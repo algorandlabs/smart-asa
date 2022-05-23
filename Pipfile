@@ -1,0 +1,17 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+docopt = "*"
+py-algorand-sdk = "*"
+pyteal = {editable = true, ref = "0dd7208d84a4e28b8c2552b2561488d9c5210f6e", git = "https://github.com/algorand/pyteal.git"}
+
+[dev-packages]
+autoflake = "*"
+black = "*"
+pytest = "*"
+
+[requires]
+python_version = "3.10"
