@@ -74,7 +74,7 @@ class Account(TransactionSigner):
 
         # TODO: `wait_for_confirmation` doesn't work with `dev` mode in Sandbox
         #  we should consider a `debug` flag to disable it.
-        # transaction.wait_for_confirmation(self.algod_client, tx_id, 3)
+        transaction.wait_for_confirmation(self.algod_client, tx_id)
 
         return self.algod_client.pending_transaction_info(tx_id)
 

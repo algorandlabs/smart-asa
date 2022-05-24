@@ -21,6 +21,7 @@ from smart_asa_asc import (
     smart_asa_global_state,
 )
 
+from utils import get_method
 
 INITIAL_FUNDS = 10_000_000
 
@@ -147,7 +148,18 @@ class TestSmartASAMethod:
         smart_asa_contract: Contract,
         smart_asa_app: AppAccount,
     ):
+
         # 1. Asset Create can only be called by Smart ASA App Creator
+        with pytest.raises(AlgodHTTPError):
+            print("\n --- Asset Create can only be called by Smart ASA App Creator")
+            eve.abi_call(
+                get_method(smart_asa_contract, "asset_create"),
+                1,
+                2,
+                app=smart_asa_app,
+            )
+            print(" --- Rejected as expected!")
+
         # Happy path
+
         # 2. Asset Create can not be called multiple times
-        pass
