@@ -65,7 +65,7 @@ def smart_asa_interface(smart_asa_abi_router: Router) -> dict:
 
 @pytest.fixture()
 def smart_asa_contract(smart_asa_interface: dict) -> Contract:
-    return Contract.from_json(str(smart_asa_interface))
+    return Contract.from_json(json.dumps(smart_asa_interface, indent=4))
 
 
 @pytest.fixture()
@@ -78,7 +78,7 @@ def eve() -> Account:
     return Sandbox.create(funds_amount=INITIAL_FUNDS)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def smart_asa_app(
     _algod_client: algod.AlgodClient,
     teal_approval: str,
