@@ -74,7 +74,7 @@ class Account(TransactionSigner):
 
         # TODO: `wait_for_confirmation` doesn't work with `dev` mode in Sandbox
         #  we should consider a `debug` flag to disable it.
-        transaction.wait_for_confirmation(self.algod_client, tx_id)
+        # transaction.wait_for_confirmation(self.algod_client, tx_id)
 
         return self.algod_client.pending_transaction_info(tx_id)
 
@@ -82,7 +82,7 @@ class Account(TransactionSigner):
         assert self.algod_client
         return get_params(self.algod_client, *args, **kwargs)
 
-    def pay(self, receiver: "Account", amount: int):
+    def pay(self, receiver: Union["Account", "AppAccount"], amount: int):
         txn = transaction.PaymentTxn(
             self.address, self._get_params(), receiver.address, amount
         )
@@ -90,7 +90,7 @@ class Account(TransactionSigner):
 
     def abi_call(
         self,
-        method,
+        method: Method,
         *args,
         app: Optional[Union[int, "AppAccount"]] = None,
         group_extra_txns: Optional[list[TransactionWithSigner]] = None,
@@ -127,7 +127,7 @@ class Account(TransactionSigner):
         atc = AtomicTransactionComposer()
         atc.add_method_call(
             app_id=app,
-            method=Method.from_signature(method.signature),
+            method=method,
             method_args=encoded_args,
             sp=self._get_params(fee),
             sender=self.address,
@@ -267,7 +267,7 @@ class Account(TransactionSigner):
         )
 
         transaction_response = self.sign_send_wait(txn)
-        return transaction_response["application-index"]
+        return AppAccount.from_app_id(transaction_response["application-index"])
 
 
 @dataclasses.dataclass(frozen=True)

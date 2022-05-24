@@ -101,6 +101,7 @@ def underlay_asa_create_inner_tx() -> Expr:
         InnerTxnBuilder.Begin(),
         InnerTxnBuilder.SetFields(
             {
+                TxnField.fee: Int(0),
                 TxnField.type_enum: TxnType.AssetConfig,
                 TxnField.config_asset_total: UNDERLYING_ASA_TOTAL,
                 TxnField.config_asset_decimals: UNDERLYING_ASA_DECIMALS,
@@ -189,11 +190,12 @@ def asset_create(
     unit_name: abi.String,
     asset_name: abi.String,
     url: abi.String,
-    metadata_hash: abi.Byte,
+    metadata_hash: abi.String,
     manager_addr: abi.Address,
     reserve_addr: abi.Address,
     freeze_addr: abi.Address,
     clawback_addr: abi.Address,
+    *,
     output: abi.Uint64,
 ) -> Expr:
 
@@ -221,6 +223,7 @@ def asset_create(
         App.globalPut(SMART_ASA_GS["Bytes"]["freeze_addr"], freeze_addr.get()),
         App.globalPut(SMART_ASA_GS["Bytes"]["clawback_addr"], clawback_addr.get()),
         output.set(App.globalGet(SMART_ASA_GS["Int"]["smart_asa_id"])),
+        # Log(Itob(output.get())),
     )
 
 
