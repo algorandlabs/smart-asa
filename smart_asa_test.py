@@ -99,6 +99,34 @@ def smart_asa_app(
     return smart_asa_asc_account
 
 
+@pytest.fixture()
+def smart_asa(
+    _algod_client: algod.AlgodClient,
+    smart_asa_app: AppAccount,
+    smart_asa_contract: Contract,
+    creator: Account,
+) -> int:
+
+    params = get_params(_algod_client)
+    abi_call_fee = params.fee * 2
+    return creator.abi_call(
+        get_method(smart_asa_contract, "asset_create"),
+        100,
+        2,
+        False,
+        "TEST",
+        "Test Smart ASA",
+        "https://test",
+        "spam",
+        creator.address,
+        creator.address,
+        creator.address,
+        creator.address,
+        app=smart_asa_app,
+        fee=abi_call_fee,
+    )
+
+
 def test_compile(
     pyteal_approval: Expr, pyteal_clear: Expr, smart_asa_interface: dict
 ) -> None:
@@ -146,12 +174,11 @@ def test_smart_asa_app_create(
     print(f" --- Smart ASA App ID: {smart_asa_app.app_id}")
 
 
-class TestSmartASAMethod:
-    def test_asset_create(
+class TestAssetCreate:
+    def test_is_creator(
         self,
         _algod_client: algod.AlgodClient,
         eve: Account,
-        creator: Account,
         smart_asa_contract: Contract,
         smart_asa_app: AppAccount,
     ):
@@ -159,7 +186,6 @@ class TestSmartASAMethod:
         params = get_params(_algod_client)
         abi_call_fee = params.fee * 2
 
-        # 1. Asset Create can only be called by Smart ASA App Creator
         print("\n --- Asset Create can not be invoked by non App Creator...")
         with pytest.raises(Exception):
             eve.abi_call(
@@ -181,27 +207,18 @@ class TestSmartASAMethod:
             )
         print(" --- Rejected as expected!")
 
-        # Happy path
-        print("\n --- Creating Smart ASA...")
-        smart_asa_id = creator.abi_call(
-            get_method(smart_asa_contract, "asset_create"),
-            100,
-            2,
-            False,
-            "TEST",
-            "Test Smart ASA",
-            "https://test",
-            "spam",
-            creator.address,
-            creator.address,
-            creator.address,
-            creator.address,
-            app=smart_asa_app,
-            fee=abi_call_fee,
-        )
-        print(" --- Smart ASA ID:", smart_asa_id)
+    def test_smart_asa_not_created(
+        self,
+        _algod_client: algod.AlgodClient,
+        creator: Account,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        smart_asa: int,
+    ):
 
-        # 2. Asset Create can not be called multiple times
+        params = get_params(_algod_client)
+        abi_call_fee = params.fee * 2
+
         print("\n --- Asset Create can not be invoked multiple times...")
         with pytest.raises(Exception):
             creator.abi_call(
@@ -221,3 +238,33 @@ class TestSmartASAMethod:
                 fee=abi_call_fee,
             )
         print(" --- Rejected as expected!")
+
+    def test_happy_path(
+        self,
+        _algod_client: algod.AlgodClient,
+        creator: Account,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+    ):
+
+        params = get_params(_algod_client)
+        abi_call_fee = params.fee * 2
+
+        print("\n --- Creating Smart ASA...")
+        smart_asa_id = creator.abi_call(
+            get_method(smart_asa_contract, "asset_create"),
+            100,
+            2,
+            False,
+            "TEST",
+            "Test Smart ASA",
+            "https://test",
+            "spam",
+            creator.address,
+            creator.address,
+            creator.address,
+            creator.address,
+            app=smart_asa_app,
+            fee=abi_call_fee,
+        )
+        print(" --- Smart ASA ID:", smart_asa_id)

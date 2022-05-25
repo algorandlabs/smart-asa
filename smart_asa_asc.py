@@ -201,19 +201,20 @@ def asset_create(
     output: abi.Uint64,
 ) -> Expr:
 
+    is_creator = Txn.sender() == Global.creator_address()
     smart_asa_not_created = Not(App.globalGet(SMART_ASA_GS["Int"]["smart_asa_id"]))
     smart_asa_id = underlay_asa_create_inner_tx()
 
     return Seq(
         # Preconditions
-        Assert(Txn.sender() == Global.creator_address()),
+        Assert(is_creator),
         Assert(smart_asa_not_created),
         # Underlying ASA creation
         App.globalPut(SMART_ASA_GS["Int"]["smart_asa_id"], smart_asa_id),
         # Smart ASA properties
         App.globalPut(SMART_ASA_GS["Int"]["total"], total.get()),
-        # NOTE: As ref. implementation we could have an `asset_mint` method
-        # which can put up to `total` units of Smart ASA in circulation.
+        # TODO: Ref. implementation could have an `asset_mint` method
+        #   which can put up to `total` units of Smart ASA in circulation.
         App.globalPut(SMART_ASA_GS["Int"]["decimals"], decimals.get()),
         App.globalPut(SMART_ASA_GS["Int"]["default_frozen"], default_frozen.get()),
         App.globalPut(SMART_ASA_GS["Bytes"]["unit_name"], unit_name.get()),
@@ -232,9 +233,9 @@ def asset_create(
 @ABIReturnSubroutine
 def asset_config(
     config_asset: abi.Uint64,  # NOTE: this should be type abi.Asset
-    total: abi.Uint64,
-    decimals: abi.Uint32,
-    default_frozen: abi.Bool,
+    total: abi.Uint64,  # FIXME: Ref. implementation could mandate `total` can not be changed
+    decimals: abi.Uint32,  # FIXME: Ref. implementation could mandate `decimals` can not be changed
+    default_frozen: abi.Bool,  # FIXME: Ref. implementation could mandate `default_frozen` can not be changed
     unit_name: abi.String,
     asset_name: abi.String,
     url: abi.String,
@@ -244,7 +245,29 @@ def asset_config(
     freeze_addr: abi.Address,
     clawback_addr: abi.Address,
 ) -> Expr:
-    return Reject()
+
+    is_creator = Txn.sender() == Global.creator_address()
+    is_correct_smart_asa = (
+        App.globalGet(SMART_ASA_GS["Int"]["smart_asa_id"]) == config_asset.get()
+    )
+
+    return Seq(
+        # Preconditions
+        Assert(is_creator),
+        Assert(is_correct_smart_asa),
+        # Smart ASA properties
+        App.globalPut(SMART_ASA_GS["Int"]["total"], total.get()),
+        App.globalPut(SMART_ASA_GS["Int"]["decimals"], decimals.get()),
+        App.globalPut(SMART_ASA_GS["Int"]["default_frozen"], default_frozen.get()),
+        App.globalPut(SMART_ASA_GS["Bytes"]["unit_name"], unit_name.get()),
+        App.globalPut(SMART_ASA_GS["Bytes"]["asset_name"], asset_name.get()),
+        App.globalPut(SMART_ASA_GS["Bytes"]["url"], url.get()),
+        App.globalPut(SMART_ASA_GS["Bytes"]["metadata_hash"], metadata_hash.get()),
+        App.globalPut(SMART_ASA_GS["Bytes"]["manager_addr"], manager_addr.get()),
+        App.globalPut(SMART_ASA_GS["Bytes"]["reserve_addr"], reserve_addr.get()),
+        App.globalPut(SMART_ASA_GS["Bytes"]["freeze_addr"], freeze_addr.get()),
+        App.globalPut(SMART_ASA_GS["Bytes"]["clawback_addr"], clawback_addr.get()),
+    )
 
 
 @smart_asa_abi.add_method_handler
