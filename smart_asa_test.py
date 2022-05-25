@@ -2,6 +2,8 @@
 
 import json
 import pprint
+
+import algosdk.constants
 import pytest
 
 from pyteal import Expr, Router
@@ -100,7 +102,7 @@ def smart_asa_app(
 
 
 @pytest.fixture()
-def smart_asa(
+def smart_asa_id(
     _algod_client: algod.AlgodClient,
     smart_asa_app: AppAccount,
     smart_asa_contract: Contract,
@@ -145,48 +147,54 @@ def test_compile(
         f.write(teal_clear_program)
 
 
-def test_smart_asa_app_create(
-    _algod_client: algod.AlgodClient,
-    teal_approval: str,
-    teal_clear: str,
-    creator: Account,
-) -> None:
+class TestAppCreate:
+    def test_wrong_state_schema(
+        self,
+        teal_approval: str,
+        teal_clear: str,
+        creator: Account,
+    ) -> None:
 
-    # 1. Smart ASA App must be invoked with right State Schema
-    with pytest.raises(AlgodHTTPError):
-        print("\n --- Smart ASA App must be invoked with right State Schema.")
-        creator.create_asc(
+        with pytest.raises(AlgodHTTPError):
+            print("\n --- Creating Smart ASA App with wrong State Schema...")
+            creator.create_asc(
+                approval_program=teal_approval,
+                clear_program=teal_clear,
+                global_schema=transaction.StateSchema(0, 0),
+                local_schema=transaction.StateSchema(0, 0),
+            )
+        print(" --- Rejected as expected!")
+
+    def test_happy_path(
+        self,
+        teal_approval: str,
+        teal_clear: str,
+        creator: Account,
+    ) -> None:
+
+        print("\n --- Creating Smart ASA App...")
+        smart_asa_app = creator.create_asc(
             approval_program=teal_approval,
             clear_program=teal_clear,
-            global_schema=transaction.StateSchema(0, 0),
-            local_schema=transaction.StateSchema(0, 0),
+            global_schema=smart_asa_global_state,
+            local_schema=smart_asa_local_state,
         )
-    print(" --- Rejected as expected!")
-
-    # Happy path
-    print("\n --- Creating Smart ASA App...")
-    smart_asa_app = creator.create_asc(
-        approval_program=teal_approval,
-        clear_program=teal_clear,
-        global_schema=smart_asa_global_state,
-        local_schema=smart_asa_local_state,
-    )
-    print(f" --- Smart ASA App ID: {smart_asa_app.app_id}")
+        print(f" --- Created Smart ASA App ID: {smart_asa_app.app_id}")
 
 
 class TestAssetCreate:
-    def test_is_creator(
+    def test_is_not_creator(
         self,
         _algod_client: algod.AlgodClient,
         eve: Account,
         smart_asa_contract: Contract,
         smart_asa_app: AppAccount,
-    ):
+    ) -> None:
 
         params = get_params(_algod_client)
         abi_call_fee = params.fee * 2
 
-        print("\n --- Asset Create can not be invoked by non App Creator...")
+        print("\n --- Creating Smart ASA not with App Creator...")
         with pytest.raises(Exception):
             eve.abi_call(
                 get_method(smart_asa_contract, "asset_create"),
@@ -207,19 +215,19 @@ class TestAssetCreate:
             )
         print(" --- Rejected as expected!")
 
-    def test_smart_asa_not_created(
+    def test_smart_asa_already_created(
         self,
         _algod_client: algod.AlgodClient,
         creator: Account,
         smart_asa_contract: Contract,
         smart_asa_app: AppAccount,
-        smart_asa: int,
-    ):
+        smart_asa_id: int,
+    ) -> None:
 
         params = get_params(_algod_client)
         abi_call_fee = params.fee * 2
 
-        print("\n --- Asset Create can not be invoked multiple times...")
+        print("\n --- Creating Smart ASA multiple times...")
         with pytest.raises(Exception):
             creator.abi_call(
                 get_method(smart_asa_contract, "asset_create"),
@@ -245,7 +253,7 @@ class TestAssetCreate:
         creator: Account,
         smart_asa_contract: Contract,
         smart_asa_app: AppAccount,
-    ):
+    ) -> None:
 
         params = get_params(_algod_client)
         abi_call_fee = params.fee * 2
@@ -267,4 +275,106 @@ class TestAssetCreate:
             app=smart_asa_app,
             fee=abi_call_fee,
         )
-        print(" --- Smart ASA ID:", smart_asa_id)
+        print(" --- Created Smart ASA ID:", smart_asa_id)
+
+
+class TestAssetConfig:
+    def test_is_creator(
+        self,
+        _algod_client: algod.AlgodClient,
+        eve: Account,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        smart_asa_id: int,
+    ) -> None:
+
+        params = get_params(_algod_client)
+        abi_call_fee = params.fee
+
+        print("\n --- Configuring Smart ASA not with App Creator...")
+        with pytest.raises(Exception):
+            eve.abi_call(
+                get_method(smart_asa_contract, "asset_config"),
+                smart_asa_id,
+                1000,
+                10,
+                True,
+                "NEW TEST",
+                "New Test Smart ASA",
+                "https://new_test",
+                "new_spam",
+                algosdk.constants.ZERO_ADDRESS,
+                algosdk.constants.ZERO_ADDRESS,
+                algosdk.constants.ZERO_ADDRESS,
+                algosdk.constants.ZERO_ADDRESS,
+                app=smart_asa_app,
+                fee=abi_call_fee,
+            )
+        print(" --- Rejected as expected!")
+
+    def test_is_correct_smart_asa(
+        self,
+        _algod_client: algod.AlgodClient,
+        creator: Account,
+        eve: Account,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        smart_asa_id: int,
+    ) -> None:
+
+        params = get_params(_algod_client)
+        abi_call_fee = params.fee
+
+        print("\n --- Configuring Smart ASA with wrong Asset ID...")
+        with pytest.raises(Exception):
+            creator.abi_call(
+                get_method(smart_asa_contract, "asset_config"),
+                42,
+                1000,
+                10,
+                True,
+                "NEW TEST",
+                "New Test Smart ASA",
+                "https://new_test",
+                "new_spam",
+                algosdk.constants.ZERO_ADDRESS,
+                algosdk.constants.ZERO_ADDRESS,
+                algosdk.constants.ZERO_ADDRESS,
+                algosdk.constants.ZERO_ADDRESS,
+                app=smart_asa_app,
+                fee=abi_call_fee,
+            )
+        print(" --- Rejected as expected!")
+
+    def test_happy_path(
+        self,
+        _algod_client: algod.AlgodClient,
+        creator: Account,
+        eve: Account,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        smart_asa_id: int,
+    ) -> None:
+
+        params = get_params(_algod_client)
+        abi_call_fee = params.fee
+
+        print("\n --- Configuring Smart ASA...")
+        creator.abi_call(
+            get_method(smart_asa_contract, "asset_config"),
+            smart_asa_id,
+            1000,
+            10,
+            True,
+            "NEW TEST",
+            "New Test Smart ASA",
+            "https://new_test",
+            "new_spam",
+            algosdk.constants.ZERO_ADDRESS,
+            algosdk.constants.ZERO_ADDRESS,
+            algosdk.constants.ZERO_ADDRESS,
+            algosdk.constants.ZERO_ADDRESS,
+            app=smart_asa_app,
+            fee=abi_call_fee,
+        )
+        print(" --- Configured Smart ASA ID:", smart_asa_id)

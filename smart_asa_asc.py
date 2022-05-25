@@ -239,7 +239,7 @@ def asset_config(
     unit_name: abi.String,
     asset_name: abi.String,
     url: abi.String,
-    metadata_hash: abi.Byte,  # FIXME: This was originally Byte in ARC-20
+    metadata_hash: abi.String,  # FIXME: This was originally Byte in ARC-20
     manager_addr: abi.Address,
     reserve_addr: abi.Address,
     freeze_addr: abi.Address,
