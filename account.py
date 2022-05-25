@@ -64,6 +64,12 @@ class Account(TransactionSigner):
 
         try:
             self.algod_client.send_transactions([signed_txn])
+            # TODO: `wait_for_confirmation` doesn't work with `dev` mode in
+            #  Sandbox we should consider a `debug` flag to disable it.
+
+            # transaction.wait_for_confirmation(self.algod_client, tx_id)
+            return self.algod_client.pending_transaction_info(tx_id)
+
         except algosdk.error.AlgodHTTPError:
             drr = transaction.create_dryrun(self.algod_client, [signed_txn])
             filename = "/tmp/dryrun.msgp"
@@ -71,12 +77,7 @@ class Account(TransactionSigner):
                 import base64
 
                 f.write(base64.b64decode(encoding.msgpack_encode(drr)))
-
-        # TODO: `wait_for_confirmation` doesn't work with `dev` mode in Sandbox
-        #  we should consider a `debug` flag to disable it.
-        # transaction.wait_for_confirmation(self.algod_client, tx_id)
-
-        return self.algod_client.pending_transaction_info(tx_id)
+            raise Exception("Transaction rejected!")
 
     def _get_params(self, *args, **kwargs) -> transaction.SuggestedParams:
         assert self.algod_client
@@ -97,7 +98,8 @@ class Account(TransactionSigner):
         on_complete: transaction.OnComplete = transaction.OnComplete.NoOpOC,
         fee: Optional[int] = None,
         extra_app_call_nop: int = 0,
-        max_wait_rounds: int = 10
+        max_wait_rounds: int = 10,
+        save_abi_call: str = None
     ) -> Any:  # TODO: Correctly specify the return type here.
         """
         ABI call from `sender` to `app` `method`, with `*args`. Txn-type args are supplied
@@ -155,6 +157,9 @@ class Account(TransactionSigner):
 
         atc.build_group()
         atc.gather_signatures()
+        if save_abi_call:
+            transaction.write_to_file(atc.signed_txns, save_abi_call, overwrite=True)
+
         try:
             atc_result = atc.execute(self.algod_client, max_wait_rounds)
             logged_result = atc_result.abi_results[0]  # type: ignore
@@ -172,6 +177,7 @@ class Account(TransactionSigner):
                 import base64
 
                 f.write(base64.b64decode(encoding.msgpack_encode(drr)))
+            raise Exception("ABI call rejected!")
 
     def create_asset(self, **kwargs) -> int:
         """Create an asset and return its ID."""

@@ -1,11 +1,12 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 """
 Smart ASA PyTEAL reference implementation based on ARC-20
 """
 
-__author__ = (
-    "Cosimo Bassi <cosimo.bassi@algorand.com>, "
-    "Stefano De Angelis <stefano.deangelis@algorand.com>"
-)
+__author__ = "Cosimo Bassi, Stefano De Angelis"
+__email__ = "<cosimo.bassi@algorand.com>, <stefano.deangelis@algorand.com>"
 
 from pyteal import (
     ABIReturnSubroutine,
@@ -149,6 +150,7 @@ def on_optin() -> Expr:
     # This prevents malicious users to circumvent the frozen status by clearing
     # their Local State. Note that this could be avoided by the use of Boxes
     # once available.
+    # TODO: add OptIn logic
     return Reject()
 
 
@@ -190,7 +192,7 @@ def asset_create(
     unit_name: abi.String,
     asset_name: abi.String,
     url: abi.String,
-    metadata_hash: abi.String,
+    metadata_hash: abi.String,  # FIXME: This was originally Byte in ARC-20
     manager_addr: abi.Address,
     reserve_addr: abi.Address,
     freeze_addr: abi.Address,
@@ -206,7 +208,7 @@ def asset_create(
         # Preconditions
         Assert(Txn.sender() == Global.creator_address()),
         Assert(smart_asa_not_created),
-        # Underlying ASA cration
+        # Underlying ASA creation
         App.globalPut(SMART_ASA_GS["Int"]["smart_asa_id"], smart_asa_id),
         # Smart ASA properties
         App.globalPut(SMART_ASA_GS["Int"]["total"], total.get()),
@@ -223,7 +225,6 @@ def asset_create(
         App.globalPut(SMART_ASA_GS["Bytes"]["freeze_addr"], freeze_addr.get()),
         App.globalPut(SMART_ASA_GS["Bytes"]["clawback_addr"], clawback_addr.get()),
         output.set(App.globalGet(SMART_ASA_GS["Int"]["smart_asa_id"])),
-        # Log(Itob(output.get())),
     )
 
 
@@ -237,7 +238,7 @@ def asset_config(
     unit_name: abi.String,
     asset_name: abi.String,
     url: abi.String,
-    metadata_hash: abi.Byte,
+    metadata_hash: abi.Byte,  # FIXME: This was originally Byte in ARC-20
     manager_addr: abi.Address,
     reserve_addr: abi.Address,
     freeze_addr: abi.Address,
