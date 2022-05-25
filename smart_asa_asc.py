@@ -97,7 +97,7 @@ smart_asa_local_state = StateSchema(
 
 # / --- --- SUBROUTINES
 @Subroutine(TealType.uint64)
-def underlay_asa_create_inner_tx() -> Expr:
+def underlying_asa_create_inner_tx() -> Expr:
     return Seq(
         InnerTxnBuilder.Begin(),
         InnerTxnBuilder.SetFields(
@@ -203,7 +203,7 @@ def asset_create(
 
     is_creator = Txn.sender() == Global.creator_address()
     smart_asa_not_created = Not(App.globalGet(SMART_ASA_GS["Int"]["smart_asa_id"]))
-    smart_asa_id = underlay_asa_create_inner_tx()
+    smart_asa_id = underlying_asa_create_inner_tx()
 
     return Seq(
         # Preconditions
@@ -246,15 +246,21 @@ def asset_config(
     clawback_addr: abi.Address,
 ) -> Expr:
 
-    is_creator = Txn.sender() == Global.creator_address()
+    is_manager_addr = Txn.sender() == App.globalGet(
+        SMART_ASA_GS["Bytes"]["manager_addr"]
+    )
     is_correct_smart_asa = (
         App.globalGet(SMART_ASA_GS["Int"]["smart_asa_id"]) == config_asset.get()
     )
+    # TODO: if Freeze and Clawback are ZeroAddress should not be changed
+    #  anymore.
 
     return Seq(
         # Preconditions
-        Assert(is_creator),
-        Assert(is_correct_smart_asa),
+        Assert(is_manager_addr),
+        Assert(
+            is_correct_smart_asa
+        ),  # TODO: this check is useless if ref. implementation mandates 1 ASA:1 App
         # Smart ASA properties
         App.globalPut(SMART_ASA_GS["Int"]["total"], total.get()),
         App.globalPut(SMART_ASA_GS["Int"]["decimals"], decimals.get()),
@@ -278,6 +284,7 @@ def asset_transfer(
     asset_sender: abi.Address,  # NOTE: this should be type abi.Account
     asset_receiver: abi.Address,  # NOTE: this should be type abi.Account
 ) -> Expr:
+    # TODO: Consider both global e local freeze
     return Reject()
 
 
@@ -287,6 +294,7 @@ def asset_freeze(
     freeze_asset: abi.Uint64,  # NOTE: this should be type abi.Asset
     asset_frozen: abi.Bool,
 ) -> Expr:
+    # TODO: Add a boolean flag to the state
     return Reject()
 
 

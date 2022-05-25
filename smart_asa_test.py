@@ -3,15 +3,15 @@
 import json
 import pprint
 
-import algosdk.constants
 import pytest
 
 from pyteal import Expr, Router
 
 from algosdk import algod
 from algosdk.abi import Contract
-from algosdk.future import transaction
+from algosdk.constants import ZERO_ADDRESS
 from algosdk.error import AlgodHTTPError
+from algosdk.future import transaction
 
 from sandbox import Sandbox
 from account import Account, AppAccount
@@ -303,10 +303,10 @@ class TestAssetConfig:
                 "New Test Smart ASA",
                 "https://new_test",
                 "new_spam",
-                algosdk.constants.ZERO_ADDRESS,
-                algosdk.constants.ZERO_ADDRESS,
-                algosdk.constants.ZERO_ADDRESS,
-                algosdk.constants.ZERO_ADDRESS,
+                ZERO_ADDRESS,
+                ZERO_ADDRESS,
+                ZERO_ADDRESS,
+                ZERO_ADDRESS,
                 app=smart_asa_app,
                 fee=abi_call_fee,
             )
@@ -337,10 +337,10 @@ class TestAssetConfig:
                 "New Test Smart ASA",
                 "https://new_test",
                 "new_spam",
-                algosdk.constants.ZERO_ADDRESS,
-                algosdk.constants.ZERO_ADDRESS,
-                algosdk.constants.ZERO_ADDRESS,
-                algosdk.constants.ZERO_ADDRESS,
+                ZERO_ADDRESS,
+                ZERO_ADDRESS,
+                ZERO_ADDRESS,
+                ZERO_ADDRESS,
                 app=smart_asa_app,
                 fee=abi_call_fee,
             )
@@ -370,10 +370,10 @@ class TestAssetConfig:
             "New Test Smart ASA",
             "https://new_test",
             "new_spam",
-            algosdk.constants.ZERO_ADDRESS,
-            algosdk.constants.ZERO_ADDRESS,
-            algosdk.constants.ZERO_ADDRESS,
-            algosdk.constants.ZERO_ADDRESS,
+            ZERO_ADDRESS,
+            ZERO_ADDRESS,
+            ZERO_ADDRESS,
+            ZERO_ADDRESS,
             app=smart_asa_app,
             fee=abi_call_fee,
         )
