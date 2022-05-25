@@ -255,6 +255,8 @@ def asset_config(
     # TODO: if Freeze and Clawback are ZeroAddress should not be changed
     #  anymore.
 
+    # TODO: check thas Smart ASA has been created
+
     return Seq(
         # Preconditions
         Assert(is_manager_addr),
