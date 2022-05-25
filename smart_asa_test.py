@@ -1,4 +1,9 @@
-"""Smart ASA test suite"""
+"""
+Smart ASA test suite
+"""
+
+__author__ = "Cosimo Bassi, Stefano De Angelis"
+__email__ = "<cosimo.bassi@algorand.com>, <stefano.deangelis@algorand.com>"
 
 import json
 import pprint
@@ -16,6 +21,7 @@ from sandbox import Sandbox
 from account import Account, AppAccount
 
 from smart_asa_asc import (
+    SMART_ASA_GS,
     smart_asa_abi,
     compile_stateful,
     smart_asa_local_state,
@@ -26,6 +32,8 @@ from smart_asa_client import (
     smart_asa_create,
     smart_asa_config,
 )
+
+from utils import get_global_state
 
 INITIAL_FUNDS = 10_000_000
 
@@ -304,3 +312,40 @@ class TestAssetConfig:
             clawback_addr=eve,
         )
         print(" --- Configured Smart ASA ID:", configured_smart_asa_id)
+
+        smart_asa = get_global_state(_algod_client, smart_asa_app.app_id)
+        assert smart_asa[SMART_ASA_GS["Int"]["total"].byte_str[1:-1]] == 0
+        assert smart_asa[SMART_ASA_GS["Int"]["decimals"].byte_str[1:-1]] == 100
+        assert smart_asa[SMART_ASA_GS["Int"]["default_frozen"].byte_str[1:-1]] == 1
+        assert (
+            smart_asa[SMART_ASA_GS["Bytes"]["unit_name"].byte_str[1:-1]]
+            == b"NEW_TEST_!!!"
+        )
+        assert (
+            smart_asa[SMART_ASA_GS["Bytes"]["asset_name"].byte_str[1:-1]]
+            == b"New Test !!!"
+        )
+        assert (
+            smart_asa[SMART_ASA_GS["Bytes"]["url"].byte_str[1:-1]]
+            == b"https://new_test.io"
+        )
+        assert (
+            smart_asa[SMART_ASA_GS["Bytes"]["metadata_hash"].byte_str[1:-1]]
+            == b"a" * 32
+        )
+        assert (
+            smart_asa[SMART_ASA_GS["Bytes"]["manager_addr"].byte_str[1:-1]]
+            == eve.decoded_address
+        )
+        assert (
+            smart_asa[SMART_ASA_GS["Bytes"]["reserve_addr"].byte_str[1:-1]]
+            == eve.decoded_address
+        )
+        assert (
+            smart_asa[SMART_ASA_GS["Bytes"]["freeze_addr"].byte_str[1:-1]]
+            == eve.decoded_address
+        )
+        assert (
+            smart_asa[SMART_ASA_GS["Bytes"]["clawback_addr"].byte_str[1:-1]]
+            == eve.decoded_address
+        )

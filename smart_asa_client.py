@@ -1,3 +1,10 @@
+"""
+Smart ASA client
+"""
+
+__author__ = "Cosimo Bassi, Stefano De Angelis"
+__email__ = "<cosimo.bassi@algorand.com>, <stefano.deangelis@algorand.com>"
+
 from typing import Optional
 from algosdk import algod
 from algosdk.abi import Contract
@@ -69,39 +76,39 @@ def smart_asa_config(
 
     global_state = get_global_state(_algod_client, smart_asa_app.app_id)
 
-    if not smart_asa_id:
+    if smart_asa_id is None:
         smart_asa_id = global_state[SMART_ASA_GS["Int"]["smart_asa_id"].byte_str[1:-1]]
-    if not total:
+    if total is None:
         total = global_state[SMART_ASA_GS["Int"]["total"].byte_str[1:-1]]
-    if not decimals:
+    if decimals is None:
         decimals = global_state[SMART_ASA_GS["Int"]["decimals"].byte_str[1:-1]]
-    if not default_frozen:
+    if default_frozen is None:
         default_frozen = global_state[
             SMART_ASA_GS["Int"]["default_frozen"].byte_str[1:-1]
         ]
-    if not unit_name:
+    if unit_name is None:
         unit_name = global_state[SMART_ASA_GS["Bytes"]["unit_name"].byte_str[1:-1]]
-    if not asset_name:
+    if asset_name is None:
         asset_name = global_state[SMART_ASA_GS["Bytes"]["asset_name"].byte_str[1:-1]]
-    if not url:
+    if url is None:
         url = global_state[SMART_ASA_GS["Bytes"]["url"].byte_str[1:-1]]
-    if not metadata_hash:
+    if metadata_hash is None:
         metadata_hash = global_state[
             SMART_ASA_GS["Bytes"]["metadata_hash"].byte_str[1:-1]
         ]
-    if not manager_addr:
+    if manager_addr is None:
         manager_addr.address = global_state[
             SMART_ASA_GS["Bytes"]["manager_addr"].byte_str[1:-1]
         ]
-    if not reserve_addr:
+    if reserve_addr is None:
         reserve_addr.address = global_state[
             SMART_ASA_GS["Bytes"]["reserve_addr"].byte_str[1:-1]
         ]
-    if not freeze_addr:
+    if freeze_addr is None:
         freeze_addr.address = global_state[
             SMART_ASA_GS["Bytes"]["freeze_addr"].byte_str[1:-1]
         ]
-    if not clawback_addr:
+    if clawback_addr is None:
         clawback_addr.address = global_state[
             SMART_ASA_GS["Bytes"]["clawback_addr"].byte_str[1:-1]
         ]

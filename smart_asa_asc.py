@@ -252,17 +252,16 @@ def asset_config(
     is_correct_smart_asa = (
         App.globalGet(SMART_ASA_GS["Int"]["smart_asa_id"]) == config_asset.get()
     )
-    # TODO: if Freeze and Clawback are ZeroAddress should not be changed
-    #  anymore.
-
-    # TODO: check thas Smart ASA has been created
 
     return Seq(
         # Preconditions
         Assert(is_manager_addr),
-        Assert(
-            is_correct_smart_asa
-        ),  # TODO: this check is useless if ref. implementation mandates 1 ASA:1 App
+        # TODO: the following check is useless if ref. implementation mandates
+        #  1 ASA:1 App
+        Assert(is_correct_smart_asa),
+        # TODO: if Freeze and Clawback are ZeroAddress should not be changed
+        #  anymore.
+        # TODO: check thas Smart ASA has been created
         # Smart ASA properties
         App.globalPut(SMART_ASA_GS["Int"]["total"], total.get()),
         App.globalPut(SMART_ASA_GS["Int"]["decimals"], decimals.get()),
