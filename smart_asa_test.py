@@ -14,6 +14,7 @@ from pyteal import Expr, Router
 
 from algosdk import algod
 from algosdk.abi import Contract
+from algosdk.error import AlgodHTTPError
 from algosdk.constants import ZERO_ADDRESS
 from algosdk.future import transaction
 
@@ -81,12 +82,12 @@ def smart_asa_contract(smart_asa_interface: dict) -> Contract:
     return Contract.from_json(json.dumps(smart_asa_interface, indent=4))
 
 
-@pytest.fixture(scope="class")
+@pytest.fixture(scope="function")
 def creator() -> Account:
     return Sandbox.create(funds_amount=INITIAL_FUNDS)
 
 
-@pytest.fixture(scope="class")
+@pytest.fixture(scope="function")
 def eve() -> Account:
     return Sandbox.create(funds_amount=INITIAL_FUNDS)
 
@@ -151,7 +152,7 @@ class TestAppCreate:
         creator: Account,
     ) -> None:
 
-        with pytest.raises(Exception):
+        with pytest.raises(AlgodHTTPError):
             print("\n --- Creating Smart ASA App with wrong State Schema...")
             creator.create_asc(
                 approval_program=teal_approval,
@@ -188,7 +189,7 @@ class TestAssetCreate:
     ) -> None:
 
         print("\n --- Creating Smart ASA not with App Creator...")
-        with pytest.raises(Exception):
+        with pytest.raises(AlgodHTTPError):
             smart_asa_create(
                 _algod_client=_algod_client,
                 smart_asa_app=smart_asa_app,
@@ -209,7 +210,7 @@ class TestAssetCreate:
     ) -> None:
 
         print("\n --- Creating Smart ASA multiple times...")
-        with pytest.raises(Exception):
+        with pytest.raises(AlgodHTTPError):
             smart_asa_create(
                 _algod_client=_algod_client,
                 smart_asa_app=smart_asa_app,
@@ -227,9 +228,9 @@ class TestAssetCreate:
         creator: Account,
         smart_asa_contract: Contract,
     ) -> None:
-
+        print(get_global_state(_algod_client, smart_asa_app.app_id))
         print("\n --- Creating Smart ASA with wrong `manager_addr`...")
-        with pytest.raises(Exception):
+        with pytest.raises(AlgodHTTPError):
             smart_asa_create(
                 _algod_client=_algod_client,
                 smart_asa_app=smart_asa_app,
@@ -248,9 +249,9 @@ class TestAssetCreate:
         creator: Account,
         smart_asa_contract: Contract,
     ) -> None:
-
+        print(get_global_state(_algod_client, smart_asa_app.app_id))
         print("\n --- Creating Smart ASA with wrong `reserve_addr`...")
-        with pytest.raises(Exception):
+        with pytest.raises(AlgodHTTPError):
             smart_asa_create(
                 _algod_client=_algod_client,
                 smart_asa_app=smart_asa_app,
@@ -269,9 +270,9 @@ class TestAssetCreate:
         creator: Account,
         smart_asa_contract: Contract,
     ) -> None:
-
+        print(get_global_state(_algod_client, smart_asa_app.app_id))
         print("\n --- Creating Smart ASA with wrong `freeze_addr`...")
-        with pytest.raises(Exception):
+        with pytest.raises(AlgodHTTPError):
             smart_asa_create(
                 _algod_client=_algod_client,
                 smart_asa_app=smart_asa_app,
@@ -290,9 +291,9 @@ class TestAssetCreate:
         creator: Account,
         smart_asa_contract: Contract,
     ) -> None:
-
+        print(get_global_state(_algod_client, smart_asa_app.app_id))
         print("\n --- Creating Smart ASA with wrong `clawback_addr`...")
-        with pytest.raises(Exception):
+        with pytest.raises(AlgodHTTPError):
             smart_asa_create(
                 _algod_client=_algod_client,
                 smart_asa_app=smart_asa_app,
@@ -334,7 +335,7 @@ class TestAssetConfig:
     ) -> None:
 
         print("\n --- Configuring Smart ASA not with App Creator...")
-        with pytest.raises(Exception):
+        with pytest.raises(AlgodHTTPError):
             smart_asa_config(
                 _algod_client=_algod_client,
                 smart_asa_app=smart_asa_app,
@@ -355,7 +356,7 @@ class TestAssetConfig:
     ) -> None:
 
         print("\n --- Configuring Smart ASA with wrong Asset ID...")
-        with pytest.raises(Exception):
+        with pytest.raises(AlgodHTTPError):
             smart_asa_config(
                 _algod_client=_algod_client,
                 smart_asa_app=smart_asa_app,

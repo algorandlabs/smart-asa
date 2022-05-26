@@ -70,14 +70,14 @@ class Account(TransactionSigner):
             # transaction.wait_for_confirmation(self.algod_client, tx_id)
             return self.algod_client.pending_transaction_info(tx_id)
 
-        except algosdk.error.AlgodHTTPError:
+        except algosdk.error.AlgodHTTPError as err:
             drr = transaction.create_dryrun(self.algod_client, [signed_txn])
             filename = "/tmp/dryrun.msgp"
             with open(filename, "wb") as f:
                 import base64
 
                 f.write(base64.b64decode(encoding.msgpack_encode(drr)))
-            raise Exception("Transaction rejected!")
+            raise err
 
     def _get_params(self, *args, **kwargs) -> transaction.SuggestedParams:
         assert self.algod_client
@@ -170,14 +170,14 @@ class Account(TransactionSigner):
                 return None
             return logged_result.return_value
 
-        except algosdk.error.AlgodHTTPError:
+        except algosdk.error.AlgodHTTPError as err:
             drr = transaction.create_dryrun(self.algod_client, atc.signed_txns)
             filename = "/tmp/dryrun.msgp"
             with open(filename, "wb") as f:
                 import base64
 
                 f.write(base64.b64decode(encoding.msgpack_encode(drr)))
-            raise Exception("ABI call rejected!")
+            raise err
 
     def create_asset(self, **kwargs) -> int:
         """Create an asset and return its ID."""
