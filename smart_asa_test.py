@@ -43,55 +43,55 @@ def _algod_client() -> algod.AlgodClient:
     return Sandbox.algod_client
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def smart_asa_abi_router() -> Router:
     return smart_asa_abi
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def pyteal_approval(smart_asa_abi_router: Router) -> Expr:
     approval, _, _ = smart_asa_abi_router.build_program()
     return approval
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def pyteal_clear(smart_asa_abi_router: Router) -> Expr:
     _, clear, _ = smart_asa_abi_router.build_program()
     return clear
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def teal_approval(pyteal_approval: Expr) -> str:
     return compile_stateful(pyteal_approval)
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def teal_clear(pyteal_clear: Expr) -> str:
     return compile_stateful(pyteal_clear)
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def smart_asa_interface(smart_asa_abi_router: Router) -> dict:
     _, _, interface = smart_asa_abi_router.build_program()
     return interface
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def smart_asa_contract(smart_asa_interface: dict) -> Contract:
     return Contract.from_json(json.dumps(smart_asa_interface, indent=4))
 
 
-@pytest.fixture()
+@pytest.fixture(scope="class")
 def creator() -> Account:
     return Sandbox.create(funds_amount=INITIAL_FUNDS)
 
 
-@pytest.fixture()
+@pytest.fixture(scope="class")
 def eve() -> Account:
     return Sandbox.create(funds_amount=INITIAL_FUNDS)
 
 
-@pytest.fixture()
+@pytest.fixture(scope="function")
 def smart_asa_app(
     _algod_client: algod.AlgodClient,
     teal_approval: str,
@@ -108,7 +108,7 @@ def smart_asa_app(
     return smart_asa_asc_account
 
 
-@pytest.fixture()
+@pytest.fixture(scope="function")
 def smart_asa_id(
     _algod_client: algod.AlgodClient,
     smart_asa_app: AppAccount,
@@ -237,7 +237,7 @@ class TestAssetCreate:
                 smart_asa_contract=smart_asa_contract,
                 total=100,
                 manager_addr="spam",
-                save_abi_call="/tmp/txn.signed",
+                save_abi_call="/tmp/invalid_manager_addr.signed",
             )
         print(" --- Rejected as expected!")
 
@@ -258,7 +258,7 @@ class TestAssetCreate:
                 smart_asa_contract=smart_asa_contract,
                 total=100,
                 reserve_addr="spam",
-                save_abi_call="/tmp/txn.signed",
+                save_abi_call="/tmp/invalid_reserve_addr.signed",
             )
         print(" --- Rejected as expected!")
 
@@ -279,7 +279,7 @@ class TestAssetCreate:
                 smart_asa_contract=smart_asa_contract,
                 total=100,
                 freeze_addr="spam",
-                save_abi_call="/tmp/txn.signed",
+                save_abi_call="/tmp/invalid_freeze_addr.signed",
             )
         print(" --- Rejected as expected!")
 
@@ -300,7 +300,7 @@ class TestAssetCreate:
                 smart_asa_contract=smart_asa_contract,
                 total=100,
                 clawback_addr="spam",
-                save_abi_call="/tmp/txn.signed",
+                save_abi_call="/tmp/invalid_clawback_addr.signed",
             )
         print(" --- Rejected as expected!")
 
