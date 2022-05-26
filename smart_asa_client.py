@@ -35,18 +35,6 @@ def smart_asa_create(
     params = get_params(_algod_client)
     abi_call_fee = params.fee * 2
 
-    # if not manager_addr and manager_addr is Account:
-    #     manager_addr = manager_addr.account
-
-    # if not reserve_addr and reserve_addr is Account:
-    #     reserve_addr = reserve_addr.account
-    
-    # if not freeze_addr and freeze_addr is Account:
-    #     freeze_addr = freeze_addr.account
-
-    # if not clawback_addr and clawback_addr is Account:
-    #     clawback_addr = clawback_addr.account
-
     return creator.abi_call(
         get_method(smart_asa_contract, "asset_create"),
         total,
