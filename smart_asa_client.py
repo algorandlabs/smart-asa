@@ -5,7 +5,7 @@ Smart ASA client
 __author__ = "Cosimo Bassi, Stefano De Angelis"
 __email__ = "<cosimo.bassi@algorand.com>, <stefano.deangelis@algorand.com>"
 
-from typing import Optional
+from typing import Optional, Union
 from algosdk import algod
 from algosdk.abi import Contract
 from account import Account, AppAccount
@@ -25,10 +25,10 @@ def smart_asa_create(
     asset_name: str = "",
     url: str = "",
     metadata_hash: str = "",
-    manager_addr: Optional[Account] = None,
-    reserve_addr: Optional[Account] = None,
-    freeze_addr: Optional[Account] = None,
-    clawback_addr: Optional[Account] = None,
+    manager_addr: Optional[Union[str, Account]] = None,
+    reserve_addr: Optional[Union[str, Account]] = None,
+    freeze_addr: Optional[Union[str, Account]] = None,
+    clawback_addr: Optional[Union[str, Account]] = None,
     save_abi_call: str = None,
 ) -> int:
 
@@ -67,10 +67,10 @@ def smart_asa_config(
     asset_name: str = None,
     url: str = None,
     metadata_hash: str = None,
-    manager_addr: Optional[Account] = None,
-    reserve_addr: Optional[Account] = None,
-    freeze_addr: Optional[Account] = None,
-    clawback_addr: Optional[Account] = None,
+    manager_addr: Optional[Union[str, Account]] = None,
+    reserve_addr: Optional[Union[str, Account]] = None,
+    freeze_addr: Optional[Union[str, Account]] = None,
+    clawback_addr: Optional[Union[str, Account]] = None,
     save_abi_call: str = None,
 ) -> int:
 

@@ -17,10 +17,12 @@ from pyteal import (
     Concat,
     Expr,
     Global,
+    If,
     InnerTxn,
     InnerTxnBuilder,
     Int,
     Itob,
+    Len,
     Mode,
     Not,
     OnComplete,
@@ -41,8 +43,10 @@ from algosdk.future.transaction import StateSchema
 
 TEAL_VERSION = 6
 
+# / --- CONSTANTS
+ADDRESS_BYTES_LENGTH = Int(32)
 
-# UNDERLYING ASA CONFIG
+# / --- --- UNDERLYING ASA CONFIG
 UNDERLYING_ASA_TOTAL = Int(2**64 - 1)
 UNDERLYING_ASA_DECIMALS = Int(0)
 UNDERLYING_ASA_DEFAULT_FROZEN = Int(1)
@@ -121,12 +125,18 @@ def underlying_asa_create_inner_tx() -> Expr:
     )
 
 
+@Subroutine(TealType.none)
+def is_valid_address_length(address: Expr) -> Expr:
+    return Assert(Len(address) == ADDRESS_BYTES_LENGTH)
+
+
 # / --- --- ABI
 smart_asa_abi = Router("Smart ASA ref. implementation")
 
 
 # / --- --- BARE CALLS
 def on_create() -> Expr:
+    init_smart_asa_id = App.globalPut(SMART_ASA_GS["Int"]["smart_asa_id"], Int(0))
     return Seq(
         # Preconditions
         # Not mandatory - Smart ASA Application self validate its state.
@@ -138,8 +148,7 @@ def on_create() -> Expr:
         Assert(
             Txn.local_num_byte_slices() == Int(smart_asa_local_state.num_byte_slices)
         ),
-        # Init Smart ASA ID
-        App.globalPut(SMART_ASA_GS["Int"]["smart_asa_id"], Int(0)),
+        init_smart_asa_id,
         Approve(),
     )
 
@@ -209,6 +218,10 @@ def asset_create(
         # Preconditions
         Assert(is_creator),
         Assert(smart_asa_not_created),
+        is_valid_address_length(manager_addr.get()),
+        is_valid_address_length(reserve_addr.get()),
+        is_valid_address_length(freeze_addr.get()),
+        is_valid_address_length(clawback_addr.get()),
         # Underlying ASA creation
         App.globalPut(SMART_ASA_GS["Int"]["smart_asa_id"], smart_asa_id),
         # Smart ASA properties
@@ -233,9 +246,9 @@ def asset_create(
 @ABIReturnSubroutine
 def asset_config(
     config_asset: abi.Uint64,  # NOTE: this should be type abi.Asset
-    total: abi.Uint64,  # FIXME: Ref. implementation could mandate `total` can not be changed
-    decimals: abi.Uint32,  # FIXME: Ref. implementation could mandate `decimals` can not be changed
-    default_frozen: abi.Bool,  # FIXME: Ref. implementation could mandate `default_frozen` can not be changed
+    total: abi.Uint64,  # NOTE: In ref. impl `total` can not be changed
+    decimals: abi.Uint32,
+    default_frozen: abi.Bool,  # NOTE: In ref. impl `default_frozen` can not be changed
     unit_name: abi.String,
     asset_name: abi.String,
     url: abi.String,
@@ -246,26 +259,42 @@ def asset_config(
     clawback_addr: abi.Address,
 ) -> Expr:
 
-    is_manager_addr = Txn.sender() == App.globalGet(
-        SMART_ASA_GS["Bytes"]["manager_addr"]
-    )
-    is_correct_smart_asa = (
-        App.globalGet(SMART_ASA_GS["Int"]["smart_asa_id"]) == config_asset.get()
-    )
+    smart_asa_id = App.globalGet(SMART_ASA_GS["Int"]["smart_asa_id"])
+    current_manager_addr = App.globalGet(SMART_ASA_GS["Bytes"]["manager_addr"])
+    current_freeze_addr = App.globalGet(SMART_ASA_GS["Bytes"]["freeze_addr"])
+    current_clawback_addr = App.globalGet(SMART_ASA_GS["Bytes"]["clawback_addr"])
+
+    is_manager_addr = Txn.sender() == current_manager_addr
+    is_correct_smart_asa = config_asset.get() == smart_asa_id
+
+    update_freeze_addr = freeze_addr.get() != current_freeze_addr
+    update_clawback_addr = clawback_addr.get() != current_clawback_addr
 
     return Seq(
         # Preconditions
+        Assert(smart_asa_id),
         Assert(is_manager_addr),
-        # TODO: the following check is useless if ref. implementation mandates
-        #  1 ASA:1 App
-        Assert(is_correct_smart_asa),
-        # TODO: if Freeze and Clawback are ZeroAddress should not be changed
-        #  anymore.
-        # TODO: check thas Smart ASA has been created
+        Assert(is_correct_smart_asa),  # NOTE: usless in ref. impl since 1 ASA : 1 App
+        is_valid_address_length(manager_addr.get()),
+        is_valid_address_length(reserve_addr.get()),
+        is_valid_address_length(freeze_addr.get()),
+        is_valid_address_length(clawback_addr.get()),
+        If(update_freeze_addr).Then(
+            # WARNING: Note that if `current_freeze_addr` has been set to any
+            # other generic string it implies that nobody would be ever able to
+            # act as `freeze_addr` but it is still updatable by `manager_addr`.
+            Assert(current_freeze_addr != Global.zero_address())
+        ),
+        If(update_clawback_addr).Then(
+            # WARNING: Note that if `current_clawback_addr` has been set to any
+            # other generic string it implies that nobody would be ever able to
+            # act as `clawback_addr` but it is still updatable `manager_addr`.
+            Assert(current_clawback_addr != Global.zero_address())
+        ),
         # Smart ASA properties
-        App.globalPut(SMART_ASA_GS["Int"]["total"], total.get()),
+        # NOTE: In ref. impl `total` can not be changed
         App.globalPut(SMART_ASA_GS["Int"]["decimals"], decimals.get()),
-        App.globalPut(SMART_ASA_GS["Int"]["default_frozen"], default_frozen.get()),
+        # NOTE: In ref. impl `default_frozen` can not be changed
         App.globalPut(SMART_ASA_GS["Bytes"]["unit_name"], unit_name.get()),
         App.globalPut(SMART_ASA_GS["Bytes"]["asset_name"], asset_name.get()),
         App.globalPut(SMART_ASA_GS["Bytes"]["url"], url.get()),

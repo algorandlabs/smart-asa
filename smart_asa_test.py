@@ -220,6 +220,90 @@ class TestAssetCreate:
             )
         print(" --- Rejected as expected!")
 
+    def test_invalid_manager_addr(
+        self,
+        _algod_client: algod.AlgodClient,
+        smart_asa_app: AppAccount,
+        creator: Account,
+        smart_asa_contract: Contract,
+    ) -> None:
+
+        print("\n --- Creating Smart ASA with wrong `manager_addr`...")
+        with pytest.raises(Exception):
+            smart_asa_create(
+                _algod_client=_algod_client,
+                smart_asa_app=smart_asa_app,
+                creator=creator,
+                smart_asa_contract=smart_asa_contract,
+                total=100,
+                manager_addr="spam",
+                save_abi_call="/tmp/txn.signed",
+            )
+        print(" --- Rejected as expected!")
+
+    def test_invalid_reserve_addr(
+        self,
+        _algod_client: algod.AlgodClient,
+        smart_asa_app: AppAccount,
+        creator: Account,
+        smart_asa_contract: Contract,
+    ) -> None:
+
+        print("\n --- Creating Smart ASA with wrong `reserve_addr`...")
+        with pytest.raises(Exception):
+            smart_asa_create(
+                _algod_client=_algod_client,
+                smart_asa_app=smart_asa_app,
+                creator=creator,
+                smart_asa_contract=smart_asa_contract,
+                total=100,
+                reserve_addr="spam",
+                save_abi_call="/tmp/txn.signed",
+            )
+        print(" --- Rejected as expected!")
+
+    def test_invalid_freeze_addr(
+        self,
+        _algod_client: algod.AlgodClient,
+        smart_asa_app: AppAccount,
+        creator: Account,
+        smart_asa_contract: Contract,
+    ) -> None:
+
+        print("\n --- Creating Smart ASA with wrong `freeze_addr`...")
+        with pytest.raises(Exception):
+            smart_asa_create(
+                _algod_client=_algod_client,
+                smart_asa_app=smart_asa_app,
+                creator=creator,
+                smart_asa_contract=smart_asa_contract,
+                total=100,
+                freeze_addr="spam",
+                save_abi_call="/tmp/txn.signed",
+            )
+        print(" --- Rejected as expected!")
+
+    def test_invalid_clawback_addr(
+        self,
+        _algod_client: algod.AlgodClient,
+        smart_asa_app: AppAccount,
+        creator: Account,
+        smart_asa_contract: Contract,
+    ) -> None:
+
+        print("\n --- Creating Smart ASA with wrong `clawback_addr`...")
+        with pytest.raises(Exception):
+            smart_asa_create(
+                _algod_client=_algod_client,
+                smart_asa_app=smart_asa_app,
+                creator=creator,
+                smart_asa_contract=smart_asa_contract,
+                total=100,
+                clawback_addr="spam",
+                save_abi_call="/tmp/txn.signed",
+            )
+        print(" --- Rejected as expected!")
+
     def test_happy_path(
         self,
         _algod_client: algod.AlgodClient,
