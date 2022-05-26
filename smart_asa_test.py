@@ -15,6 +15,7 @@ from pyteal import Expr, Router
 from algosdk import algod
 from algosdk.abi import Contract
 from algosdk.error import AlgodHTTPError
+from algosdk.error import ABIEncodingError
 from algosdk.constants import ZERO_ADDRESS
 from algosdk.future import transaction
 
@@ -230,7 +231,7 @@ class TestAssetCreate:
     ) -> None:
         print(get_global_state(_algod_client, smart_asa_app.app_id))
         print("\n --- Creating Smart ASA with wrong `manager_addr`...")
-        with pytest.raises(AlgodHTTPError):
+        with pytest.raises(ABIEncodingError):
             smart_asa_create(
                 _algod_client=_algod_client,
                 smart_asa_app=smart_asa_app,
@@ -251,7 +252,7 @@ class TestAssetCreate:
     ) -> None:
         print(get_global_state(_algod_client, smart_asa_app.app_id))
         print("\n --- Creating Smart ASA with wrong `reserve_addr`...")
-        with pytest.raises(AlgodHTTPError):
+        with pytest.raises(ABIEncodingError):
             smart_asa_create(
                 _algod_client=_algod_client,
                 smart_asa_app=smart_asa_app,
@@ -272,7 +273,7 @@ class TestAssetCreate:
     ) -> None:
         print(get_global_state(_algod_client, smart_asa_app.app_id))
         print("\n --- Creating Smart ASA with wrong `freeze_addr`...")
-        with pytest.raises(AlgodHTTPError):
+        with pytest.raises(ABIEncodingError):
             smart_asa_create(
                 _algod_client=_algod_client,
                 smart_asa_app=smart_asa_app,
@@ -293,7 +294,7 @@ class TestAssetCreate:
     ) -> None:
         print(get_global_state(_algod_client, smart_asa_app.app_id))
         print("\n --- Creating Smart ASA with wrong `clawback_addr`...")
-        with pytest.raises(AlgodHTTPError):
+        with pytest.raises(ABIEncodingError):
             smart_asa_create(
                 _algod_client=_algod_client,
                 smart_asa_app=smart_asa_app,

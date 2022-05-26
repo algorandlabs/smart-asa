@@ -127,40 +127,39 @@ class Account(TransactionSigner):
                 encoded_args.append(arg)
 
         atc = AtomicTransactionComposer()
-        atc.add_method_call(
-            app_id=app,
-            method=method,
-            method_args=encoded_args,
-            sp=self._get_params(fee),
-            sender=self.address,
-            signer=self,
-            on_complete=on_complete,
-        )
-
-        if group_extra_txns is not None:
-            for transaction_with_signer in group_extra_txns:
-                atc.add_transaction(transaction_with_signer)
-
-        if extra_app_call_nop:
-            for i in range(extra_app_call_nop):
-                atc.add_transaction(
-                    TransactionWithSigner(
-                        transaction.ApplicationNoOpTxn(
-                            sender=self.address,
-                            sp=self._get_params(fee),
-                            index=app,
-                            note=bytes(i),
-                        ),
-                        self,
-                    )
-                )
-
-        atc.build_group()
-        atc.gather_signatures()
-        if save_abi_call:
-            transaction.write_to_file(atc.signed_txns, save_abi_call, overwrite=True)
-
         try:
+            atc.add_method_call(
+                app_id=app,
+                method=method,
+                method_args=encoded_args,
+                sp=self._get_params(fee),
+                sender=self.address,
+                signer=self,
+                on_complete=on_complete,
+            )
+
+            if group_extra_txns is not None:
+                for transaction_with_signer in group_extra_txns:
+                    atc.add_transaction(transaction_with_signer)
+
+            if extra_app_call_nop:
+                for i in range(extra_app_call_nop):
+                    atc.add_transaction(
+                        TransactionWithSigner(
+                            transaction.ApplicationNoOpTxn(
+                                sender=self.address,
+                                sp=self._get_params(fee),
+                                index=app,
+                                note=bytes(i),
+                            ),
+                            self,
+                        )
+                    )
+
+            atc.build_group()
+            atc.gather_signatures()
+            if save_abi_call:
+                transaction.write_to_file(atc.signed_txns, save_abi_call, overwrite=True)
             atc_result = atc.execute(self.algod_client, max_wait_rounds)
             logged_result = atc_result.abi_results[0]  # type: ignore
             if logged_result.decode_error:
@@ -170,7 +169,7 @@ class Account(TransactionSigner):
                 return None
             return logged_result.return_value
 
-        except algosdk.error.AlgodHTTPError as err:
+        except (algosdk.error.AlgodHTTPError, algosdk.error.ABIEncodingError) as err:
             drr = transaction.create_dryrun(self.algod_client, atc.signed_txns)
             filename = "/tmp/dryrun.msgp"
             with open(filename, "wb") as f:
