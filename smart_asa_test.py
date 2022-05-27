@@ -8,6 +8,8 @@ __email__ = "<cosimo.bassi@algorand.com>, <stefano.deangelis@algorand.com>"
 import json
 import pprint
 
+from typing import Callable
+
 import pytest
 
 from pyteal import Expr, Router
@@ -15,7 +17,6 @@ from pyteal import Expr, Router
 from algosdk import algod
 from algosdk.abi import Contract
 from algosdk.error import AlgodHTTPError
-from algosdk.error import ABIEncodingError
 from algosdk.constants import ZERO_ADDRESS
 from algosdk.future import transaction
 
@@ -73,22 +74,17 @@ def teal_clear(pyteal_clear: Expr) -> str:
 
 
 @pytest.fixture(scope="session")
-def smart_asa_interface(smart_asa_abi_router: Router) -> dict:
-    _, _, interface = smart_asa_abi_router.build_program()
-    return interface
+def smart_asa_contract(smart_asa_abi_router: Router) -> Contract:
+    _, _, contract = smart_asa_abi_router.build_program()
+    return contract
 
 
-@pytest.fixture(scope="session")
-def smart_asa_contract(smart_asa_interface: dict) -> Contract:
-    return Contract.from_json(json.dumps(smart_asa_interface, indent=4))
-
-
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="class")
 def creator() -> Account:
     return Sandbox.create(funds_amount=INITIAL_FUNDS)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="class")
 def eve() -> Account:
     return Sandbox.create(funds_amount=INITIAL_FUNDS)
 
@@ -127,14 +123,40 @@ def smart_asa_id(
     )
 
 
+@pytest.fixture(scope="function")
+def opted_in_creator(
+    creator: Account, smart_asa_app: AppAccount, smart_asa_id: int
+) -> Account:
+    creator.optin_to_asset(smart_asa_id)
+    creator.optin_to_application(
+        smart_asa_app.app_id,
+        foreign_assets=[smart_asa_id],
+    )
+    return creator
+
+
+@pytest.fixture(scope="function")
+def opted_in_account_factory(smart_asa_app: AppAccount, smart_asa_id: int) -> Callable:
+    def _factory() -> Account:
+        account = Sandbox.create(funds_amount=INITIAL_FUNDS)
+        account.optin_to_asset(smart_asa_id)
+        account.optin_to_application(
+            smart_asa_app.app_id,
+            foreign_assets=[smart_asa_id],
+        )
+        return account
+
+    return _factory
+
+
 def test_compile(
-    pyteal_approval: Expr, pyteal_clear: Expr, smart_asa_interface: dict
+    pyteal_approval: Expr, pyteal_clear: Expr, smart_asa_contract: Contract
 ) -> None:
     # This test simply ensures we can compile the ASC programs
     teal_approval_program = compile_stateful(pyteal_approval)
     teal_clear_program = compile_stateful(pyteal_clear)
 
-    pprint.pprint("\nABI\n" + json.dumps(smart_asa_interface))
+    pprint.pprint("\nABI\n" + json.dumps(smart_asa_contract.dictify()))
 
     print("\nAPPROVAL PROGRAM\n" + teal_approval_program)
     with open("/tmp/approval.teal", "w") as f:
@@ -222,90 +244,6 @@ class TestAssetCreate:
             )
         print(" --- Rejected as expected!")
 
-    def test_invalid_manager_addr(
-        self,
-        _algod_client: algod.AlgodClient,
-        smart_asa_app: AppAccount,
-        creator: Account,
-        smart_asa_contract: Contract,
-    ) -> None:
-        print(get_global_state(_algod_client, smart_asa_app.app_id))
-        print("\n --- Creating Smart ASA with wrong `manager_addr`...")
-        with pytest.raises(ABIEncodingError):
-            smart_asa_create(
-                _algod_client=_algod_client,
-                smart_asa_app=smart_asa_app,
-                creator=creator,
-                smart_asa_contract=smart_asa_contract,
-                total=100,
-                manager_addr="spam",
-                save_abi_call="/tmp/invalid_manager_addr.signed",
-            )
-        print(" --- Rejected as expected!")
-
-    def test_invalid_reserve_addr(
-        self,
-        _algod_client: algod.AlgodClient,
-        smart_asa_app: AppAccount,
-        creator: Account,
-        smart_asa_contract: Contract,
-    ) -> None:
-        print(get_global_state(_algod_client, smart_asa_app.app_id))
-        print("\n --- Creating Smart ASA with wrong `reserve_addr`...")
-        with pytest.raises(ABIEncodingError):
-            smart_asa_create(
-                _algod_client=_algod_client,
-                smart_asa_app=smart_asa_app,
-                creator=creator,
-                smart_asa_contract=smart_asa_contract,
-                total=100,
-                reserve_addr="spam",
-                save_abi_call="/tmp/invalid_reserve_addr.signed",
-            )
-        print(" --- Rejected as expected!")
-
-    def test_invalid_freeze_addr(
-        self,
-        _algod_client: algod.AlgodClient,
-        smart_asa_app: AppAccount,
-        creator: Account,
-        smart_asa_contract: Contract,
-    ) -> None:
-        print(get_global_state(_algod_client, smart_asa_app.app_id))
-        print("\n --- Creating Smart ASA with wrong `freeze_addr`...")
-        with pytest.raises(ABIEncodingError):
-            smart_asa_create(
-                _algod_client=_algod_client,
-                smart_asa_app=smart_asa_app,
-                creator=creator,
-                smart_asa_contract=smart_asa_contract,
-                total=100,
-                freeze_addr="spam",
-                save_abi_call="/tmp/invalid_freeze_addr.signed",
-            )
-        print(" --- Rejected as expected!")
-
-    def test_invalid_clawback_addr(
-        self,
-        _algod_client: algod.AlgodClient,
-        smart_asa_app: AppAccount,
-        creator: Account,
-        smart_asa_contract: Contract,
-    ) -> None:
-        print(get_global_state(_algod_client, smart_asa_app.app_id))
-        print("\n --- Creating Smart ASA with wrong `clawback_addr`...")
-        with pytest.raises(ABIEncodingError):
-            smart_asa_create(
-                _algod_client=_algod_client,
-                smart_asa_app=smart_asa_app,
-                creator=creator,
-                smart_asa_contract=smart_asa_contract,
-                total=100,
-                clawback_addr="spam",
-                save_abi_call="/tmp/invalid_clawback_addr.signed",
-            )
-        print(" --- Rejected as expected!")
-
     def test_happy_path(
         self,
         _algod_client: algod.AlgodClient,
@@ -324,9 +262,34 @@ class TestAssetCreate:
         )
         print(" --- Created Smart ASA ID:", smart_asa_id)
 
+        smart_asa = get_global_state(_algod_client, smart_asa_app.app_id)
+        assert smart_asa[SMART_ASA_GS["smart_asa_id"].byte_str[1:-1]] != 0
+        assert smart_asa[SMART_ASA_GS["total"].byte_str[1:-1]] == 100
+
 
 class TestAssetConfig:
-    def test_is_creator(
+    def test_smart_asa_not_created(
+        self,
+        _algod_client: algod.AlgodClient,
+        smart_asa_app: AppAccount,
+        creator: Account,
+        smart_asa_contract: Contract,
+    ) -> None:
+
+        print("\n --- Configuring unexisting Smart ASA...")
+        with pytest.raises(AlgodHTTPError):
+            smart_asa_config(
+                _algod_client=_algod_client,
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                manager=creator,
+                smart_asa_id=42,
+                config_manager_addr=ZERO_ADDRESS,
+                save_abi_call="/tmp/txn.signed",
+            )
+        print(" --- Rejected as expected!")
+
+    def test_is_manager(
         self,
         _algod_client: algod.AlgodClient,
         smart_asa_app: AppAccount,
@@ -335,14 +298,15 @@ class TestAssetConfig:
         smart_asa_id: int,
     ) -> None:
 
-        print("\n --- Configuring Smart ASA not with App Creator...")
+        print("\n --- Configuring Smart ASA not with Smart ASA Manager...")
         with pytest.raises(AlgodHTTPError):
             smart_asa_config(
                 _algod_client=_algod_client,
-                smart_asa_app=smart_asa_app,
-                creator=eve,
                 smart_asa_contract=smart_asa_contract,
-                manager_addr=ZERO_ADDRESS,
+                smart_asa_app=smart_asa_app,
+                manager=eve,
+                smart_asa_id=smart_asa_id,
+                config_manager_addr=ZERO_ADDRESS,
                 save_abi_call="/tmp/txn.signed",
             )
         print(" --- Rejected as expected!")
@@ -360,11 +324,11 @@ class TestAssetConfig:
         with pytest.raises(AlgodHTTPError):
             smart_asa_config(
                 _algod_client=_algod_client,
-                smart_asa_app=smart_asa_app,
-                creator=creator,
                 smart_asa_contract=smart_asa_contract,
-                manager_addr=ZERO_ADDRESS,
+                smart_asa_app=smart_asa_app,
+                manager=creator,
                 smart_asa_id=42,
+                config_manager_addr=ZERO_ADDRESS,
                 save_abi_call="/tmp/txn.signed",
             )
         print(" --- Rejected as expected!")
@@ -382,56 +346,65 @@ class TestAssetConfig:
         print("\n --- Configuring Smart ASA...")
         configured_smart_asa_id = smart_asa_config(
             _algod_client=_algod_client,
-            smart_asa_app=smart_asa_app,
-            creator=creator,
             smart_asa_contract=smart_asa_contract,
-            total=0,
-            decimals=100,
-            default_frozen=True,
-            unit_name="NEW_TEST_!!!",
-            asset_name="New Test !!!",
-            url="https://new_test.io",
-            metadata_hash="a" * 32,
-            manager_addr=eve,
-            reserve_addr=eve,
-            freeze_addr=eve,
-            clawback_addr=eve,
+            smart_asa_app=smart_asa_app,
+            manager=creator,
+            smart_asa_id=smart_asa_id,
+            config_total=0,
+            config_decimals=100,
+            config_default_frozen=True,
+            config_unit_name="NEW_TEST_!!!",
+            config_asset_name="New Test !!!",
+            config_url="https://new_test.io",
+            config_metadata_hash="a" * 32,
+            config_manager_addr=eve,
+            config_reserve_addr=eve,
+            config_freeze_addr=eve,
+            config_clawback_addr=eve,
         )
         print(" --- Configured Smart ASA ID:", configured_smart_asa_id)
 
         smart_asa = get_global_state(_algod_client, smart_asa_app.app_id)
-        assert smart_asa[SMART_ASA_GS["Int"]["total"].byte_str[1:-1]] == 0
-        assert smart_asa[SMART_ASA_GS["Int"]["decimals"].byte_str[1:-1]] == 100
-        assert smart_asa[SMART_ASA_GS["Int"]["default_frozen"].byte_str[1:-1]] == 1
+        assert smart_asa[SMART_ASA_GS["total"].byte_str[1:-1]] == 100
+        assert smart_asa[SMART_ASA_GS["decimals"].byte_str[1:-1]] == 100
+        assert smart_asa[SMART_ASA_GS["default_frozen"].byte_str[1:-1]] == 0
+        assert smart_asa[SMART_ASA_GS["unit_name"].byte_str[1:-1]] == b"NEW_TEST_!!!"
+        assert smart_asa[SMART_ASA_GS["asset_name"].byte_str[1:-1]] == b"New Test !!!"
+        assert smart_asa[SMART_ASA_GS["url"].byte_str[1:-1]] == b"https://new_test.io"
+        assert smart_asa[SMART_ASA_GS["metadata_hash"].byte_str[1:-1]] == b"a" * 32
         assert (
-            smart_asa[SMART_ASA_GS["Bytes"]["unit_name"].byte_str[1:-1]]
-            == b"NEW_TEST_!!!"
-        )
-        assert (
-            smart_asa[SMART_ASA_GS["Bytes"]["asset_name"].byte_str[1:-1]]
-            == b"New Test !!!"
-        )
-        assert (
-            smart_asa[SMART_ASA_GS["Bytes"]["url"].byte_str[1:-1]]
-            == b"https://new_test.io"
-        )
-        assert (
-            smart_asa[SMART_ASA_GS["Bytes"]["metadata_hash"].byte_str[1:-1]]
-            == b"a" * 32
-        )
-        assert (
-            smart_asa[SMART_ASA_GS["Bytes"]["manager_addr"].byte_str[1:-1]]
+            smart_asa[SMART_ASA_GS["manager_addr"].byte_str[1:-1]]
             == eve.decoded_address
         )
         assert (
-            smart_asa[SMART_ASA_GS["Bytes"]["reserve_addr"].byte_str[1:-1]]
+            smart_asa[SMART_ASA_GS["reserve_addr"].byte_str[1:-1]]
             == eve.decoded_address
         )
         assert (
-            smart_asa[SMART_ASA_GS["Bytes"]["freeze_addr"].byte_str[1:-1]]
-            == eve.decoded_address
+            smart_asa[SMART_ASA_GS["freeze_addr"].byte_str[1:-1]] == eve.decoded_address
         )
         assert (
-            smart_asa[SMART_ASA_GS["Bytes"]["clawback_addr"].byte_str[1:-1]]
+            smart_asa[SMART_ASA_GS["clawback_addr"].byte_str[1:-1]]
             == eve.decoded_address
         )
+
+
+# class TestAssetTransfer:
+#     def test_happy_path_minting(
+#         self,
+#         _algod_client: algod.AlgodClient,
+#         smart_asa_contract: Contract,
+#         smart_asa_app: AppAccount,
+#         smart_asa_id: int,
+#         opted_in_creator: Account,
+#     ):
+#         smart_asa_transfer(
+#             _algod_client=_algod_client,
+#             smart_asa_contract=smart_asa_contract,
+#             smart_asa_app=smart_asa_app,
+#             xfer_asset=smart_asa_id,
+#             asset_amount=100,
+#             caller=opted_in_creator,
+#             asset_receiver=opted_in_creator,
+#             asset_sender=smart_asa_app,
+#         )

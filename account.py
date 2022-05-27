@@ -127,39 +127,39 @@ class Account(TransactionSigner):
                 encoded_args.append(arg)
 
         atc = AtomicTransactionComposer()
-        try:
-            atc.add_method_call(
-                app_id=app,
-                method=method,
-                method_args=encoded_args,
-                sp=self._get_params(fee),
-                sender=self.address,
-                signer=self,
-                on_complete=on_complete,
-            )
+        atc.add_method_call(
+            app_id=app,
+            method=method,
+            method_args=encoded_args,
+            sp=self._get_params(fee),
+            sender=self.address,
+            signer=self,
+            on_complete=on_complete,
+        )
 
-            if group_extra_txns is not None:
-                for transaction_with_signer in group_extra_txns:
-                    atc.add_transaction(transaction_with_signer)
+        if group_extra_txns is not None:
+            for transaction_with_signer in group_extra_txns:
+                atc.add_transaction(transaction_with_signer)
 
-            if extra_app_call_nop:
-                for i in range(extra_app_call_nop):
-                    atc.add_transaction(
-                        TransactionWithSigner(
-                            transaction.ApplicationNoOpTxn(
-                                sender=self.address,
-                                sp=self._get_params(fee),
-                                index=app,
-                                note=bytes(i),
-                            ),
-                            self,
-                        )
+        if extra_app_call_nop:
+            for i in range(extra_app_call_nop):
+                atc.add_transaction(
+                    TransactionWithSigner(
+                        transaction.ApplicationNoOpTxn(
+                            sender=self.address,
+                            sp=self._get_params(fee),
+                            index=app,
+                            note=bytes(i),
+                        ),
+                        self,
                     )
+                )
 
-            atc.build_group()
-            atc.gather_signatures()
-            if save_abi_call:
-                transaction.write_to_file(atc.signed_txns, save_abi_call, overwrite=True)
+        atc.build_group()
+        atc.gather_signatures()
+        if save_abi_call:
+            transaction.write_to_file(atc.signed_txns, save_abi_call, overwrite=True)
+        try:
             atc_result = atc.execute(self.algod_client, max_wait_rounds)
             logged_result = atc_result.abi_results[0]  # type: ignore
             if logged_result.decode_error:
@@ -169,7 +169,7 @@ class Account(TransactionSigner):
                 return None
             return logged_result.return_value
 
-        except (algosdk.error.AlgodHTTPError, algosdk.error.ABIEncodingError) as err:
+        except algosdk.error.AlgodHTTPError as err:
             drr = transaction.create_dryrun(self.algod_client, atc.signed_txns)
             filename = "/tmp/dryrun.msgp"
             with open(filename, "wb") as f:
@@ -208,11 +208,22 @@ class Account(TransactionSigner):
         )
         return self.sign_send_wait(txn)
 
-    def optin_to_application(self, asc_id: int):
+    def optin_to_application(
+        self,
+        asc_id: int,
+        app_args: Any = None,
+        accounts: Any = None,
+        foreign_apps: Any = None,
+        foreign_assets: Any = None,
+    ):
         txn = transaction.ApplicationOptInTxn(
             sender=self.address,
             sp=self._get_params(),
             index=asc_id,
+            app_args=app_args,
+            accounts=accounts,
+            foreign_apps=foreign_apps,
+            foreign_assets=foreign_assets,
         )
         return self.sign_send_wait(txn)
 
