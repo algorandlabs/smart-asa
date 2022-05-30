@@ -672,21 +672,90 @@ class TestAssetTransfer:
         assert sender.asa_balance(smart_asa_id) == sender_balance - amount
         assert receiver.asa_balance(smart_asa_id) == receiver_balance + amount
 
-    def test_clawback_happy_path(self) -> None:
+    def test_clawback_happy_path(
+        self,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        creator: Account,
+        account_with_supply_factory: Callable,
+        smart_asa_id: int,
+    ) -> None:
         # NOTE: here we need a `clawback_addr` different from App `creator`
         # otherwise the test falls in `minting` case.
+        clawback = account_with_supply_factory()
+        revoke_from = account_with_supply_factory()
+        receiver = account_with_supply_factory()
+
+        print("\n --- Configuring Smart ASA...")
+        smart_asa_config(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            manager=creator,
+            smart_asa_id=smart_asa_id,
+            config_clawback_addr=clawback,
+        )
+
+        print("\n --- Clawbacking Smart ASA...")
+        smart_asa_transfer(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            xfer_asset=smart_asa_id,
+            asset_amount=1,
+            caller=clawback,
+            asset_sender=revoke_from,
+            asset_receiver=receiver,
+        )
+
+    def test_wrong_clawback(
+        self,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        creator: Account,
+        account_with_supply_factory: Callable,
+        smart_asa_id: int,
+    ) -> None:
+        clawback = account_with_supply_factory()
+        revoke_from = account_with_supply_factory()
+        receiver = account_with_supply_factory()
+
+        with pytest.raises(AlgodHTTPError):
+            print("\n --- Clawbacking Smart ASA with wrong clawback...")
+            smart_asa_transfer(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                xfer_asset=smart_asa_id,
+                asset_amount=1,
+                caller=clawback,
+                asset_sender=revoke_from,
+                asset_receiver=receiver,
+            )
+        print(" --- Rejected as expected!")
+
+    def test_self_clawback_happy_path(
+        self,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        creator_with_supply: Account,
+        smart_asa_id: int,
+    ) -> None:
+        print("\n --- Self-Clawbacking Smart ASA...")
+        smart_asa_transfer(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            xfer_asset=smart_asa_id,
+            asset_amount=1,
+            caller=creator_with_supply,
+            asset_receiver=creator_with_supply,
+        )
+
+    def test_fail_if_receiver_is_frozen(self) -> None:
+        # TODO: implement once `asset_freeze` is available
         pass
 
-    def test_self_clawback_happy_path(self) -> None:
-        # NOTE: here we need a `clawback_addr` different from App `creator`
-        # otherwise the test falls in `minting` case.
+    def test_fail_if_sender_is_frozen(self) -> None:
+        # TODO: implement once `asset_freeze` is available
         pass
 
-    def test_receiver_is_frozen(self) -> None:
-        pass
-
-    def test_sender_is_frozen(self) -> None:
-        pass
-
-    def test_smart_asa_is_global_frozen(self) -> None:
+    def test_fail_if_smart_asa_is_global_frozen(self) -> None:
+        # TODO: implement once `asset_global_freeze` is available
         pass
