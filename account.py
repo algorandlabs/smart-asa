@@ -268,6 +268,7 @@ class Account(TransactionSigner):
         clear_program: str,
         global_schema=transaction.StateSchema(0, 0),
         local_schema=transaction.StateSchema(0, 0),
+        on_complete=transaction.OnComplete.NoOpOC,
     ) -> "AppAccount":
         approval_program = assembly_program(self.algod_client, approval_program)
         clear_program = assembly_program(self.algod_client, clear_program)
@@ -275,7 +276,7 @@ class Account(TransactionSigner):
         txn = transaction.ApplicationCreateTxn(
             self.address,
             self._get_params(),
-            transaction.OnComplete.NoOpOC,
+            on_complete,
             approval_program,
             clear_program,
             global_schema,
@@ -283,7 +284,9 @@ class Account(TransactionSigner):
         )
 
         transaction_response = self.sign_send_wait(txn)
-        return AppAccount.from_app_id(transaction_response["application-index"])
+        return AppAccount.from_app_id(
+            transaction_response["application-index"], algod_client=self.algod_client
+        )
 
 
 @dataclasses.dataclass(frozen=True)

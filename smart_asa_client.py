@@ -6,7 +6,6 @@ __author__ = "Cosimo Bassi, Stefano De Angelis"
 __email__ = "<cosimo.bassi@algorand.com>, <stefano.deangelis@algorand.com>"
 
 from typing import Optional, Union
-from algosdk import algod
 from algosdk.abi import Contract
 from algosdk.encoding import encode_address
 from algosdk.future.transaction import OnComplete
@@ -16,7 +15,6 @@ from utils import get_global_state, get_method, get_params
 
 
 def smart_asa_create(
-    _algod_client: algod.AlgodClient,
     smart_asa_contract: Contract,
     smart_asa_app: AppAccount,
     creator: Account,
@@ -34,7 +32,7 @@ def smart_asa_create(
     save_abi_call: str = None,
 ) -> int:
 
-    params = get_params(_algod_client)
+    params = get_params(creator.algod_client)
     abi_call_fee = params.fee * 2
 
     return creator.abi_call(
@@ -57,7 +55,6 @@ def smart_asa_create(
 
 
 def smart_asa_optin(
-    _algod_client: algod.AlgodClient,
     smart_asa_contract: Contract,
     smart_asa_app: AppAccount,
     asset_id: int,
@@ -65,7 +62,7 @@ def smart_asa_optin(
     save_abi_call: str = None,
 ) -> None:
 
-    params = get_params(_algod_client)
+    params = get_params(caller.algod_client)
     abi_call_fee = params.fee * 2
 
     caller.abi_call(
@@ -79,7 +76,6 @@ def smart_asa_optin(
 
 
 def smart_asa_config(
-    _algod_client: algod.AlgodClient,
     smart_asa_contract: Contract,
     smart_asa_app: AppAccount,
     manager: Account,
@@ -98,7 +94,7 @@ def smart_asa_config(
     save_abi_call: str = None,
 ) -> int:
 
-    global_state = get_global_state(_algod_client, smart_asa_app.app_id)
+    global_state = get_global_state(manager.algod_client, smart_asa_app.app_id)
 
     if config_total is None:
         config_total = global_state[SMART_ASA_GS["total"].byte_str[1:-1]]
@@ -143,7 +139,7 @@ def smart_asa_config(
             )
         )
 
-    params = get_params(_algod_client)
+    params = get_params(manager.algod_client)
     abi_call_fee = params.fee * 2
 
     manager.abi_call(
@@ -168,7 +164,6 @@ def smart_asa_config(
 
 
 def smart_asa_transfer(
-    _algod_client: algod.AlgodClient,
     smart_asa_contract: Contract,
     smart_asa_app: AppAccount,
     xfer_asset: int,
@@ -179,7 +174,7 @@ def smart_asa_transfer(
     save_abi_call: str = None,
 ) -> None:
 
-    params = get_params(_algod_client)
+    params = get_params(caller.algod_client)
     abi_call_fee = params.fee * 2
 
     caller.abi_call(

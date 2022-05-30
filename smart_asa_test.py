@@ -14,7 +14,6 @@ import pytest
 
 from pyteal import Expr, Router
 
-from algosdk import algod
 from algosdk.abi import Contract
 from algosdk.error import AlgodHTTPError
 from algosdk.constants import ZERO_ADDRESS
@@ -36,6 +35,7 @@ from smart_asa_client import (
     smart_asa_create,
     smart_asa_config,
     smart_asa_optin,
+    smart_asa_transfer,
 )
 
 from utils import (
@@ -44,11 +44,6 @@ from utils import (
 )
 
 INITIAL_FUNDS = 100_000_000
-
-
-@pytest.fixture(scope="session")
-def _algod_client() -> algod.AlgodClient:
-    return Sandbox.algod_client
 
 
 @pytest.fixture(scope="session")
@@ -122,7 +117,6 @@ def smart_asa_id(
     request,
 ) -> int:
     return smart_asa_create(
-        _algod_client=creator.algod_client,
         smart_asa_app=smart_asa_app,
         creator=creator,
         smart_asa_contract=smart_asa_contract,
@@ -140,13 +134,31 @@ def opted_in_creator(
 ) -> Account:
     creator.optin_to_asset(smart_asa_id)
     smart_asa_optin(
-        _algod_client=creator.algod_client,
         smart_asa_contract=smart_asa_contract,
         smart_asa_app=smart_asa_app,
         asset_id=smart_asa_id,
         caller=creator,
     )
     return creator
+
+
+@pytest.fixture(scope="function")
+def creator_with_supply(
+    smart_asa_contract: Contract,
+    smart_asa_app: AppAccount,
+    opted_in_creator: Account,
+    smart_asa_id: int,
+) -> Account:
+    smart_asa_transfer(
+        smart_asa_contract=smart_asa_contract,
+        smart_asa_app=smart_asa_app,
+        xfer_asset=smart_asa_id,
+        asset_amount=50,
+        caller=opted_in_creator,
+        asset_receiver=opted_in_creator,
+        asset_sender=smart_asa_app,
+    )
+    return opted_in_creator
 
 
 @pytest.fixture(scope="function")
@@ -157,11 +169,33 @@ def opted_in_account_factory(
         account = Sandbox.create(funds_amount=INITIAL_FUNDS)
         account.optin_to_asset(smart_asa_id)
         smart_asa_optin(
-            _algod_client=account.algod_client,
             smart_asa_contract=smart_asa_contract,
             smart_asa_app=smart_asa_app,
             asset_id=smart_asa_id,
             caller=account,
+        )
+        return account
+
+    return _factory
+
+
+@pytest.fixture(scope="function")
+def account_with_supply_factory(
+    smart_asa_contract: Contract,
+    smart_asa_app: AppAccount,
+    smart_asa_id: int,
+    creator_with_supply: Account,
+    opted_in_account_factory: Callable,
+) -> Callable:
+    def _factory() -> Account:
+        account = opted_in_account_factory()
+        smart_asa_transfer(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            xfer_asset=smart_asa_id,
+            asset_amount=10,
+            caller=creator_with_supply,
+            asset_receiver=account,
         )
         return account
 
@@ -232,7 +266,6 @@ class TestAssetCreate:
         print("\n --- Creating Smart ASA not with App Creator...")
         with pytest.raises(AlgodHTTPError):
             smart_asa_create(
-                _algod_client=eve.algod_client,
                 smart_asa_app=smart_asa_app,
                 creator=eve,
                 smart_asa_contract=smart_asa_contract,
@@ -252,7 +285,6 @@ class TestAssetCreate:
         print("\n --- Creating Smart ASA multiple times...")
         with pytest.raises(AlgodHTTPError):
             smart_asa_create(
-                _algod_client=creator.algod_client,
                 smart_asa_app=smart_asa_app,
                 creator=creator,
                 smart_asa_contract=smart_asa_contract,
@@ -270,7 +302,6 @@ class TestAssetCreate:
 
         print("\n --- Creating Smart ASA...")
         smart_asa_id = smart_asa_create(
-            _algod_client=creator.algod_client,
             smart_asa_app=smart_asa_app,
             creator=creator,
             smart_asa_contract=smart_asa_contract,
@@ -293,7 +324,6 @@ class TestAssetOptin:
         print("\n --- Opt-In App with no Smart ASA ID...")
         with pytest.raises(AlgodHTTPError):
             smart_asa_optin(
-                _algod_client=creator.algod_client,
                 smart_asa_contract=smart_asa_contract,
                 smart_asa_app=smart_asa_app,
                 asset_id=1,
@@ -313,7 +343,6 @@ class TestAssetOptin:
         print("\n --- Opt-In App with wrong Smart ASA ID...")
         with pytest.raises(AlgodHTTPError):
             smart_asa_optin(
-                _algod_client=creator.algod_client,
                 smart_asa_contract=smart_asa_contract,
                 smart_asa_app=smart_asa_app,
                 asset_id=smart_asa_id + 1,
@@ -333,7 +362,6 @@ class TestAssetOptin:
         print("\n --- Opt-In App without optin to underlying ASA...")
         with pytest.raises(AlgodHTTPError):
             smart_asa_optin(
-                _algod_client=creator.algod_client,
                 smart_asa_contract=smart_asa_contract,
                 smart_asa_app=smart_asa_app,
                 asset_id=smart_asa_id,
@@ -372,7 +400,6 @@ class TestAssetConfig:
         print("\n --- Configuring unexisting Smart ASA...")
         with pytest.raises(AlgodHTTPError):
             smart_asa_config(
-                _algod_client=creator.algod_client,
                 smart_asa_contract=smart_asa_contract,
                 smart_asa_app=smart_asa_app,
                 manager=creator,
@@ -382,18 +409,18 @@ class TestAssetConfig:
             )
         print(" --- Rejected as expected!")
 
-    def test_is_manager(
+    def test_is_not_manager(
         self,
         smart_asa_contract: Contract,
         smart_asa_app: AppAccount,
         eve: Account,
         smart_asa_id: int,
     ) -> None:
-
+        # NOTE: This test ensures also that once `manager_add` is set to
+        # ZERO_ADDR the Smart ASA can no longer be configured.
         print("\n --- Configuring Smart ASA not with Smart ASA Manager...")
         with pytest.raises(AlgodHTTPError):
             smart_asa_config(
-                _algod_client=eve.algod_client,
                 smart_asa_contract=smart_asa_contract,
                 smart_asa_app=smart_asa_app,
                 manager=eve,
@@ -403,7 +430,7 @@ class TestAssetConfig:
             )
         print(" --- Rejected as expected!")
 
-    def test_is_correct_smart_asa(
+    def test_is_not_correct_smart_asa(
         self,
         smart_asa_contract: Contract,
         smart_asa_app: AppAccount,
@@ -414,7 +441,6 @@ class TestAssetConfig:
         print("\n --- Configuring Smart ASA with wrong Asset ID...")
         with pytest.raises(AlgodHTTPError):
             smart_asa_config(
-                _algod_client=creator.algod_client,
                 smart_asa_contract=smart_asa_contract,
                 smart_asa_app=smart_asa_app,
                 manager=creator,
@@ -433,7 +459,6 @@ class TestAssetConfig:
     ) -> None:
         print("\n --- Disabling Smart ASA Freeze and Clawback Addresses...")
         configured_smart_asa_id = smart_asa_config(
-            _algod_client=creator.algod_client,
             smart_asa_contract=smart_asa_contract,
             smart_asa_app=smart_asa_app,
             manager=creator,
@@ -446,7 +471,6 @@ class TestAssetConfig:
         print("\n --- Changing Smart ASA Freeze Address...")
         with pytest.raises(AlgodHTTPError):
             smart_asa_config(
-                _algod_client=creator.algod_client,
                 smart_asa_contract=smart_asa_contract,
                 smart_asa_app=smart_asa_app,
                 manager=creator,
@@ -459,43 +483,11 @@ class TestAssetConfig:
         print("\n --- Changing Smart ASA Clawback Address...")
         with pytest.raises(AlgodHTTPError):
             smart_asa_config(
-                _algod_client=creator.algod_client,
                 smart_asa_contract=smart_asa_contract,
                 smart_asa_app=smart_asa_app,
                 manager=creator,
                 smart_asa_id=smart_asa_id,
                 config_clawback_addr=creator,
-                save_abi_call="/tmp/txn.signed",
-            )
-        print(" --- Rejected as expected!")
-
-    def test_disabled_manager(
-        self,
-        smart_asa_contract: Contract,
-        smart_asa_app: AppAccount,
-        creator: Account,
-        smart_asa_id: int,
-    ) -> None:
-        print("\n --- Disabling Smart ASA Manager Address...")
-        configured_smart_asa_id = smart_asa_config(
-            _algod_client=creator.algod_client,
-            smart_asa_contract=smart_asa_contract,
-            smart_asa_app=smart_asa_app,
-            manager=creator,
-            smart_asa_id=smart_asa_id,
-            config_manager_addr=ZERO_ADDRESS,
-        )
-        print(" --- Configured Smart ASA ID:", configured_smart_asa_id)
-
-        print("\n --- Changing Smart ASA Unit Name...")
-        with pytest.raises(AlgodHTTPError):
-            smart_asa_config(
-                _algod_client=creator.algod_client,
-                smart_asa_contract=smart_asa_contract,
-                smart_asa_app=smart_asa_app,
-                manager=creator,
-                smart_asa_id=smart_asa_id,
-                config_unit_name="Panzerotto",
                 save_abi_call="/tmp/txn.signed",
             )
         print(" --- Rejected as expected!")
@@ -512,7 +504,6 @@ class TestAssetConfig:
 
         print("\n --- Configuring Smart ASA...")
         configured_smart_asa_id = smart_asa_config(
-            _algod_client=creator.algod_client,
             smart_asa_contract=smart_asa_contract,
             smart_asa_app=smart_asa_app,
             manager=creator,
@@ -556,23 +547,146 @@ class TestAssetConfig:
         )
 
 
-# class TestAssetTransfer:
-#     def test_happy_path_minting(
-#         self,
-#         _algod_client: algod.AlgodClient,
-#         smart_asa_contract: Contract,
-#         smart_asa_app: AppAccount,
-#         opted_in_creator: Account,
-#         smart_asa_id: int,
-#     ) -> None:
-#         smart_asa_transfer(
-#             _algod_client=_algod_client,
-#             smart_asa_contract=smart_asa_contract,
-#             smart_asa_app=smart_asa_app,
-#             xfer_asset=smart_asa_id,
-#             asset_amount=100,
-#             caller=opted_in_creator,
-#             asset_receiver=opted_in_creator,
-#             asset_sender=smart_asa_app,
-#             save_abi_call="/tmp/smart_asa_xfer.sig"
-#         )
+class TestAssetTransfer:
+    def test_smart_asa_not_created(
+        self,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        creator: Account,
+    ) -> None:
+
+        print("\n --- Transferring unexisting Smart ASA...")
+        with pytest.raises(AlgodHTTPError):
+            smart_asa_transfer(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                xfer_asset=42,
+                asset_amount=100,
+                caller=creator,
+                asset_receiver=creator,
+                save_abi_call="/tmp/txn.signed",
+            )
+        print(" --- Rejected as expected!")
+
+    def test_is_not_correct_smart_asa(
+        self,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        creator: Account,
+        smart_asa_id: int,
+    ) -> None:
+
+        print("\n --- Transferring Smart ASA with wrong Asset ID...")
+        with pytest.raises(AlgodHTTPError):
+            smart_asa_transfer(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                xfer_asset=42,
+                asset_amount=100,
+                caller=creator,
+                asset_receiver=creator,
+                save_abi_call="/tmp/txn.signed",
+            )
+        print(" --- Rejected as expected!")
+
+    def test_happy_path_minting(
+        self,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        opted_in_creator: Account,
+        smart_asa_id: int,
+    ) -> None:
+        print(
+            "\n --- Pre Minting Smart ASA Reserve:",
+            smart_asa_app.asa_balance(smart_asa_id),
+        )
+        print("\n --- Minting Smart ASA...")
+        smart_asa_transfer(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            xfer_asset=smart_asa_id,
+            asset_amount=100,
+            caller=opted_in_creator,
+            asset_receiver=opted_in_creator,
+            asset_sender=smart_asa_app,
+        )
+        print(
+            "\n --- Post Minting Smart ASA Reserve:",
+            smart_asa_app.asa_balance(smart_asa_id),
+        )
+        assert opted_in_creator.asa_balance(smart_asa_id) == 100
+
+    def test_receiver_not_optedin_to_app(
+        self,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        creator_with_supply: Account,
+        eve: Account,
+        smart_asa_id: int,
+    ) -> None:
+        eve.optin_to_asset(smart_asa_id)
+        print("\n --- Transferring Smart ASA to not opted-in receiver...")
+        with pytest.raises(AlgodHTTPError):
+            smart_asa_transfer(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                xfer_asset=smart_asa_id,
+                asset_amount=100,
+                caller=creator_with_supply,
+                asset_receiver=eve,
+                asset_sender=creator_with_supply,
+            )
+        print(" --- Rejected as expected!")
+
+    @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
+    def test_happy_path_transfer(
+        self,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        account_with_supply_factory: Callable,
+        smart_asa_id: int,
+    ) -> None:
+        sender = account_with_supply_factory()
+        receiver = account_with_supply_factory()
+        sender_balance = sender.asa_balance(smart_asa_id)
+        receiver_balance = receiver.asa_balance(smart_asa_id)
+        amount = 1
+        print("\n --- Sender Balance Pre Transfering:", sender_balance)
+        print("\n --- Receiver Balance Pre Transfering:", receiver_balance)
+        print("\n --- Transferring Smart ASA...")
+        smart_asa_transfer(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            xfer_asset=smart_asa_id,
+            asset_amount=amount,
+            caller=sender,
+            asset_receiver=receiver,
+        )
+        print(
+            "\n --- Sender Balance Post Transfering:", sender.asa_balance(smart_asa_id)
+        )
+        print(
+            "\n --- Receiver Balance Post Transfering:",
+            receiver.asa_balance(smart_asa_id),
+        )
+        assert sender.asa_balance(smart_asa_id) == sender_balance - amount
+        assert receiver.asa_balance(smart_asa_id) == receiver_balance + amount
+
+    def test_clawback_happy_path(self) -> None:
+        # NOTE: here we need a `clawback_addr` different from App `creator`
+        # otherwise the test falls in `minting` case.
+        pass
+
+    def test_self_clawback_happy_path(self) -> None:
+        # NOTE: here we need a `clawback_addr` different from App `creator`
+        # otherwise the test falls in `minting` case.
+        pass
+
+    def test_receiver_is_frozen(self) -> None:
+        pass
+
+    def test_sender_is_frozen(self) -> None:
+        pass
+
+    def test_smart_asa_is_global_frozen(self) -> None:
+        pass

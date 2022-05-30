@@ -9,6 +9,7 @@ __author__ = "Cosimo Bassi, Stefano De Angelis"
 __email__ = "<cosimo.bassi@algorand.com>, <stefano.deangelis@algorand.com>"
 
 from pyteal import (
+    And,
     App,
     Approve,
     Assert,
@@ -387,15 +388,28 @@ def asset_transfer(
     asset_receiver = Txn.accounts[asset_receiver.get()]
     smart_asa_id = App.globalGet(SMART_ASA_GS["smart_asa_id"])
     clawback_addr = App.globalGet(SMART_ASA_GS["clawback_addr"])
-    is_not_clawback = Txn.sender() != clawback_addr
-    is_creator = Txn.sender() == Global.creator_address()
+    is_not_clawback = And(
+        Txn.sender() == asset_sender,
+        Txn.sender() != clawback_addr,
+    )
+    is_minting = And(
+        Txn.sender() == Global.creator_address(),
+        Global.current_application_address() == asset_sender,
+    )
+    is_clawback = Txn.sender() == clawback_addr
     is_correct_smart_asa_id = smart_asa_id == xfer_asset
     receiver_is_optedin = App.optedIn(asset_receiver, Global.current_application_id())
     global_frozen = App.globalGet(SMART_ASA_GS["global_frozen"])
     asset_sender_frozen = App.localGet(asset_sender, SMART_ASA_LS["frozen"])
     asset_receiver_frozen = App.localGet(asset_receiver, SMART_ASA_LS["frozen"])
+    # TODO: can not mint more than `total`. This could be checked by
+    #  inspecting the `reserve_addr` balance OR introducing a new auxiliary
+    #  `circulating_supply` modified just by `mint` or `burn` (in this
+    #  second case we should figure out how to handle amout of ASA returned
+    #  to the Smart ASA App bypassing the `burn` method).
     return Seq(
         # Preconditions
+        Assert(smart_asa_id),
         is_valid_address_bytes_length(asset_sender),
         is_valid_address_bytes_length(asset_receiver),
         Assert(is_correct_smart_asa_id),
@@ -404,20 +418,20 @@ def asset_transfer(
         .Then(
             Seq(
                 # Asset Regular Transfer Preconditions
-                Assert(Txn.sender() == asset_sender),
                 Assert(Not(global_frozen)),
                 Assert(Not(asset_sender_frozen)),
                 Assert(Not(asset_receiver_frozen)),
             )
         )
-        .ElseIf(is_creator)
+        .ElseIf(is_minting)
         .Then(
             # Asset Minting Preconditions
             # NOTE: The minting premission is granted to `creator`, instead of
             # `manager`, because a Smart ASA could be created with no
             # `manager`, resulting in a locked-in Smart ASA.
-            Assert(Global.current_application_address() == asset_sender)
-        ),
+            Assert(Not(global_frozen)),
+        )
+        .Else(Assert(is_clawback)),
         smart_asa_transfer_inner_txn(
             xfer_asset,
             asset_amount.get(),
