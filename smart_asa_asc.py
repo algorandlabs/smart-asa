@@ -29,6 +29,7 @@ from pyteal import (
     Not,
     OnCompleteAction,
     OptimizeOptions,
+    Or,
     Reject,
     Return,
     Router,
@@ -157,7 +158,7 @@ def smart_asa_transfer_inner_txn(
 
 @Subroutine(TealType.none)
 def is_valid_address_bytes_length(address: Expr) -> Expr:
-    # WARNING: Note this check only ensures proper bytes length on `address`,
+    # WARNING: Note this check only ensures proper bytes' length on `address`,
     # but it doesn't ensure that those 32 bytes are a _proper_ Algorand
     # address.
     return Assert(Len(address) == ADDRESS_BYTES_LENGTH)
@@ -167,17 +168,7 @@ def is_valid_address_bytes_length(address: Expr) -> Expr:
 # / --- --- BARE CALLS
 @Subroutine(TealType.none)
 def asset_app_create() -> Expr:
-    return Seq(
-        # Preconditions
-        # Not mandatory - Smart ASA Application self validate its state.
-        Assert(Txn.global_num_uints() == Int(smart_asa_global_state.num_uints)),
-        Assert(
-            Txn.global_num_byte_slices() == Int(smart_asa_global_state.num_byte_slices)
-        ),
-        Assert(Txn.local_num_uints() == Int(smart_asa_local_state.num_uints)),
-        Assert(
-            Txn.local_num_byte_slices() == Int(smart_asa_local_state.num_byte_slices)
-        ),
+    init_global_state = Seq(
         App.globalPut(SMART_ASA_GS["smart_asa_id"], Int(0)),
         App.globalPut(SMART_ASA_GS["total"], Int(0)),
         App.globalPut(SMART_ASA_GS["decimals"], Int(0)),
@@ -197,19 +188,34 @@ def asset_app_create() -> Expr:
         App.globalPut(SMART_ASA_GS["clawback_addr"], Global.zero_address()),
         # Special Smart ASA fields
         App.globalPut(SMART_ASA_GS["global_frozen"], Int(0)),
+    )
+    return Seq(
+        # Preconditions
+        # Not mandatory - Smart ASA Application self validate its state.
+        Assert(Txn.global_num_uints() == Int(smart_asa_global_state.num_uints)),
+        Assert(
+            Txn.global_num_byte_slices() == Int(smart_asa_global_state.num_byte_slices)
+        ),
+        Assert(Txn.local_num_uints() == Int(smart_asa_local_state.num_uints)),
+        Assert(
+            Txn.local_num_byte_slices() == Int(smart_asa_local_state.num_byte_slices)
+        ),
+        init_global_state,
         Approve(),
     )
 
 
 @Subroutine(TealType.none)
 def on_closeout() -> Expr:
-    # TODO: clawback all the account balance into the Smart ASA App
+    # TODO: clawback all the account balance into the Smart ASA App, or
+    #  mandates that `on_closeout` is a Group with `asa_close_to`.
     return Reject()
 
 
 @Subroutine(TealType.none)
 def on_clear_state() -> Expr:
-    # TODO: clawback all the account balance into the Smart ASA App
+    # TODO: clawback all the account balance into the Smart ASA App, or
+    #  mandates that `on_closeout` is a Group with `asa_close_to`.
     return Reject()
 
 
@@ -235,11 +241,14 @@ def asset_app_optin(asset_id: abi.Asset) -> Expr:
     # units of the underlying ASA. This prevents malicious users to circumvent
     # the `default_frozen` status by clearing their Local State. Note that this
     # could be avoided by the use of Boxes once available.
+    asset_id = Txn.assets[asset_id.get()]
     smart_asa_id = App.globalGet(SMART_ASA_GS["smart_asa_id"])
-    is_correct_smart_asa_id = smart_asa_id == asset_id.get()
+    is_correct_smart_asa_id = smart_asa_id == asset_id
     default_frozen = App.globalGet(SMART_ASA_GS["default_frozen"])
-    freeze_account = App.localPut(Txn.sender(), SMART_ASA_GS["default_frozen"], Int(1))
-    account_balance = AssetHolding().balance(Txn.sender(), asset_id.get())
+    init_local_state = App.localPut(Txn.sender(), SMART_ASA_LS["frozen"], Int(0))
+    freeze_account = App.localPut(Txn.sender(), SMART_ASA_LS["frozen"], Int(1))
+    account_balance = AssetHolding().balance(Txn.sender(), asset_id)
+    optin_to_underlying_asa = account_balance.hasValue()
     # TODO: Underlying ASA opt-in and Smart ASA App opt-in could be atomic
     return Seq(
         # Preconditions
@@ -248,14 +257,15 @@ def asset_app_optin(asset_id: abi.Asset) -> Expr:
         account_balance,
         # NOTE: Ref. imlp requires opt-in underlaying ASA to opt-in Smart ASA
         # App.
-        Assert(account_balance.hasValue()),
-        If(default_frozen, freeze_account),
-        If(account_balance.value() > Int(0), freeze_account),
+        Assert(optin_to_underlying_asa),
+        init_local_state,
+        If(Or(default_frozen, account_balance.value() > Int(0)), freeze_account),
+        Approve(),
     )
 
 
 # FIXME: in future release of ABI
-smart_asa_abi.method(asset_app_optin, opt_in=CallConfig.ALL)
+smart_asa_abi.method(asset_app_optin, no_op=CallConfig.NEVER, opt_in=CallConfig.ALL)
 
 
 @smart_asa_abi.method
@@ -321,13 +331,14 @@ def asset_config(
     clawback_addr: abi.Address,
 ) -> Expr:
 
+    config_asset = Txn.assets[config_asset.get()]
     smart_asa_id = App.globalGet(SMART_ASA_GS["smart_asa_id"])
     current_manager_addr = App.globalGet(SMART_ASA_GS["manager_addr"])
     current_freeze_addr = App.globalGet(SMART_ASA_GS["freeze_addr"])
     current_clawback_addr = App.globalGet(SMART_ASA_GS["clawback_addr"])
 
     is_manager = Txn.sender() == current_manager_addr
-    is_correct_smart_asa_id = smart_asa_id == config_asset.get()
+    is_correct_smart_asa_id = smart_asa_id == config_asset
 
     update_freeze_addr = current_freeze_addr != freeze_addr.get()
     update_clawback_addr = current_clawback_addr != clawback_addr.get()
@@ -371,31 +382,29 @@ def asset_transfer(
     asset_sender: abi.Account,
     asset_receiver: abi.Account,
 ) -> Expr:
-    # TODO: Consider adding a special case for miniting
-    # TODO: Ref. implementation could have an `asset_mint` method
-    #   which can put up to `total` units of Smart ASA in circulation.
+    xfer_asset = Txn.assets[xfer_asset.get()]
+    asset_sender = Txn.accounts[asset_sender.get()]
+    asset_receiver = Txn.accounts[asset_receiver.get()]
     smart_asa_id = App.globalGet(SMART_ASA_GS["smart_asa_id"])
     clawback_addr = App.globalGet(SMART_ASA_GS["clawback_addr"])
     is_not_clawback = Txn.sender() != clawback_addr
     is_creator = Txn.sender() == Global.creator_address()
-    is_correct_smart_asa_id = smart_asa_id == xfer_asset.get()
-    receiver_is_optedin = App.optedIn(
-        asset_receiver.get(), Global.current_application_id()
-    )
+    is_correct_smart_asa_id = smart_asa_id == xfer_asset
+    receiver_is_optedin = App.optedIn(asset_receiver, Global.current_application_id())
     global_frozen = App.globalGet(SMART_ASA_GS["global_frozen"])
-    asset_sender_frozen = App.localGet(asset_sender.get(), SMART_ASA_LS["frozen"])
-    asset_receiver_frozen = App.localGet(asset_receiver.get(), SMART_ASA_LS["frozen"])
+    asset_sender_frozen = App.localGet(asset_sender, SMART_ASA_LS["frozen"])
+    asset_receiver_frozen = App.localGet(asset_receiver, SMART_ASA_LS["frozen"])
     return Seq(
         # Preconditions
-        is_valid_address_bytes_length(asset_sender.get()),
-        is_valid_address_bytes_length(asset_receiver.get()),
+        is_valid_address_bytes_length(asset_sender),
+        is_valid_address_bytes_length(asset_receiver),
         Assert(is_correct_smart_asa_id),
         Assert(receiver_is_optedin),  # NOTE: if Smart ASA requires Local State
         If(is_not_clawback)
         .Then(
             Seq(
                 # Asset Regular Transfer Preconditions
-                Assert(Txn.sender() == Txn.accounts[asset_sender.get()]),
+                Assert(Txn.sender() == asset_sender),
                 Assert(Not(global_frozen)),
                 Assert(Not(asset_sender_frozen)),
                 Assert(Not(asset_receiver_frozen)),
@@ -407,15 +416,13 @@ def asset_transfer(
             # NOTE: The minting premission is granted to `creator`, instead of
             # `manager`, because a Smart ASA could be created with no
             # `manager`, resulting in a locked-in Smart ASA.
-            Assert(
-                Global.current_application_address() == Txn.accounts[asset_sender.get()]
-            )
+            Assert(Global.current_application_address() == asset_sender)
         ),
         smart_asa_transfer_inner_txn(
-            smart_asa_id,
+            xfer_asset,
             asset_amount.get(),
-            Txn.accounts[asset_sender.get()],
-            Txn.accounts[asset_receiver.get()],
+            asset_sender,
+            asset_receiver,
         ),
     )
 

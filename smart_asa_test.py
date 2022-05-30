@@ -25,6 +25,7 @@ from account import Account, AppAccount
 
 from smart_asa_asc import (
     SMART_ASA_GS,
+    SMART_ASA_LS,
     smart_asa_abi,
     compile_stateful,
     smart_asa_local_state,
@@ -34,11 +35,15 @@ from smart_asa_asc import (
 from smart_asa_client import (
     smart_asa_create,
     smart_asa_config,
+    smart_asa_optin,
 )
 
-from utils import get_global_state
+from utils import (
+    get_global_state,
+    get_local_state,
+)
 
-INITIAL_FUNDS = 10_000_000
+INITIAL_FUNDS = 100_000_000
 
 
 @pytest.fixture(scope="session")
@@ -91,7 +96,6 @@ def eve() -> Account:
 
 @pytest.fixture(scope="function")
 def smart_asa_app(
-    _algod_client: algod.AlgodClient,
     teal_approval: str,
     teal_clear: str,
     creator: Account,
@@ -106,43 +110,58 @@ def smart_asa_app(
     return smart_asa_asc_account
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(
+    scope="function",
+    params=[False, True],
+    ids=["Not Frozen Smart ASA", "Default Frozen Smart ASA"],
+)
 def smart_asa_id(
-    _algod_client: algod.AlgodClient,
     smart_asa_app: AppAccount,
     creator: Account,
     smart_asa_contract: Contract,
+    request,
 ) -> int:
     return smart_asa_create(
-        _algod_client=_algod_client,
+        _algod_client=creator.algod_client,
         smart_asa_app=smart_asa_app,
         creator=creator,
         smart_asa_contract=smart_asa_contract,
         total=100,
-        save_abi_call="/tmp/txn.signed",
+        default_frozen=request.param,
     )
 
 
 @pytest.fixture(scope="function")
 def opted_in_creator(
-    creator: Account, smart_asa_app: AppAccount, smart_asa_id: int
+    creator: Account,
+    smart_asa_app: AppAccount,
+    smart_asa_contract: Contract,
+    smart_asa_id: int,
 ) -> Account:
     creator.optin_to_asset(smart_asa_id)
-    creator.optin_to_application(
-        smart_asa_app.app_id,
-        foreign_assets=[smart_asa_id],
+    smart_asa_optin(
+        _algod_client=creator.algod_client,
+        smart_asa_contract=smart_asa_contract,
+        smart_asa_app=smart_asa_app,
+        asset_id=smart_asa_id,
+        caller=creator,
     )
     return creator
 
 
 @pytest.fixture(scope="function")
-def opted_in_account_factory(smart_asa_app: AppAccount, smart_asa_id: int) -> Callable:
+def opted_in_account_factory(
+    smart_asa_app: AppAccount, smart_asa_contract: Contract, smart_asa_id: int
+) -> Callable:
     def _factory() -> Account:
         account = Sandbox.create(funds_amount=INITIAL_FUNDS)
         account.optin_to_asset(smart_asa_id)
-        account.optin_to_application(
-            smart_asa_app.app_id,
-            foreign_assets=[smart_asa_id],
+        smart_asa_optin(
+            _algod_client=account.algod_client,
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            asset_id=smart_asa_id,
+            caller=account,
         )
         return account
 
@@ -205,7 +224,6 @@ class TestAppCreate:
 class TestAssetCreate:
     def test_is_not_creator(
         self,
-        _algod_client: algod.AlgodClient,
         smart_asa_app: AppAccount,
         eve: Account,
         smart_asa_contract: Contract,
@@ -214,7 +232,7 @@ class TestAssetCreate:
         print("\n --- Creating Smart ASA not with App Creator...")
         with pytest.raises(AlgodHTTPError):
             smart_asa_create(
-                _algod_client=_algod_client,
+                _algod_client=eve.algod_client,
                 smart_asa_app=smart_asa_app,
                 creator=eve,
                 smart_asa_contract=smart_asa_contract,
@@ -225,7 +243,6 @@ class TestAssetCreate:
 
     def test_smart_asa_already_created(
         self,
-        _algod_client: algod.AlgodClient,
         smart_asa_app: AppAccount,
         creator: Account,
         smart_asa_contract: Contract,
@@ -235,7 +252,7 @@ class TestAssetCreate:
         print("\n --- Creating Smart ASA multiple times...")
         with pytest.raises(AlgodHTTPError):
             smart_asa_create(
-                _algod_client=_algod_client,
+                _algod_client=creator.algod_client,
                 smart_asa_app=smart_asa_app,
                 creator=creator,
                 smart_asa_contract=smart_asa_contract,
@@ -246,7 +263,6 @@ class TestAssetCreate:
 
     def test_happy_path(
         self,
-        _algod_client: algod.AlgodClient,
         smart_asa_app: AppAccount,
         creator: Account,
         smart_asa_contract: Contract,
@@ -254,7 +270,7 @@ class TestAssetCreate:
 
         print("\n --- Creating Smart ASA...")
         smart_asa_id = smart_asa_create(
-            _algod_client=_algod_client,
+            _algod_client=creator.algod_client,
             smart_asa_app=smart_asa_app,
             creator=creator,
             smart_asa_contract=smart_asa_contract,
@@ -262,15 +278,92 @@ class TestAssetCreate:
         )
         print(" --- Created Smart ASA ID:", smart_asa_id)
 
-        smart_asa = get_global_state(_algod_client, smart_asa_app.app_id)
+        smart_asa = get_global_state(creator.algod_client, smart_asa_app.app_id)
         assert smart_asa[SMART_ASA_GS["smart_asa_id"].byte_str[1:-1]] != 0
         assert smart_asa[SMART_ASA_GS["total"].byte_str[1:-1]] == 100
+
+
+class TestAssetOptin:
+    def test_smart_asa_not_created(
+        self,
+        smart_asa_app: AppAccount,
+        creator: Account,
+        smart_asa_contract: Contract,
+    ) -> None:
+        print("\n --- Opt-In App with no Smart ASA ID...")
+        with pytest.raises(AlgodHTTPError):
+            smart_asa_optin(
+                _algod_client=creator.algod_client,
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                asset_id=1,
+                caller=creator,
+            )
+        print(" --- Rejected as expected!")
+
+    @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
+    def test_wrong_smart_asa_id(
+        self,
+        smart_asa_app: AppAccount,
+        smart_asa_contract: Contract,
+        creator: Account,
+        smart_asa_id: int,
+    ) -> None:
+        creator.optin_to_asset(smart_asa_id)
+        print("\n --- Opt-In App with wrong Smart ASA ID...")
+        with pytest.raises(AlgodHTTPError):
+            smart_asa_optin(
+                _algod_client=creator.algod_client,
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                asset_id=smart_asa_id + 1,
+                caller=creator,
+            )
+        print(" --- Rejected as expected!")
+
+    @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
+    def test_no_optin_to_underlying_asa(
+        self,
+        smart_asa_app: AppAccount,
+        smart_asa_contract: Contract,
+        creator: Account,
+        smart_asa_id: int,
+    ) -> None:
+
+        print("\n --- Opt-In App without optin to underlying ASA...")
+        with pytest.raises(AlgodHTTPError):
+            smart_asa_optin(
+                _algod_client=creator.algod_client,
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                asset_id=smart_asa_id,
+                caller=creator,
+            )
+        print(" --- Rejected as expected!")
+
+    def test_happy_path(
+        self,
+        smart_asa_app: AppAccount,
+        opted_in_creator: Account,
+    ) -> None:
+        smart_asa = get_global_state(
+            algod_client=opted_in_creator.algod_client,
+            asc_idx=smart_asa_app.app_id,
+        )
+        local_state = get_local_state(
+            algod_client=opted_in_creator.algod_client,
+            account_address=opted_in_creator.address,
+            asc_idx=smart_asa_app.app_id,
+        )
+        if smart_asa[SMART_ASA_GS["default_frozen"].byte_str[1:-1]]:
+            assert local_state[SMART_ASA_LS["frozen"].byte_str[1:-1]]
+        else:
+            assert not local_state[SMART_ASA_LS["frozen"].byte_str[1:-1]]
 
 
 class TestAssetConfig:
     def test_smart_asa_not_created(
         self,
-        _algod_client: algod.AlgodClient,
         smart_asa_app: AppAccount,
         creator: Account,
         smart_asa_contract: Contract,
@@ -279,7 +372,7 @@ class TestAssetConfig:
         print("\n --- Configuring unexisting Smart ASA...")
         with pytest.raises(AlgodHTTPError):
             smart_asa_config(
-                _algod_client=_algod_client,
+                _algod_client=creator.algod_client,
                 smart_asa_contract=smart_asa_contract,
                 smart_asa_app=smart_asa_app,
                 manager=creator,
@@ -291,7 +384,6 @@ class TestAssetConfig:
 
     def test_is_manager(
         self,
-        _algod_client: algod.AlgodClient,
         smart_asa_app: AppAccount,
         eve: Account,
         smart_asa_contract: Contract,
@@ -301,7 +393,7 @@ class TestAssetConfig:
         print("\n --- Configuring Smart ASA not with Smart ASA Manager...")
         with pytest.raises(AlgodHTTPError):
             smart_asa_config(
-                _algod_client=_algod_client,
+                _algod_client=eve.algod_client,
                 smart_asa_contract=smart_asa_contract,
                 smart_asa_app=smart_asa_app,
                 manager=eve,
@@ -313,7 +405,6 @@ class TestAssetConfig:
 
     def test_is_correct_smart_asa(
         self,
-        _algod_client: algod.AlgodClient,
         smart_asa_app: AppAccount,
         creator: Account,
         smart_asa_contract: Contract,
@@ -323,7 +414,7 @@ class TestAssetConfig:
         print("\n --- Configuring Smart ASA with wrong Asset ID...")
         with pytest.raises(AlgodHTTPError):
             smart_asa_config(
-                _algod_client=_algod_client,
+                _algod_client=creator.algod_client,
                 smart_asa_contract=smart_asa_contract,
                 smart_asa_app=smart_asa_app,
                 manager=creator,
@@ -333,9 +424,12 @@ class TestAssetConfig:
             )
         print(" --- Rejected as expected!")
 
+    # TODO: You can not reconfigure `frozen` or `clawback` if disabled
+    # TODO: You can not reconfigure if 'manager' is disabled
+
+    @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
     def test_happy_path(
         self,
-        _algod_client: algod.AlgodClient,
         creator: Account,
         eve: Account,
         smart_asa_contract: Contract,
@@ -345,7 +439,7 @@ class TestAssetConfig:
 
         print("\n --- Configuring Smart ASA...")
         configured_smart_asa_id = smart_asa_config(
-            _algod_client=_algod_client,
+            _algod_client=creator.algod_client,
             smart_asa_contract=smart_asa_contract,
             smart_asa_app=smart_asa_app,
             manager=creator,
@@ -364,7 +458,7 @@ class TestAssetConfig:
         )
         print(" --- Configured Smart ASA ID:", configured_smart_asa_id)
 
-        smart_asa = get_global_state(_algod_client, smart_asa_app.app_id)
+        smart_asa = get_global_state(creator.algod_client, smart_asa_app.app_id)
         assert smart_asa[SMART_ASA_GS["total"].byte_str[1:-1]] == 100
         assert smart_asa[SMART_ASA_GS["decimals"].byte_str[1:-1]] == 100
         assert smart_asa[SMART_ASA_GS["default_frozen"].byte_str[1:-1]] == 0
@@ -407,4 +501,5 @@ class TestAssetConfig:
 #             caller=opted_in_creator,
 #             asset_receiver=opted_in_creator,
 #             asset_sender=smart_asa_app,
+#             save_abi_call="/tmp/smart_asa_xfer.sig"
 #         )

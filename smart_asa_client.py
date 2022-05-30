@@ -9,6 +9,7 @@ from typing import Optional, Union
 from algosdk import algod
 from algosdk.abi import Contract
 from algosdk.encoding import encode_address
+from algosdk.future.transaction import OnComplete
 from account import Account, AppAccount
 from smart_asa_asc import SMART_ASA_GS
 from utils import get_global_state, get_method, get_params
@@ -70,6 +71,7 @@ def smart_asa_optin(
     caller.abi_call(
         get_method(smart_asa_contract, "asset_app_optin"),
         asset_id,
+        on_complete=OnComplete.OptInOC,
         app=smart_asa_app,
         fee=abi_call_fee,
         save_abi_call=save_abi_call,
