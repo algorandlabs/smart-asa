@@ -264,7 +264,7 @@ def asset_app_optin(asset_id: abi.Asset) -> Expr:
     )
 
 
-# FIXME: in future release of ABI
+# FIXME: as decorator in future release of ABI
 smart_asa_abi.method(asset_app_optin, no_op=CallConfig.NEVER, opt_in=CallConfig.ALL)
 
 
