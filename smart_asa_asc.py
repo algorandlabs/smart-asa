@@ -100,7 +100,7 @@ smart_asa_global_state = StateSchema(
 # NOTE: Local State is needed only if the Smart ASA has `account_frozen`.
 # Local State is not needed in case Smart ASA has just "global" `asset_freeze`.
 SMART_ASA_LOCAL_INTS = {
-    "smart_asa_id": Bytes("frozen"),
+    "smart_asa_id": Bytes("smart_asa_id"),
     "frozen": Bytes("frozen"),
 }
 
@@ -458,7 +458,7 @@ def asset_transfer(
                 Assert(Not(asset_frozen)),
                 Assert(Not(asset_sender_frozen)),
                 Assert(Not(asset_receiver_frozen)),
-                # FIXME: Assert(is_current_smart_asa_id),
+                Assert(is_current_smart_asa_id),
             )
         )
         .ElseIf(is_minting)
@@ -478,7 +478,7 @@ def asset_transfer(
         .Else(
             Seq(
                 Assert(is_clawback),
-                # FIXME: Assert(is_current_smart_asa_id),
+                Assert(is_current_smart_asa_id),
             )
         ),
         smart_asa_transfer_inner_txn(

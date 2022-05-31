@@ -676,6 +676,7 @@ class TestAssetTransfer:
             asset_amount=amount,
             caller=sender,
             asset_receiver=receiver,
+            save_abi_call='/tmp/debugme.sig'
         )
         print(
             "\n --- Sender Balance Post Transfering:", sender.asa_balance(smart_asa_id)
