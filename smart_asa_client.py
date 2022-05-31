@@ -44,17 +44,17 @@ def smart_asa_create(
     smart_asa_app: AppAccount,
     creator: Account,
     total: int,
-    decimals: int = 0,
-    default_frozen: bool = False,
-    unit_name: str = "",
-    asset_name: str = "",
-    url: str = "",
-    metadata_hash: str = "",
+    decimals: Optional[int] = None,
+    default_frozen: Optional[bool] = None,
+    unit_name: Optional[str] = None,
+    asset_name: Optional[str] = None,
+    url: Optional[str] = None,
+    metadata_hash: Optional[str] = None,
     manager_addr: Optional[Union[str, Account]] = None,
     reserve_addr: Optional[Union[str, Account]] = None,
     freeze_addr: Optional[Union[str, Account]] = None,
     clawback_addr: Optional[Union[str, Account]] = None,
-    save_abi_call: str = None,
+    save_abi_call: Optional[str] = None,
 ) -> int:
 
     params = get_params(creator.algod_client)
@@ -63,12 +63,12 @@ def smart_asa_create(
     return creator.abi_call(
         get_method(smart_asa_contract, "asset_create"),
         total,
-        decimals,
-        default_frozen,
-        unit_name,
-        asset_name,
-        url,
-        metadata_hash,
+        decimals if decimals is not None else 0,
+        default_frozen if default_frozen is not None else False,
+        unit_name if unit_name is not None else "",
+        asset_name if asset_name is not None else "",
+        url if url is not None else "",
+        metadata_hash if metadata_hash is not None else "",
         manager_addr if manager_addr is not None else creator,
         reserve_addr if reserve_addr is not None else creator,
         freeze_addr if freeze_addr is not None else creator,
@@ -84,7 +84,7 @@ def smart_asa_optin(
     smart_asa_app: AppAccount,
     asset_id: int,
     caller: Account,
-    save_abi_call: str = None,
+    save_abi_call: Optional[str] = None,
 ) -> None:
 
     params = get_params(caller.algod_client)
@@ -105,18 +105,18 @@ def smart_asa_config(
     smart_asa_app: AppAccount,
     manager: Account,
     smart_asa_id: int,
-    config_total: int = None,
-    config_decimals: int = None,
-    config_default_frozen: bool = None,
-    config_unit_name: str = None,
-    config_asset_name: str = None,
-    config_url: str = None,
-    config_metadata_hash: str = None,
-    config_manager_addr: Optional[Account] = None,
-    config_reserve_addr: Optional[Account] = None,
-    config_freeze_addr: Optional[Account] = None,
-    config_clawback_addr: Optional[Account] = None,
-    save_abi_call: str = None,
+    config_total: Optional[int] = None,
+    config_decimals: Optional[int] = None,
+    config_default_frozen: Optional[bool] = None,
+    config_unit_name: Optional[str] = None,
+    config_asset_name: Optional[str] = None,
+    config_url: Optional[str] = None,
+    config_metadata_hash: Optional[str] = None,
+    config_manager_addr: Optional[Union[str, Account]] = None,
+    config_reserve_addr: Optional[Union[str, Account]] = None,
+    config_freeze_addr: Optional[Union[str, Account]] = None,
+    config_clawback_addr: Optional[Union[str, Account]] = None,
+    save_abi_call: Optional[str] = None,
 ) -> int:
 
     s_asa = get_smart_asa_params(manager.algod_client, smart_asa_id)
@@ -166,7 +166,7 @@ def smart_asa_transfer(
     caller: Account,
     asset_receiver: Account,
     asset_sender: Optional[Account] = None,
-    save_abi_call: str = None,
+    save_abi_call: Optional[str] = None,
 ) -> None:
 
     params = get_params(caller.algod_client)
@@ -190,7 +190,7 @@ def smart_asa_freeze(
     freezer: Account,
     freeze_asset: int,
     asset_frozen: bool,
-    save_abi_call: str = None,
+    save_abi_call: Optional[str] = None,
 ) -> None:
 
     params = get_params(freezer.algod_client)
@@ -213,7 +213,7 @@ def smart_asa_account_freeze(
     freeze_asset: int,
     target_account: Account,
     account_frozen: bool,
-    save_abi_call: str = None,
+    save_abi_call: Optional[str] = None,
 ) -> None:
 
     params = get_params(freezer.algod_client)
@@ -235,7 +235,7 @@ def smart_asa_destroy(
     smart_asa_app: AppAccount,
     manager: Account,
     destroy_asset: int,
-    save_abi_call: str = None,
+    save_abi_call: Optional[str] = None,
 ) -> None:
 
     params = get_params(manager.algod_client)

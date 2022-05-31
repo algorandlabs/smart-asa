@@ -34,7 +34,19 @@ import sys
 from docopt import docopt
 
 from sandbox import Sandbox
-from smart_asa_client import get_smart_asa_params
+
+# TODO: should be imported just in _client
+from smart_asa_asc import (
+    smart_asa_abi,
+    smart_asa_global_state,
+    smart_asa_local_state,
+    compile_stateful,
+)
+
+from smart_asa_client import (
+    get_smart_asa_params,
+    smart_asa_create,
+)
 
 
 def smart_asa_info(smart_asa_id: int) -> None:
@@ -60,6 +72,16 @@ def smart_asa_info(smart_asa_id: int) -> None:
     )
 
 
+def args_types(args: dict) -> dict:
+    if args["<total>"] is not None:
+        args["<total>"] = int(args["<total>"])
+
+    if args["--decimals"] is not None:
+        args["--decimals"] = int(args["--decimals"])
+
+    return args
+
+
 def smart_asa_cli():
     if len(sys.argv) == 1:
         # Display help if no arguments, see:
@@ -67,9 +89,46 @@ def smart_asa_cli():
         sys.argv.append("--help")
 
     args = docopt(__doc__)
+    args = args_types(args)
 
     if args["info"]:
         smart_asa_info(int(args["<asset-id>"]))
+
+    approval, clear, contract = smart_asa_abi.build_program()
+
+    if args["create"]:
+        creator = Sandbox.from_public_key(args["<creator>"])
+
+        print("\n --- Creating Smart ASA App...")
+        smart_asa_app = creator.create_asc(
+            approval_program=compile_stateful(approval),
+            clear_program=compile_stateful(clear),
+            global_schema=smart_asa_global_state,
+            local_schema=smart_asa_local_state,
+        )
+        print(" --- Smart ASA App ID:", smart_asa_app.app_id)
+
+        print("\n --- Funding Smart ASA App with 1 ALGO...")
+        creator.pay(receiver=smart_asa_app, amount=1_000_000)
+
+        print("\n --- Creating Smart ASA...")
+        smart_asa_id = smart_asa_create(
+            smart_asa_contract=contract,
+            smart_asa_app=smart_asa_app,
+            creator=creator,
+            total=args["<total>"],
+            decimals=args["--decimals"],
+            default_frozen=args["--default-frozen"],
+            asset_name=args["--name"],
+            unit_name=args["--unit-name"],
+            url=args["--url"],
+            metadata_hash=args["--metadata-hash"],
+            manager_addr=args["--manager"],
+            reserve_addr=args["--reserve"],
+            freeze_addr=args["--freeze"],
+            clawback_addr=args["--clawback"],
+        )
+        return print(" --- Created Smart ASA with ID:", smart_asa_id)
 
 
 if __name__ == "__main__":

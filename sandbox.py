@@ -45,6 +45,15 @@ class Sandbox:
         raise KeyError("Could not find sandbox faucet")
 
     @classmethod
+    def from_public_key(cls, account: str):
+        default_wallet_name = cls.kmd_client.list_wallets()[0]["name"]
+        # Sandbox's wallet has no password
+        wallet = Wallet(default_wallet_name, "", cls.kmd_client)
+        return Account(
+            account, wallet.export_key(account), algod_client=cls.algod_client
+        )
+
+    @classmethod
     def create(cls, funds_amount: int) -> Account:
         new_account = Account.create(algod_client=cls.algod_client)
         cls.faucet().pay(new_account, funds_amount)

@@ -458,7 +458,7 @@ def asset_transfer(
                 Assert(Not(asset_frozen)),
                 Assert(Not(asset_sender_frozen)),
                 Assert(Not(asset_receiver_frozen)),
-                Assert(is_current_smart_asa_id),
+                # FIXME: Assert(is_current_smart_asa_id),
             )
         )
         .ElseIf(is_minting)
@@ -478,7 +478,7 @@ def asset_transfer(
         .Else(
             Seq(
                 Assert(is_clawback),
-                Assert(is_current_smart_asa_id),
+                # FIXME: Assert(is_current_smart_asa_id),
             )
         ),
         smart_asa_transfer_inner_txn(
