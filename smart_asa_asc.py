@@ -241,13 +241,6 @@ def asset_app_create() -> Expr:
 
 
 @Subroutine(TealType.none)
-def on_closeout() -> Expr:
-    # TODO: clawback all the account balance into the Smart ASA App, or
-    #  mandates that `on_closeout` is a Group with `asa_close_to`.
-    return Reject()
-
-
-@Subroutine(TealType.none)
 def on_clear_state() -> Expr:
     # TODO: clawback all the account balance into the Smart ASA App, or
     #  mandates that `on_closeout` is a Group with `asa_close_to`.
@@ -265,7 +258,6 @@ smart_asa_abi = Router(
         # controlling Smart Contract is not deletable.
         delete_application=OnCompleteAction.always(Reject()),
         clear_state=OnCompleteAction.always(on_clear_state()),
-        close_out=OnCompleteAction.always(on_closeout()),
     ),
 )
 
@@ -300,6 +292,32 @@ def asset_app_optin(asset_id: abi.Asset) -> Expr:
 
 # FIXME: as decorator in future release of ABI
 smart_asa_abi.method(asset_app_optin, no_op=CallConfig.NEVER, opt_in=CallConfig.ALL)
+
+# FIXME: Must be an Atomic Transfer where second txn is an axfer of correct asset_id with asset_closeout != ZERO_ADDRESS
+def asset_app_closeout(asset_id: abi.Asset) -> Expr:
+    # TODO: clawback all the account balance into the Smart ASA App, or
+    #  mandates that `on_closeout` is a Group with `asa_close_to`.
+    asset_id = Txn.assets[asset_id.get()]
+    smart_asa_id = App.globalGet(SMART_ASA_GS["smart_asa_id"])
+    is_correct_smart_asa_id = smart_asa_id == asset_id
+    is_current_smart_asa_id = And(
+        smart_asa_id == App.localGet(Txn.sender(), SMART_ASA_LS["smart_asa_id"]),
+    )
+
+    return Seq(
+        # Preconditions
+        Assert(smart_asa_id),
+        Assert(is_correct_smart_asa_id),
+        Assert(is_current_smart_asa_id),
+        # Effects
+        Approve(),
+    )
+
+
+# FIXME: as decorator in future release of ABI
+smart_asa_abi.method(
+    asset_app_closeout, no_op=CallConfig.NEVER, close_out=CallConfig.ALL
+)
 
 
 @smart_asa_abi.method
@@ -463,11 +481,17 @@ def asset_transfer(
         )
         .ElseIf(is_minting)
         .Then(
-            # Asset Minting Preconditions
-            # NOTE: The minting premission is granted to `creator`, instead of
-            # `manager`, because a Smart ASA could be created with no
-            # `manager`, resulting in a locked-in Smart ASA.
-            Assert(Not(asset_frozen)),
+            Seq(
+                # Asset Minting Preconditions
+                # NOTE: The minting premission is granted to `creator`, instead of
+                # `manager`, because a Smart ASA could be created with no
+                # `manager`, resulting in a locked-in Smart ASA.
+                Assert(Not(asset_frozen)),
+                Assert(
+                    smart_asa_id
+                    == App.localGet(asset_receiver, SMART_ASA_LS["smart_asa_id"])
+                ),
+            )
             # TODO: can not mint more than `total`. This could be checked by
             #  inspecting the `reserve_addr` balance OR introducing a new
             #  auxiliary `circulating_supply` modified just by `mint` or

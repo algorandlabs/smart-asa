@@ -36,6 +36,7 @@ from smart_asa_client import (
     smart_asa_create,
     smart_asa_config,
     smart_asa_optin,
+    smart_asa_closeout,
     smart_asa_transfer,
     smart_asa_freeze,
     smart_asa_account_freeze,
@@ -412,7 +413,7 @@ class TestAssetConfig:
                 smart_asa_contract=smart_asa_contract,
                 smart_asa_app=smart_asa_app,
                 manager=creator,
-                smart_asa_id=42,
+                asset_id=42,
                 config_manager_addr=ZERO_ADDRESS,
                 save_abi_call="/tmp/txn.signed",
             )
@@ -433,7 +434,7 @@ class TestAssetConfig:
                 smart_asa_contract=smart_asa_contract,
                 smart_asa_app=smart_asa_app,
                 manager=eve,
-                smart_asa_id=smart_asa_id,
+                asset_id=smart_asa_id,
                 config_manager_addr=ZERO_ADDRESS,
                 save_abi_call="/tmp/txn.signed",
             )
@@ -453,7 +454,7 @@ class TestAssetConfig:
                 smart_asa_contract=smart_asa_contract,
                 smart_asa_app=smart_asa_app,
                 manager=creator,
-                smart_asa_id=42,
+                asset_id=42,
                 config_manager_addr=ZERO_ADDRESS,
                 save_abi_call="/tmp/txn.signed",
             )
@@ -471,7 +472,7 @@ class TestAssetConfig:
             smart_asa_contract=smart_asa_contract,
             smart_asa_app=smart_asa_app,
             manager=creator,
-            smart_asa_id=smart_asa_id,
+            asset_id=smart_asa_id,
             config_freeze_addr=ZERO_ADDRESS,
             config_clawback_addr=ZERO_ADDRESS,
         )
@@ -483,7 +484,7 @@ class TestAssetConfig:
                 smart_asa_contract=smart_asa_contract,
                 smart_asa_app=smart_asa_app,
                 manager=creator,
-                smart_asa_id=smart_asa_id,
+                asset_id=smart_asa_id,
                 config_freeze_addr=creator,
                 save_abi_call="/tmp/txn.signed",
             )
@@ -495,7 +496,7 @@ class TestAssetConfig:
                 smart_asa_contract=smart_asa_contract,
                 smart_asa_app=smart_asa_app,
                 manager=creator,
-                smart_asa_id=smart_asa_id,
+                asset_id=smart_asa_id,
                 config_clawback_addr=creator,
                 save_abi_call="/tmp/txn.signed",
             )
@@ -534,7 +535,7 @@ class TestAssetConfig:
             smart_asa_contract=smart_asa_contract,
             smart_asa_app=smart_asa_app,
             manager=creator,
-            smart_asa_id=smart_asa_id,
+            asset_id=smart_asa_id,
             config_total=config_s_asa["total"],
             config_decimals=config_s_asa["decimals"],
             config_default_frozen=config_s_asa["default_frozen"],
@@ -706,7 +707,7 @@ class TestAssetTransfer:
             smart_asa_contract=smart_asa_contract,
             smart_asa_app=smart_asa_app,
             manager=creator,
-            smart_asa_id=smart_asa_id,
+            asset_id=smart_asa_id,
             config_clawback_addr=clawback,
         )
 
@@ -986,7 +987,7 @@ class TestAssetTransfer:
     #         smart_asa_contract=smart_asa_contract,
     #         smart_asa_app=smart_asa_app,
     #         manager=opted_in_creator,
-    #         smart_asa_id=new_smart_asa_id,
+    #         asset_id=new_smart_asa_id,
     #         config_clawback_addr=ZERO_ADDRESS
     #     )
 
@@ -1284,3 +1285,27 @@ class TestAssetDestroy:
             destroy_asset=smart_asa_id,
         )
         print(" --- Destroyed Smart ASA ID:", smart_asa_id)
+
+
+class TestAssetCloseout:
+    def test_happy_path(
+        self,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        smart_asa_id: int,
+        opted_in_creator: Account,
+    ) -> None:
+        print(f"\n --- Closing out Smart ASA in App {smart_asa_app.app_id}...")
+        smart_asa_closeout(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            asset_id=smart_asa_id,
+            closer=opted_in_creator,
+        )
+        print(" --- Closed out Smart ASA ID:", smart_asa_id)
+        closer_state = get_local_state(
+            opted_in_creator.algod_client,
+            opted_in_creator.address,
+            smart_asa_app.app_id,
+        )
+        print(closer_state)

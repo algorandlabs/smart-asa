@@ -14,6 +14,8 @@ from algosdk.future.transaction import OnComplete
 from account import Account, AppAccount
 from utils import get_global_state, get_method, get_params
 
+# TODO: Simplify clients with default smart_asa_id = None and read it from app state
+
 
 def get_smart_asa_params(_algod_client: AlgodClient, smart_asa_id: int) -> dict:
     smart_asa = _algod_client.asset_info(smart_asa_id)["params"]
@@ -100,11 +102,32 @@ def smart_asa_optin(
     )
 
 
+def smart_asa_closeout(
+    smart_asa_contract: Contract,
+    smart_asa_app: AppAccount,
+    asset_id: int,
+    closer: Account,
+    save_abi_call: Optional[str] = None,
+) -> None:
+
+    params = get_params(closer.algod_client)
+    abi_call_fee = params.fee * 2
+
+    closer.abi_call(
+        get_method(smart_asa_contract, "asset_app_closeout"),
+        asset_id,
+        on_complete=OnComplete.CloseOutOC,
+        app=smart_asa_app,
+        fee=abi_call_fee,
+        save_abi_call=save_abi_call,
+    )
+
+
 def smart_asa_config(
     smart_asa_contract: Contract,
     smart_asa_app: AppAccount,
     manager: Account,
-    smart_asa_id: int,
+    asset_id: int,
     config_total: Optional[int] = None,
     config_decimals: Optional[int] = None,
     config_default_frozen: Optional[bool] = None,
@@ -119,7 +142,7 @@ def smart_asa_config(
     save_abi_call: Optional[str] = None,
 ) -> int:
 
-    s_asa = get_smart_asa_params(manager.algod_client, smart_asa_id)
+    s_asa = get_smart_asa_params(manager.algod_client, asset_id)
 
     if config_manager_addr is None:
         config_manager_addr = Account(address=s_asa["manager_addr"])
@@ -135,7 +158,7 @@ def smart_asa_config(
 
     manager.abi_call(
         get_method(smart_asa_contract, "asset_config"),
-        smart_asa_id,
+        asset_id,
         s_asa["total"] if config_total is None else config_total,
         s_asa["decimals"] if config_decimals is None else config_decimals,
         s_asa["default_frozen"]
@@ -155,7 +178,7 @@ def smart_asa_config(
         fee=abi_call_fee,
         save_abi_call=save_abi_call,
     )
-    return smart_asa_id
+    return asset_id
 
 
 def smart_asa_transfer(
