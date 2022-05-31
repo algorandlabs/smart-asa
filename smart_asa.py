@@ -15,6 +15,7 @@ Usage:
   smart_asa optin   <asset-id> <account>
   smart_asa send    <asset-id> <from> <to> <amount> [--clawback=<c>]
   smart_asa info    <asset-id>
+  smart_asa get     <asset-id> <getter>
   smart_asa         [--help]
 
 Commands:
@@ -33,19 +34,18 @@ Options:
 import sys
 from docopt import docopt
 
+from account import AppAccount
 from sandbox import Sandbox
-
-# TODO: should be imported just in _client
 from smart_asa_asc import (
-    smart_asa_abi,
-    smart_asa_global_state,
-    smart_asa_local_state,
     compile_stateful,
+    smart_asa_abi,
 )
-
 from smart_asa_client import (
     get_smart_asa_params,
+    smart_asa_app_create,
     smart_asa_create,
+    smart_asa_config,
+    smart_asa_destroy,
 )
 
 
@@ -76,6 +76,9 @@ def args_types(args: dict) -> dict:
     if args["<total>"] is not None:
         args["<total>"] = int(args["<total>"])
 
+    if args["<asset-id>"] is not None:
+        args["<asset-id>"] = int(args["<asset-id>"])
+
     if args["--decimals"] is not None:
         args["--decimals"] = int(args["--decimals"])
 
@@ -95,17 +98,14 @@ def smart_asa_cli():
         smart_asa_info(int(args["<asset-id>"]))
 
     approval, clear, contract = smart_asa_abi.build_program()
+    approval = compile_stateful(approval)
+    clear = compile_stateful(clear)
 
     if args["create"]:
         creator = Sandbox.from_public_key(args["<creator>"])
 
         print("\n --- Creating Smart ASA App...")
-        smart_asa_app = creator.create_asc(
-            approval_program=compile_stateful(approval),
-            clear_program=compile_stateful(clear),
-            global_schema=smart_asa_global_state,
-            local_schema=smart_asa_local_state,
-        )
+        smart_asa_app = smart_asa_app_create(approval, clear, creator)
         print(" --- Smart ASA App ID:", smart_asa_app.app_id)
 
         print("\n --- Funding Smart ASA App with 1 ALGO...")
@@ -129,6 +129,45 @@ def smart_asa_cli():
             clawback_addr=args["--clawback"],
         )
         return print(" --- Created Smart ASA with ID:", smart_asa_id)
+
+    if args["config"]:
+        manager = Sandbox.from_public_key(args["<manager>"])
+        smart_asa = get_smart_asa_params(manager.algod_client, args["<asset-id>"])
+        smart_asa_app = AppAccount.from_app_id(app_id=smart_asa["app_id"])
+
+        print(f"\n --- Configuring Smart ASA {args['<asset-id>']}...")
+        smart_asa_config(
+            smart_asa_contract=contract,
+            smart_asa_app=smart_asa_app,
+            manager=manager,
+            asset_id=args["<asset-id>"],
+            config_total=args["<total>"],
+            config_decimals=args["--decimals"],
+            config_default_frozen=args["--default-frozen"],
+            config_asset_name=args["--name"],
+            config_unit_name=args["--unit-name"],
+            config_url=args["--url"],
+            config_metadata_hash=args["--metadata-hash"],
+            config_manager_addr=args["--manager"],
+            config_reserve_addr=args["--reserve"],
+            config_freeze_addr=args["--freeze"],
+            config_clawback_addr=args["--clawback"],
+        )
+        return print(f" --- Smart ASA {args['<asset-id>']} configured!")
+
+    if args["destroy"]:
+        manager = Sandbox.from_public_key(args["<manager>"])
+        smart_asa = get_smart_asa_params(manager.algod_client, args["<asset-id>"])
+        smart_asa_app = AppAccount.from_app_id(app_id=smart_asa["app_id"])
+
+        print(f"\n --- Destroying Smart ASA {args['<asset-id>']}...")
+        smart_asa_destroy(
+            smart_asa_contract=contract,
+            smart_asa_app=smart_asa_app,
+            manager=manager,
+            destroy_asset=args["<asset-id>"],
+        )
+        return print(f" --- Smart ASA {args['<asset-id>']} destroyed!")
 
 
 if __name__ == "__main__":

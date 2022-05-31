@@ -14,7 +14,10 @@ from algosdk.future.transaction import OnComplete
 from account import Account, AppAccount
 from utils import get_global_state, get_method, get_params
 
-# TODO: Simplify clients with default smart_asa_id = None and read it from app state
+from smart_asa_asc import (
+    smart_asa_global_state,
+    smart_asa_local_state,
+)
 
 
 def get_smart_asa_params(_algod_client: AlgodClient, smart_asa_id: int) -> dict:
@@ -39,6 +42,17 @@ def get_smart_asa_params(_algod_client: AlgodClient, smart_asa_id: int) -> dict:
         "freeze_addr": encode_address(smart_asa_state["freeze_addr"]),
         "clawback_addr": encode_address(smart_asa_state["clawback_addr"]),
     }
+
+
+def smart_asa_app_create(
+    teal_approval: str, teal_clear: str, creator: Account
+) -> AppAccount:
+    return creator.create_asc(
+        approval_program=teal_approval,
+        clear_program=teal_clear,
+        global_schema=smart_asa_global_state,
+        local_schema=smart_asa_local_state,
+    )
 
 
 def smart_asa_create(
@@ -212,7 +226,7 @@ def smart_asa_freeze(
     smart_asa_app: AppAccount,
     freezer: Account,
     freeze_asset: int,
-    asset_frozen: bool,
+    asset_frozen: Optional[bool] = None,
     save_abi_call: Optional[str] = None,
 ) -> None:
 
@@ -222,7 +236,7 @@ def smart_asa_freeze(
     freezer.abi_call(
         get_method(smart_asa_contract, "asset_freeze"),
         freeze_asset,
-        asset_frozen,
+        False if asset_frozen is None else asset_frozen,
         app=smart_asa_app,
         fee=abi_call_fee,
         save_abi_call=save_abi_call,
@@ -235,7 +249,7 @@ def smart_asa_account_freeze(
     freezer: Account,
     freeze_asset: int,
     target_account: Account,
-    account_frozen: bool,
+    account_frozen: Optional[bool] = None,
     save_abi_call: Optional[str] = None,
 ) -> None:
 
@@ -246,7 +260,7 @@ def smart_asa_account_freeze(
         get_method(smart_asa_contract, "account_freeze"),
         freeze_asset,
         target_account,
-        account_frozen,
+        False if account_frozen is None else account_frozen,
         app=smart_asa_app,
         fee=abi_call_fee,
         save_abi_call=save_abi_call,
