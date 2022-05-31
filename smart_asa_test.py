@@ -676,7 +676,6 @@ class TestAssetTransfer:
             asset_amount=amount,
             caller=sender,
             asset_receiver=receiver,
-            save_abi_call="/tmp/debugme.sig",
         )
         print(
             "\n --- Sender Balance Post Transfering:", sender.asa_balance(smart_asa_id)
@@ -764,17 +763,244 @@ class TestAssetTransfer:
             asset_receiver=creator_with_supply,
         )
 
-    def test_fail_if_receiver_is_frozen(self) -> None:
-        # TODO: implement once `account_freeze` is available
-        pass
+    @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
+    def test_fail_if_receiver_is_frozen(
+        self,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        smart_asa_id: int,
+        creator: Account,
+        opted_in_account_factory: Callable,
+    ) -> None:
+        account = opted_in_account_factory()
+        account_state = get_local_state(
+            account.algod_client, account.address, smart_asa_app.app_id
+        )
+        assert not account_state["frozen"]
+        print("\n --- Freezeing Smart ASA account...")
+        smart_asa_account_freeze(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            freezer=creator,
+            freeze_asset=smart_asa_id,
+            target_account=account,
+            account_frozen=True,
+        )
+        account_state = get_local_state(
+            account.algod_client, account.address, smart_asa_app.app_id
+        )
+        assert account_state["frozen"]
 
-    def test_fail_if_sender_is_frozen(self) -> None:
-        # TODO: implement once `account_freeze` is available
-        pass
+        amount = 1
+        print("\n --- Transferring Smart ASA to freezed account...")
+        with pytest.raises(AlgodHTTPError):
+            smart_asa_transfer(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                xfer_asset=smart_asa_id,
+                asset_amount=amount,
+                caller=creator,
+                asset_receiver=account,
+            )
+        print(" --- Rejected as expected!")
 
-    def test_fail_if_smart_asa_is_frozen(self) -> None:
-        # TODO: implement once `asset_freeze` is available
-        pass
+    @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
+    def test_fail_if_sender_is_frozen(
+        self,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        smart_asa_id: int,
+        creator: Account,
+        account_with_supply_factory: Callable,
+    ) -> None:
+        sender = account_with_supply_factory()
+        receiver = account_with_supply_factory()
+        sender_state = get_local_state(
+            sender.algod_client, sender.address, smart_asa_app.app_id
+        )
+        assert not sender_state["frozen"]
+        print("\n --- Freezeing Smart ASA sender account...")
+        smart_asa_account_freeze(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            freezer=creator,
+            freeze_asset=smart_asa_id,
+            target_account=sender,
+            account_frozen=True,
+        )
+        account_state = get_local_state(
+            sender.algod_client, sender.address, smart_asa_app.app_id
+        )
+        assert account_state["frozen"]
+
+        amount = 1
+        print("\n --- Transferring Smart ASA from freezed account...")
+        with pytest.raises(AlgodHTTPError):
+            smart_asa_transfer(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                xfer_asset=smart_asa_id,
+                asset_amount=amount,
+                caller=sender,
+                asset_receiver=receiver,
+            )
+        print(" --- Rejected as expected!")
+
+    @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
+    def test_fail_if_smart_asa_is_frozen(
+        self,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        smart_asa_id: int,
+        creator: Account,
+        account_with_supply_factory: Callable,
+    ) -> None:
+        sender = account_with_supply_factory()
+        receiver = account_with_supply_factory()
+        sender_state = get_local_state(
+            sender.algod_client, sender.address, smart_asa_app.app_id
+        )
+        receiver_state = get_local_state(
+            receiver.algod_client, receiver.address, smart_asa_app.app_id
+        )
+        smart_asa = get_smart_asa_params(creator.algod_client, smart_asa_id)
+        assert not sender_state["frozen"]
+        assert not receiver_state["frozen"]
+        assert not smart_asa["frozen"]
+
+        print("\n --- Freezing whole Smart ASA...")
+        smart_asa_freeze(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            freezer=creator,
+            freeze_asset=smart_asa_id,
+            asset_frozen=True,
+        )
+        smart_asa = get_smart_asa_params(creator.algod_client, smart_asa_id)
+        assert smart_asa["frozen"]
+
+        amount = 1
+        print("\n --- Transferring frozen Smart ASA...")
+        with pytest.raises(AlgodHTTPError):
+            smart_asa_transfer(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                xfer_asset=smart_asa_id,
+                asset_amount=amount,
+                caller=sender,
+                asset_receiver=receiver,
+            )
+        print(" --- Rejected as expected!")
+
+    # @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
+    # def test_fail_if_not_current_smart_asa_id(
+    #     self,
+    #     smart_asa_contract: Contract,
+    #     smart_asa_app: AppAccount,
+    #     smart_asa_id: int,
+    #     opted_in_creator: Account,
+    #     opted_in_account_factory: Callable
+    # ) -> None:
+
+    #     creator_state = get_local_state(
+    #         opted_in_creator.algod_client, opted_in_creator.address, smart_asa_app.app_id
+    #     )
+
+    #     old_creator_smart_asa_id = creator_state['smart_asa_id']
+
+    #     print(f"\n --- Destroying Smart ASA in App {smart_asa_app.app_id}...")
+    #     smart_asa_destroy(
+    #         smart_asa_contract=smart_asa_contract,
+    #         smart_asa_app=smart_asa_app,
+    #         manager=opted_in_creator,
+    #         destroy_asset=smart_asa_id,
+    #     )
+    #     print(" --- Destroyed Smart ASA ID:", smart_asa_id)
+
+    #     print(f"\n --- Creating new underlying Smart ASA in App {smart_asa_app.app_id}...")
+    #     new_smart_asa_id = smart_asa_create(
+    #         smart_asa_contract=smart_asa_contract,
+    #         smart_asa_app=smart_asa_app,
+    #         creator=opted_in_creator,
+    #         total=100
+    #     )
+
+    #     print(f"\n --- Creator optin to new ASA {new_smart_asa_id}...")
+    #     opted_in_creator.optin_to_asset(new_smart_asa_id)
+
+    # TODO: To enable new optin we need the creator's clear state
+
+    #     print(f"\n --- Creator optin to Smart ASA App {new_smart_asa_id}...")
+    #     smart_asa_optin(
+    #         smart_asa_contract=smart_asa_contract,
+    #         smart_asa_app=smart_asa_app,
+    #         asset_id=new_smart_asa_id,
+    #         caller=opted_in_creator
+    #     )
+
+    #     creator_state = get_local_state(
+    #         opted_in_creator.algod_client, opted_in_creator.address, smart_asa_app.app_id
+    #     )
+    #     new_creator_smart_asa_id = creator_state['smart_asa_id']
+    #     assert old_creator_smart_asa_id != new_creator_smart_asa_id
+
+    #     print(
+    #         "\n --- Pre Minting Smart ASA Reserve:",
+    #         smart_asa_app.asa_balance(new_smart_asa_id),
+    #     )
+    #     print("\n --- Minting Smart ASA...")
+    #     smart_asa_transfer(
+    #         smart_asa_contract=smart_asa_contract,
+    #         smart_asa_app=smart_asa_app,
+    #         xfer_asset=new_smart_asa_id,
+    #         asset_amount=100,
+    #         caller=opted_in_creator,
+    #         asset_receiver=opted_in_creator,
+    #         asset_sender=smart_asa_app,
+    #     )
+    #     print(
+    #         "\n --- Post Minting Smart ASA Reserve:",
+    #         smart_asa_app.asa_balance(new_smart_asa_id),
+    #     )
+    #     assert opted_in_creator.asa_balance(new_smart_asa_id) == 100
+
+    #     receiver = opted_in_account_factory()
+    #     print(f"\n --- Receiver optin to new ASA {new_smart_asa_id}...")
+    #     receiver.optin_to_asset(new_smart_asa_id)
+
+    #     amount = 1
+    #     print("\n --- Clawbacking new Smart ASA to unauthorized receiver...")
+    #     with pytest.raises(AlgodHTTPError):
+    #         smart_asa_transfer(
+    #             smart_asa_contract=smart_asa_contract,
+    #             smart_asa_app=smart_asa_app,
+    #             xfer_asset=new_smart_asa_id,
+    #             asset_amount=amount,
+    #             caller=opted_in_creator,
+    #             asset_receiver=receiver,
+    #         )
+    #     print(" --- Rejected as expected!")
+
+    #     print("\n --- Removing clawback from Smart ASA ...")
+    #     smart_asa_config(
+    #         smart_asa_contract=smart_asa_contract,
+    #         smart_asa_app=smart_asa_app,
+    #         manager=opted_in_creator,
+    #         smart_asa_id=new_smart_asa_id,
+    #         config_clawback_addr=ZERO_ADDRESS
+    #     )
+
+    #     print("\n --- Transferring new Smart ASA to unauthorized receiver...")
+    #     with pytest.raises(AlgodHTTPError):
+    #         smart_asa_transfer(
+    #             smart_asa_contract=smart_asa_contract,
+    #             smart_asa_app=smart_asa_app,
+    #             xfer_asset=new_smart_asa_id,
+    #             asset_amount=amount,
+    #             caller=opted_in_creator,
+    #             asset_receiver=receiver,
+    #         )
+    #     print(" --- Rejected as expected!")
 
 
 class TestAssetFreeze:
