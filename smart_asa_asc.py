@@ -97,7 +97,12 @@ smart_asa_global_state = StateSchema(
 )
 
 # / --- --- LOCAL STATE
-SMART_ASA_LOCAL_INTS = {"frozen": Bytes("frozen")}
+# NOTE: Local State is needed only if the Smart ASA has `account_frozen`.
+# Local State is not needed in case Smart ASA has just "global" `asset_freeze`.
+SMART_ASA_LOCAL_INTS = {
+    "smart_asa_id": Bytes("frozen"),
+    "frozen": Bytes("frozen"),
+}
 
 SMART_ASA_LOCAL_BYTES = {}
 
@@ -132,6 +137,15 @@ def init_global_state() -> Expr:
         App.globalPut(SMART_ASA_GS["clawback_addr"], Global.zero_address()),
         # Special Smart ASA fields
         App.globalPut(SMART_ASA_GS["frozen"], Int(0)),
+    )
+
+
+@Subroutine(TealType.none)
+def init_local_state() -> Expr:
+    smart_asa_id = App.globalGet(SMART_ASA_GS["smart_asa_id"])
+    return Seq(
+        App.localPut(Txn.sender(), SMART_ASA_LS["smart_asa_id"], smart_asa_id),
+        App.localPut(Txn.sender(), SMART_ASA_LS["frozen"], Int(0)),
     )
 
 
@@ -266,7 +280,6 @@ def asset_app_optin(asset_id: abi.Asset) -> Expr:
     smart_asa_id = App.globalGet(SMART_ASA_GS["smart_asa_id"])
     is_correct_smart_asa_id = smart_asa_id == asset_id
     default_frozen = App.globalGet(SMART_ASA_GS["default_frozen"])
-    init_local_state = App.localPut(Txn.sender(), SMART_ASA_LS["frozen"], Int(0))
     freeze_account = App.localPut(Txn.sender(), SMART_ASA_LS["frozen"], Int(1))
     account_balance = AssetHolding().balance(Txn.sender(), asset_id)
     optin_to_underlying_asa = account_balance.hasValue()
@@ -279,7 +292,7 @@ def asset_app_optin(asset_id: abi.Asset) -> Expr:
         # NOTE: Ref. imlp requires opt-in underlaying ASA to opt-in Smart ASA
         # App.
         Assert(optin_to_underlying_asa),
-        init_local_state,
+        init_local_state(),
         If(Or(default_frozen, account_balance.value() > Int(0)), freeze_account),
         Approve(),
     )
@@ -419,6 +432,14 @@ def asset_transfer(
     )
     is_clawback = Txn.sender() == clawback_addr
     is_correct_smart_asa_id = smart_asa_id == xfer_asset
+    # NOTE: We check that `smart_asa_id` is correct in Local
+    # State since the App could generate a new Smart ASA if the
+    # previous one has been dystroied, forcing users to opt-in
+    # again to gain a coherent `frozen` status.
+    is_current_smart_asa_id = And(
+        smart_asa_id == App.localGet(asset_sender, SMART_ASA_LS["smart_asa_id"]),
+        smart_asa_id == App.localGet(asset_receiver, SMART_ASA_LS["smart_asa_id"]),
+    )
     receiver_is_optedin = App.optedIn(asset_receiver, Global.current_application_id())
     asset_frozen = App.globalGet(SMART_ASA_GS["frozen"])
     asset_sender_frozen = App.localGet(asset_sender, SMART_ASA_LS["frozen"])
@@ -437,6 +458,7 @@ def asset_transfer(
                 Assert(Not(asset_frozen)),
                 Assert(Not(asset_sender_frozen)),
                 Assert(Not(asset_receiver_frozen)),
+                Assert(is_current_smart_asa_id),
             )
         )
         .ElseIf(is_minting)
@@ -453,7 +475,12 @@ def asset_transfer(
             #  handle amout of ASA returned to the Smart ASA App bypassing
             #  the `burn` method).
         )
-        .Else(Assert(is_clawback)),
+        .Else(
+            Seq(
+                Assert(is_clawback),
+                Assert(is_current_smart_asa_id),
+            )
+        ),
         smart_asa_transfer_inner_txn(
             xfer_asset,
             asset_amount.get(),
