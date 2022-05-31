@@ -11,7 +11,8 @@ Usage:
                     [--reserve=<r>] [--name=<n>] [--unit-name=<un>]
                     [--metadata-hash=<mh>]
   smart_asa destroy <asset-id> <manager>
-  smart_asa freeze  <asset-id> <manager> [--asset-freeze=<af>] [--account=<a>]
+  smart_asa freeze  <asset-id> <manager> (--asset-freeze | --account=<a>)
+                    [--frozen=<z>]
   smart_asa optin   <asset-id> <account>
   smart_asa send    <asset-id> <from> <to> <amount> [--clawback=<c>]
   smart_asa info    <asset-id>
@@ -22,7 +23,7 @@ Commands:
   create     Create a Smart ASA
   config     Configure a Smart ASA
   destroy    Destroy a Smart ASA
-  freeze     Freeze Smart ASA or account
+  freeze     Freeze whole Smart ASA or specific account (--frozen is 0 or 1)
   optin      Optin to Smart ASAs
   send       Transfer Smart ASAs
   info       Look up current parameters for a Smart ASA
