@@ -6,7 +6,7 @@ __author__ = "Cosimo Bassi, Stefano De Angelis"
 __email__ = "<cosimo.bassi@algorand.com>, <stefano.deangelis@algorand.com>"
 
 from base64 import b64decode
-from typing import Optional, Union
+from typing import Any, Optional, Union
 from algosdk.abi import Contract
 from algosdk.v2client.algod import AlgodClient
 from algosdk.encoding import encode_address
@@ -269,5 +269,22 @@ def smart_asa_destroy(
         destroy_asset,
         app=smart_asa_app,
         fee=abi_call_fee,
+        save_abi_call=save_abi_call,
+    )
+
+
+def smart_asa_get(
+    smart_asa_contract: Contract,
+    smart_asa_app: AppAccount,
+    caller: Account,
+    asset_id: int,
+    getter: str,
+    save_abi_call: Optional[str] = None,
+) -> Any:
+
+    return caller.abi_call(
+        get_method(smart_asa_contract, getter),
+        asset_id,
+        app=smart_asa_app,
         save_abi_call=save_abi_call,
     )

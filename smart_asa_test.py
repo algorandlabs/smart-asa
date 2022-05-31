@@ -41,6 +41,7 @@ from smart_asa_client import (
     smart_asa_freeze,
     smart_asa_account_freeze,
     smart_asa_destroy,
+    smart_asa_get,
 )
 
 from utils import (
@@ -1309,3 +1310,24 @@ class TestAssetCloseout:
             smart_asa_app.app_id,
         )
         print(closer_state)
+
+
+class TestGetters:
+    def test_happy_path(
+        self,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        smart_asa_id: int,
+        creator: Account,
+    ) -> None:
+
+        smart_asa = get_smart_asa_params(creator.algod_client, smart_asa_id)
+        assert smart_asa["frozen"] == smart_asa_get(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            caller=creator,
+            asset_id=smart_asa_id,
+            getter="is_asset_frozen",
+        )
+
+        # TODO: Add other getters below

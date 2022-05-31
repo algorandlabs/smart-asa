@@ -572,6 +572,21 @@ def asset_destroy(destroy_asset: abi.Asset) -> Expr:
     )
 
 
+# / --- --- GETTERS
+@smart_asa_abi.method
+def is_asset_frozen(freeze_asset: abi.Asset, *, output: abi.Bool) -> Expr:
+    freeze_asset = Txn.assets[freeze_asset.get()]
+    smart_asa_id = App.globalGet(SMART_ASA_GS["smart_asa_id"])
+    is_correct_smart_asa_id = smart_asa_id == freeze_asset
+
+    return Seq(
+        # Preconditions
+        Assert(smart_asa_id),
+        Assert(is_correct_smart_asa_id),
+        output.set(App.globalGet(SMART_ASA_GS["frozen"])),
+    )
+
+
 def compile_stateful(program: Expr) -> str:
     return compileTeal(
         program,
