@@ -110,6 +110,31 @@ smart_asa_local_state = StateSchema(
 
 
 # / --- --- SUBROUTINES
+@Subroutine(TealType.none)
+def init_global_state() -> Expr:
+    return Seq(
+        App.globalPut(SMART_ASA_GS["smart_asa_id"], Int(0)),
+        App.globalPut(SMART_ASA_GS["total"], Int(0)),
+        App.globalPut(SMART_ASA_GS["decimals"], Int(0)),
+        App.globalPut(SMART_ASA_GS["default_frozen"], Int(0)),
+        # NOTE: ASA behaves excluding `unit_name` field if not declared:
+        App.globalPut(SMART_ASA_GS["unit_name"], Bytes("")),
+        # NOTE: ASA behaves excluding `name` field if not declared:
+        App.globalPut(SMART_ASA_GS["name"], Bytes("")),
+        # NOTE: ASA behaves excluding `url` field if not declared:
+        App.globalPut(SMART_ASA_GS["url"], Bytes("")),
+        # NOTE: ASA behaves excluding `metadata_hash` field if not declared:
+        App.globalPut(SMART_ASA_GS["metadata_hash"], Bytes("")),
+        # TODO: should we initialize Smart ASA roles to App Creator?
+        App.globalPut(SMART_ASA_GS["manager_addr"], Global.zero_address()),
+        App.globalPut(SMART_ASA_GS["reserve_addr"], Global.zero_address()),
+        App.globalPut(SMART_ASA_GS["freeze_addr"], Global.zero_address()),
+        App.globalPut(SMART_ASA_GS["clawback_addr"], Global.zero_address()),
+        # Special Smart ASA fields
+        App.globalPut(SMART_ASA_GS["frozen"], Int(0)),
+    )
+
+
 @Subroutine(TealType.uint64)
 def underlying_asa_create_inner_tx() -> Expr:
     return Seq(
@@ -185,27 +210,6 @@ def is_valid_address_bytes_length(address: Expr) -> Expr:
 # / --- --- BARE CALLS
 @Subroutine(TealType.none)
 def asset_app_create() -> Expr:
-    init_global_state = Seq(
-        App.globalPut(SMART_ASA_GS["smart_asa_id"], Int(0)),
-        App.globalPut(SMART_ASA_GS["total"], Int(0)),
-        App.globalPut(SMART_ASA_GS["decimals"], Int(0)),
-        App.globalPut(SMART_ASA_GS["default_frozen"], Int(0)),
-        # NOTE: ASA behaves excluding `unit_name` field if not declared:
-        App.globalPut(SMART_ASA_GS["unit_name"], Bytes("")),
-        # NOTE: ASA behaves excluding `name` field if not declared:
-        App.globalPut(SMART_ASA_GS["name"], Bytes("")),
-        # NOTE: ASA behaves excluding `url` field if not declared:
-        App.globalPut(SMART_ASA_GS["url"], Bytes("")),
-        # NOTE: ASA behaves excluding `metadata_hash` field if not declared:
-        App.globalPut(SMART_ASA_GS["metadata_hash"], Bytes("")),
-        # TODO: should we initialize Smart ASA roles to App Creator?
-        App.globalPut(SMART_ASA_GS["manager_addr"], Global.zero_address()),
-        App.globalPut(SMART_ASA_GS["reserve_addr"], Global.zero_address()),
-        App.globalPut(SMART_ASA_GS["freeze_addr"], Global.zero_address()),
-        App.globalPut(SMART_ASA_GS["clawback_addr"], Global.zero_address()),
-        # Special Smart ASA fields
-        App.globalPut(SMART_ASA_GS["frozen"], Int(0)),
-    )
     return Seq(
         # Preconditions
         # Not mandatory - Smart ASA Application self validate its state.
@@ -217,7 +221,7 @@ def asset_app_create() -> Expr:
         Assert(
             Txn.local_num_byte_slices() == Int(smart_asa_local_state.num_byte_slices)
         ),
-        init_global_state,
+        init_global_state(),
         Approve(),
     )
 
@@ -310,6 +314,7 @@ def asset_create(
         # Preconditions
         Assert(is_creator),
         Assert(smart_asa_not_created),
+        Assert(total.get() > Int(0)),  # NOTE: Ref. imlp requires `total` > 0
         is_valid_address_bytes_length(manager_addr.get()),
         is_valid_address_bytes_length(reserve_addr.get()),
         is_valid_address_bytes_length(freeze_addr.get()),
@@ -510,6 +515,9 @@ def asset_destroy(destroy_asset: abi.Asset) -> Expr:
         Assert(is_correct_smart_asa_id),
         Assert(is_manager_addr),
         smart_asa_destroy_inner_txn(destroy_asset),
+        # TODO: erase global state?
+        init_global_state(),
+        # TODO: how to handle local states?
     )
 
 

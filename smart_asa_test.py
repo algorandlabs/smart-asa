@@ -39,6 +39,7 @@ from smart_asa_client import (
     smart_asa_transfer,
     smart_asa_freeze,
     smart_asa_account_freeze,
+    smart_asa_destroy,
 )
 
 from utils import (
@@ -813,7 +814,7 @@ class TestAssetFreeze:
             )
         print(" --- Rejected as expected!")
 
-    def test_is_not_feeze_account(
+    def test_is_not_freezer(
         self,
         smart_asa_contract: Contract,
         smart_asa_app: AppAccount,
@@ -906,7 +907,7 @@ class TestAccountFreeze:
             )
         print(" --- Rejected as expected!")
 
-    def test_is_not_feeze_account(
+    def test_is_not_freezer(
         self,
         smart_asa_contract: Contract,
         smart_asa_app: AppAccount,
@@ -966,3 +967,93 @@ class TestAccountFreeze:
             account.algod_client, account.address, smart_asa_app.app_id
         )
         assert not account_state["frozen"]
+
+
+class TestAssetDestroy:
+    def test_smart_asa_not_created(
+        self,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        creator: Account,
+    ) -> None:
+
+        print("\n --- Destroying unexisting Smart ASA...")
+        with pytest.raises(AlgodHTTPError):
+            smart_asa_destroy(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                manager=creator,
+                destroy_asset=42,
+            )
+        print(" --- Rejected as expected!")
+
+    def test_is_not_correct_smart_asa(
+        self,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        creator: Account,
+        smart_asa_id: int,
+    ) -> None:
+
+        print("\n --- Destroying wrong Smart ASA ID...")
+        with pytest.raises(AlgodHTTPError):
+            smart_asa_destroy(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                manager=creator,
+                destroy_asset=42,
+            )
+        print(" --- Rejected as expected!")
+
+    def test_is_not_manager(
+        self,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        eve: Account,
+        smart_asa_id: int,
+    ) -> None:
+        with pytest.raises(AlgodHTTPError):
+            print("\n --- Destroying Smart ASA with wrong account...")
+            smart_asa_destroy(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                manager=eve,
+                destroy_asset=smart_asa_id,
+            )
+        print(" --- Rejected as expected!")
+
+    def test_smart_asa_still_in_circulation(
+        self,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        creator_with_supply: Account,
+        smart_asa_id: int,
+    ) -> None:
+        with pytest.raises(AlgodHTTPError):
+            print(
+                f"\n --- Destroying circulating Smart ASA in App"
+                f" {smart_asa_app.app_id}..."
+            )
+            smart_asa_destroy(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                manager=creator_with_supply,
+                destroy_asset=smart_asa_id,
+            )
+        print(" --- Rejected as expected!")
+
+    def test_happy_path(
+        self,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        creator: Account,
+        smart_asa_id: int,
+    ) -> None:
+        print(f"\n --- Destroying Smart ASA in App {smart_asa_app.app_id}...")
+        smart_asa_destroy(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            manager=creator,
+            destroy_asset=smart_asa_id,
+        )
+        print(" --- Destroyed Smart ASA ID:", smart_asa_id)

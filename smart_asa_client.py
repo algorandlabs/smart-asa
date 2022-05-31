@@ -228,3 +228,23 @@ def smart_asa_account_freeze(
         fee=abi_call_fee,
         save_abi_call=save_abi_call,
     )
+
+
+def smart_asa_destroy(
+    smart_asa_contract: Contract,
+    smart_asa_app: AppAccount,
+    manager: Account,
+    destroy_asset: int,
+    save_abi_call: str = None,
+) -> None:
+
+    params = get_params(manager.algod_client)
+    abi_call_fee = params.fee * 2
+
+    manager.abi_call(
+        get_method(smart_asa_contract, "asset_destroy"),
+        destroy_asset,
+        app=smart_asa_app,
+        fee=abi_call_fee,
+        save_abi_call=save_abi_call,
+    )
