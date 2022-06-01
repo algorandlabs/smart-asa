@@ -50,7 +50,6 @@ def smart_asa_app_create(
     return creator.create_asc(
         approval_program=teal_approval,
         clear_program=teal_clear,
-        extra_pages=1,
         global_schema=smart_asa_global_state,
         local_schema=smart_asa_local_state,
     )
