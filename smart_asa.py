@@ -11,21 +11,24 @@ Usage:
                     [--manager=<m>] [--reserve=<r>] [--freeze=<f>]
                     [--clawback=<c>]
   smart_asa destroy <asset-id> <manager>
-  smart_asa freeze  <asset-id> <manager> (--asset | <account>) <frozen>
+  smart_asa freeze  <asset-id> <freeze> (--asset | <account>) <boolean>
   smart_asa optin   <asset-id> <account>
+  smart_asa optout  <asset-id> <account>
   smart_asa send    <asset-id> <from> <to> <amount> [--clawback=<c>]
-  smart_asa info    <asset-id>
-  smart_asa get     <asset-id> <getter>
+  smart_asa info    <asset-id> [--account=<a>]
+  smart_asa get     <asset-id> <getter> [--account=<a>]
   smart_asa         [--help]
 
 Commands:
   create     Create a Smart ASA
   config     Configure a Smart ASA
   destroy    Destroy a Smart ASA
-  freeze     Freeze whole Smart ASA or specific account (<frozen> is boolean)
-  optin      Optin to Smart ASAs
+  freeze     Freeze whole Smart ASA or specific account
+  optin      Optin Smart ASAs
+  optout     Optout Smart ASAs
   send       Transfer Smart ASAs
-  info       Look up current parameters for a Smart ASA
+  info       Look up current parameters for Smart ASA or specific account
+  get        Look up a parameter for Smart ASA
 
 Options:
   -h, --help
@@ -42,10 +45,13 @@ from smart_asa_asc import (
 )
 from smart_asa_client import (
     get_smart_asa_params,
+    smart_asa_account_freeze,
     smart_asa_app_create,
     smart_asa_create,
     smart_asa_config,
     smart_asa_destroy,
+    smart_asa_freeze,
+    smart_asa_app_optin,
 )
 
 
@@ -82,8 +88,10 @@ def args_types(args: dict) -> dict:
     if args["--decimals"] is not None:
         args["--decimals"] = int(args["--decimals"])
 
-    if args["<frozen>"] is not None:
-        args["<frozen>"] = bool(args["<frozen>"])
+    if args["<boolean>"] is not None:
+        args["<boolean>"] = int(args["<boolean>"])
+        assert args["<boolean>"] == 0 or args["<boolean>"] == 1
+        args["<boolean>"] = bool(args["<boolean>"])
 
     return args
 
@@ -96,9 +104,6 @@ def smart_asa_cli():
 
     args = docopt(__doc__)
     args = args_types(args)
-
-    if args["info"]:
-        smart_asa_info(int(args["<asset-id>"]))
 
     approval, clear, contract = smart_asa_abi.build_program()
     approval = compile_stateful(approval)
@@ -131,12 +136,13 @@ def smart_asa_cli():
             freeze_addr=args["--freeze"],
             clawback_addr=args["--clawback"],
         )
-        return print(" --- Created Smart ASA with ID:", smart_asa_id)
+        return print(" --- Created Smart ASA with ID:", smart_asa_id, "\n")
+
+    smart_asa = get_smart_asa_params(Sandbox.algod_client, args["<asset-id>"])
+    smart_asa_app = AppAccount.from_app_id(app_id=smart_asa["app_id"])
 
     if args["config"]:
         manager = Sandbox.from_public_key(args["<manager>"])
-        smart_asa = get_smart_asa_params(manager.algod_client, args["<asset-id>"])
-        smart_asa_app = AppAccount.from_app_id(app_id=smart_asa["app_id"])
 
         print(f"\n --- Configuring Smart ASA {args['<asset-id>']}...")
         smart_asa_config(
@@ -156,12 +162,10 @@ def smart_asa_cli():
             config_freeze_addr=args["--freeze"],
             config_clawback_addr=args["--clawback"],
         )
-        return print(f" --- Smart ASA {args['<asset-id>']} configured!")
+        return print(f" --- Smart ASA {args['<asset-id>']} configured!\n")
 
     if args["destroy"]:
         manager = Sandbox.from_public_key(args["<manager>"])
-        smart_asa = get_smart_asa_params(manager.algod_client, args["<asset-id>"])
-        smart_asa_app = AppAccount.from_app_id(app_id=smart_asa["app_id"])
 
         print(f"\n --- Destroying Smart ASA {args['<asset-id>']}...")
         smart_asa_destroy(
@@ -170,7 +174,66 @@ def smart_asa_cli():
             manager=manager,
             destroy_asset=args["<asset-id>"],
         )
-        return print(f" --- Smart ASA {args['<asset-id>']} destroyed!")
+        return print(f" --- Smart ASA {args['<asset-id>']} destroyed!\n")
+
+    if args["freeze"]:
+        freezer = Sandbox.from_public_key(args["<freeze>"])
+
+        if args["<boolean>"]:
+            action = "Freezing"
+        else:
+            action = "Unfreezing"
+
+        if args["--asset"]:
+            print(f"\n --- {action} Smart ASA {args['<asset-id>']}...\n")
+            return smart_asa_freeze(
+                smart_asa_contract=contract,
+                smart_asa_app=smart_asa_app,
+                freezer=freezer,
+                freeze_asset=args["<asset-id>"],
+                asset_frozen=args["<boolean>"],
+            )
+        else:
+            print(f"\n --- {action} account {args['<account>']}...\n")
+            return smart_asa_account_freeze(
+                smart_asa_contract=contract,
+                smart_asa_app=smart_asa_app,
+                freezer=freezer,
+                freeze_asset=args["<asset-id>"],
+                account_frozen=args["<boolean>"],
+                target_account=args["<account>"],
+            )
+
+    if args["optin"]:
+        account = Sandbox.from_public_key(args["<account>"])
+
+        print(f"\n --- Opt-in Smart ASA {args['<asset-id>']}...")
+        account.optin_to_asset(args["<asset-id>"])
+        smart_asa_app_optin(
+            smart_asa_contract=contract,
+            smart_asa_app=smart_asa_app,
+            asset_id=args["<asset-id>"],
+            caller=account,
+        )
+        print(f"\n --- Smart ASA {args['<asset-id>']} state:")
+        return print(account.app_local_state(smart_asa_app.app_id), "\n")
+
+    if args["optout"]:
+        pass  # TODO
+
+    if args["send"]:
+        pass  # TODO
+
+    if args["info"]:
+        if args["--account"]:
+            account = Sandbox.from_public_key(args["--account"])
+            print(f"\n --- Smart ASA {args['<asset-id>']} state:")
+            return print(account.app_local_state(smart_asa_app.app_id), "\n")
+        else:
+            return smart_asa_info(int(args["<asset-id>"]))
+
+    if args["get"]:
+        pass  # TODO
 
 
 if __name__ == "__main__":
