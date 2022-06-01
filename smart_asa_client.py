@@ -95,7 +95,7 @@ def smart_asa_create(
     )
 
 
-def smart_asa_optin(
+def smart_asa_app_optin(
     smart_asa_contract: Contract,
     smart_asa_app: AppAccount,
     asset_id: int,
@@ -104,7 +104,7 @@ def smart_asa_optin(
 ) -> None:
 
     params = get_params(caller.algod_client)
-    abi_call_fee = params.fee * 2
+    abi_call_fee = params.fee
 
     caller.abi_call(
         get_method(smart_asa_contract, "asset_app_optin"),
@@ -116,7 +116,7 @@ def smart_asa_optin(
     )
 
 
-def smart_asa_closeout(
+def smart_asa_app_closeout(
     smart_asa_contract: Contract,
     smart_asa_app: AppAccount,
     asset_id: int,
@@ -125,7 +125,7 @@ def smart_asa_closeout(
 ) -> None:
 
     params = get_params(closer.algod_client)
-    abi_call_fee = params.fee * 2
+    abi_call_fee = params.fee
 
     closer.abi_call(
         get_method(smart_asa_contract, "asset_app_closeout"),

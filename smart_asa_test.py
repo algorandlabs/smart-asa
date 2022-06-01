@@ -31,14 +31,14 @@ from smart_asa_client import (
     get_smart_asa_params,
     smart_asa_account_freeze,
     smart_asa_app_create,
-    smart_asa_closeout,
+    smart_asa_app_closeout,
     smart_asa_config,
     smart_asa_create,
     smart_asa_destroy,
     smart_asa_freeze,
     smart_asa_get,
     smart_asa_get_asset_frozen,
-    smart_asa_optin,
+    smart_asa_app_optin,
     smart_asa_transfer,
 )
 
@@ -136,7 +136,7 @@ def opted_in_creator(
     smart_asa_id: int,
 ) -> Account:
     creator.optin_to_asset(smart_asa_id)
-    smart_asa_optin(
+    smart_asa_app_optin(
         smart_asa_contract=smart_asa_contract,
         smart_asa_app=smart_asa_app,
         asset_id=smart_asa_id,
@@ -171,7 +171,7 @@ def opted_in_account_factory(
     def _factory() -> Account:
         account = Sandbox.create(funds_amount=INITIAL_FUNDS)
         account.optin_to_asset(smart_asa_id)
-        smart_asa_optin(
+        smart_asa_app_optin(
             smart_asa_contract=smart_asa_contract,
             smart_asa_app=smart_asa_app,
             asset_id=smart_asa_id,
@@ -324,7 +324,7 @@ class TestAssetOptin:
     ) -> None:
         print("\n --- Opt-In App with no Smart ASA ID...")
         with pytest.raises(AlgodHTTPError):
-            smart_asa_optin(
+            smart_asa_app_optin(
                 smart_asa_contract=smart_asa_contract,
                 smart_asa_app=smart_asa_app,
                 asset_id=1,
@@ -343,7 +343,7 @@ class TestAssetOptin:
         creator.optin_to_asset(smart_asa_id)
         print("\n --- Opt-In App with wrong Smart ASA ID...")
         with pytest.raises(AlgodHTTPError):
-            smart_asa_optin(
+            smart_asa_app_optin(
                 smart_asa_contract=smart_asa_contract,
                 smart_asa_app=smart_asa_app,
                 asset_id=smart_asa_id + 1,
@@ -362,7 +362,7 @@ class TestAssetOptin:
 
         print("\n --- Opt-In App without optin to underlying ASA...")
         with pytest.raises(AlgodHTTPError):
-            smart_asa_optin(
+            smart_asa_app_optin(
                 smart_asa_contract=smart_asa_contract,
                 smart_asa_app=smart_asa_app,
                 asset_id=smart_asa_id,
@@ -884,115 +884,124 @@ class TestAssetTransfer:
             )
         print(" --- Rejected as expected!")
 
-    # @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
-    # def test_fail_if_not_current_smart_asa_id(
-    #     self,
-    #     smart_asa_contract: Contract,
-    #     smart_asa_app: AppAccount,
-    #     smart_asa_id: int,
-    #     opted_in_creator: Account,
-    #     opted_in_account_factory: Callable
-    # ) -> None:
+    @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
+    def test_fail_if_not_current_smart_asa_id(
+        self,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        smart_asa_id: int,
+        opted_in_creator: Account,
+    ) -> None:
 
-    #     creator_state = get_local_state(
-    #         opted_in_creator.algod_client, opted_in_creator.address, smart_asa_app.app_id
-    #     )
+        creator_state = get_local_state(
+            opted_in_creator.algod_client,
+            opted_in_creator.address,
+            smart_asa_app.app_id,
+        )
 
-    #     old_creator_smart_asa_id = creator_state['smart_asa_id']
+        creator_old_smart_asa_id = creator_state["smart_asa_id"]
 
-    #     print(f"\n --- Destroying Smart ASA in App {smart_asa_app.app_id}...")
-    #     smart_asa_destroy(
-    #         smart_asa_contract=smart_asa_contract,
-    #         smart_asa_app=smart_asa_app,
-    #         manager=opted_in_creator,
-    #         destroy_asset=smart_asa_id,
-    #     )
-    #     print(" --- Destroyed Smart ASA ID:", smart_asa_id)
+        print(f"\n --- Destroying Smart ASA in App {smart_asa_app.app_id}...")
+        smart_asa_destroy(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            manager=opted_in_creator,
+            destroy_asset=smart_asa_id,
+        )
+        print(" --- Destroyed Smart ASA ID:", smart_asa_id)
 
-    #     print(f"\n --- Creating new underlying Smart ASA in App {smart_asa_app.app_id}...")
-    #     new_smart_asa_id = smart_asa_create(
-    #         smart_asa_contract=smart_asa_contract,
-    #         smart_asa_app=smart_asa_app,
-    #         creator=opted_in_creator,
-    #         total=100
-    #     )
+        print(f"\n --- Creating new Smart ASA in App {smart_asa_app.app_id}...")
+        new_smart_asa_id = smart_asa_create(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            creator=opted_in_creator,
+            total=100,
+        )
+        print(" --- Created Smart ASA ID:", new_smart_asa_id)
 
-    #     print(f"\n --- Creator optin to new ASA {new_smart_asa_id}...")
-    #     opted_in_creator.optin_to_asset(new_smart_asa_id)
+        print(get_global_state(opted_in_creator.algod_client, smart_asa_app.app_id))
 
-    # TODO: To enable new optin we need the creator's `asset_close_to`
+        print(f"\n --- Closing old Smart ASA {smart_asa_id}...")
+        opted_in_creator.close_asset_to(smart_asa_id, smart_asa_app)
 
-    #     print(f"\n --- Creator optin to Smart ASA App {new_smart_asa_id}...")
-    #     smart_asa_optin(
-    #         smart_asa_contract=smart_asa_contract,
-    #         smart_asa_app=smart_asa_app,
-    #         asset_id=new_smart_asa_id,
-    #         caller=opted_in_creator
-    #     )
+        print(f"\n --- Closing out Smart ASA in App {smart_asa_app.app_id}...")
+        smart_asa_app_closeout(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            asset_id=smart_asa_id,
+            closer=opted_in_creator,
+        )
 
-    #     creator_state = get_local_state(
-    #         opted_in_creator.algod_client, opted_in_creator.address, smart_asa_app.app_id
-    #     )
-    #     new_creator_smart_asa_id = creator_state['smart_asa_id']
-    #     assert old_creator_smart_asa_id != new_creator_smart_asa_id
+        print(f"\n --- Creator optin new Smart ASA {new_smart_asa_id}...")
+        opted_in_creator.optin_to_asset(new_smart_asa_id)
 
-    #     print(
-    #         "\n --- Pre Minting Smart ASA Reserve:",
-    #         smart_asa_app.asa_balance(new_smart_asa_id),
-    #     )
-    #     print("\n --- Minting Smart ASA...")
-    #     smart_asa_transfer(
-    #         smart_asa_contract=smart_asa_contract,
-    #         smart_asa_app=smart_asa_app,
-    #         xfer_asset=new_smart_asa_id,
-    #         asset_amount=100,
-    #         caller=opted_in_creator,
-    #         asset_receiver=opted_in_creator,
-    #         asset_sender=smart_asa_app,
-    #     )
-    #     print(
-    #         "\n --- Post Minting Smart ASA Reserve:",
-    #         smart_asa_app.asa_balance(new_smart_asa_id),
-    #     )
-    #     assert opted_in_creator.asa_balance(new_smart_asa_id) == 100
+        print(
+            f"\n --- Creator optin again to Smart ASA App" f" {smart_asa_app.app_id}..."
+        )
+        smart_asa_app_optin(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            asset_id=new_smart_asa_id,
+            caller=opted_in_creator,
+        )
 
-    #     receiver = opted_in_account_factory()
-    #     print(f"\n --- Receiver optin to new ASA {new_smart_asa_id}...")
-    #     receiver.optin_to_asset(new_smart_asa_id)
+        creator_state = get_local_state(
+            opted_in_creator.algod_client,
+            opted_in_creator.address,
+            smart_asa_app.app_id,
+        )
+        creator_new_smart_asa_id = creator_state["smart_asa_id"]
+        assert creator_old_smart_asa_id != creator_new_smart_asa_id
 
-    #     amount = 1
-    #     print("\n --- Clawbacking new Smart ASA to unauthorized receiver...")
-    #     with pytest.raises(AlgodHTTPError):
-    #         smart_asa_transfer(
-    #             smart_asa_contract=smart_asa_contract,
-    #             smart_asa_app=smart_asa_app,
-    #             xfer_asset=new_smart_asa_id,
-    #             asset_amount=amount,
-    #             caller=opted_in_creator,
-    #             asset_receiver=receiver,
-    #         )
-    #     print(" --- Rejected as expected!")
+        print("\n --- Minting Smart ASA...")
+        smart_asa_transfer(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            xfer_asset=new_smart_asa_id,
+            asset_amount=100,
+            caller=opted_in_creator,
+            asset_receiver=opted_in_creator,
+            asset_sender=smart_asa_app,
+        )
+        assert opted_in_creator.asa_balance(new_smart_asa_id) == 100
 
-    #     print("\n --- Removing clawback from Smart ASA ...")
-    #     smart_asa_config(
-    #         smart_asa_contract=smart_asa_contract,
-    #         smart_asa_app=smart_asa_app,
-    #         manager=opted_in_creator,
-    #         asset_id=new_smart_asa_id,
-    #         config_clawback_addr=ZERO_ADDRESS
-    #     )
+        receiver = Sandbox.create(funds_amount=1_000_000)
+        print(f"\n --- Receiver optin to new ASA {new_smart_asa_id}...")
+        receiver.optin_to_asset(new_smart_asa_id)
 
-    #     print("\n --- Transferring new Smart ASA to unauthorized receiver...")
-    #     with pytest.raises(AlgodHTTPError):
-    #         smart_asa_transfer(
-    #             smart_asa_contract=smart_asa_contract,
-    #             smart_asa_app=smart_asa_app,
-    #             xfer_asset=new_smart_asa_id,
-    #             asset_amount=amount,
-    #             caller=opted_in_creator,
-    #             asset_receiver=receiver,
-    #         )
-    #     print(" --- Rejected as expected!")
+        amount = 1
+        print("\n --- Clawbacking new Smart ASA to unauthorized receiver...")
+        with pytest.raises(AlgodHTTPError):
+            smart_asa_transfer(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                xfer_asset=new_smart_asa_id,
+                asset_amount=amount,
+                caller=opted_in_creator,
+                asset_receiver=receiver,
+            )
+        print(" --- Rejected as expected!")
+
+        print("\n --- Removing clawback from Smart ASA ...")
+        smart_asa_config(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            manager=opted_in_creator,
+            asset_id=new_smart_asa_id,
+            config_clawback_addr=ZERO_ADDRESS,
+        )
+
+        print("\n --- Transferring new Smart ASA to unauthorized receiver...")
+        with pytest.raises(AlgodHTTPError):
+            smart_asa_transfer(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                xfer_asset=new_smart_asa_id,
+                asset_amount=amount,
+                caller=opted_in_creator,
+                asset_receiver=receiver,
+            )
+        print(" --- Rejected as expected!")
 
 
 class TestAssetFreeze:
@@ -1288,7 +1297,7 @@ class TestAssetCloseout:
     ) -> None:
         with pytest.raises(AlgodHTTPError):
             print(f"\n --- Closing App while still opted in to Smart ASA...")
-            smart_asa_closeout(
+            smart_asa_app_closeout(
                 smart_asa_contract=smart_asa_contract,
                 smart_asa_app=smart_asa_app,
                 asset_id=smart_asa_id,
@@ -1318,7 +1327,7 @@ class TestAssetCloseout:
         )
 
         print(f"\n --- Closing out Smart ASA in App {smart_asa_app.app_id}...")
-        smart_asa_closeout(
+        smart_asa_app_closeout(
             smart_asa_contract=smart_asa_contract,
             smart_asa_app=smart_asa_app,
             asset_id=smart_asa_id,

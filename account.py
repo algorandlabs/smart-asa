@@ -328,7 +328,7 @@ class AppAccount(Account):
             address=cast(
                 str,
                 encoding.encode_address(
-                    encoding.checksum(b"appID" + (app_id).to_bytes(8, "big"))
+                    encoding.checksum(b"appID" + app_id.to_bytes(8, "big"))
                 ),
             ),
             **kwargs
@@ -338,7 +338,9 @@ class AppAccount(Account):
         assert self.algod_client
         return get_global_state(self.algod_client, self.app_id)
 
-    def local_state(self, account: Union[Account, str]) -> dict[str, Union[bytes, int]]:
+    def app_local_state(
+        self, account: Union[Account, str]
+    ) -> dict[str, Union[bytes, int]]:
         assert self.algod_client
         if isinstance(account, Account):
             account = account.address

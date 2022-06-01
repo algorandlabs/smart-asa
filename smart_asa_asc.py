@@ -303,18 +303,15 @@ smart_asa_abi.method(asset_app_optin, no_op=CallConfig.NEVER, opt_in=CallConfig.
 def asset_app_closeout(asset_id: abi.Asset) -> Expr:
     # TODO: Underlying ASA and Smart ASA App close-out could be atomic.
     asset_id = Txn.assets[asset_id.get()]
-    smart_asa_id = App.globalGet(SMART_ASA_GS["smart_asa_id"])
-    is_correct_smart_asa_id = smart_asa_id == asset_id
-    is_current_smart_asa_id = And(
-        smart_asa_id == App.localGet(Txn.sender(), SMART_ASA_LS["smart_asa_id"]),
-    )
+    current_smart_asa_id = App.localGet(Txn.sender(), SMART_ASA_LS["smart_asa_id"])
+    is_correct_smart_asa_id = current_smart_asa_id == asset_id
     account_balance = AssetHolding().balance(Txn.sender(), asset_id)
     optin_to_underlying_asa = account_balance.hasValue()
     return Seq(
         # Preconditions
-        Assert(smart_asa_id),
+        # NOTE: Smart ASA existence is not checked on close-out since
+        # would be impossible to close-out destroyed assets.
         Assert(is_correct_smart_asa_id),
-        Assert(is_current_smart_asa_id),
         account_balance,
         Assert(Not(optin_to_underlying_asa)),
         # Effects
