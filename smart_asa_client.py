@@ -50,6 +50,7 @@ def smart_asa_app_create(
     return creator.create_asc(
         approval_program=teal_approval,
         clear_program=teal_clear,
+        extra_pages=1,
         global_schema=smart_asa_global_state,
         local_schema=smart_asa_local_state,
     )
@@ -299,6 +300,25 @@ def smart_asa_get(
     return caller.abi_call(
         get_method(smart_asa_contract, getter),
         asset_id,
+        app=smart_asa_app,
+        save_abi_call=save_abi_call,
+    )
+
+
+def smart_asa_get_asset_frozen(
+    smart_asa_contract: Contract,
+    smart_asa_app: AppAccount,
+    caller: Account,
+    asset_id: int,
+    getter: str,
+    account: Optional[Account] = None,
+    save_abi_call: Optional[str] = None,
+) -> Any:
+
+    return caller.abi_call(
+        get_method(smart_asa_contract, getter),
+        asset_id,
+        caller if account is None else account,
         app=smart_asa_app,
         save_abi_call=save_abi_call,
     )

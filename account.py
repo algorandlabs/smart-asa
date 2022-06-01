@@ -266,6 +266,7 @@ class Account(TransactionSigner):
         self,
         approval_program: str,
         clear_program: str,
+        extra_pages: Optional[int] = 0,
         global_schema=transaction.StateSchema(0, 0),
         local_schema=transaction.StateSchema(0, 0),
         on_complete=transaction.OnComplete.NoOpOC,
@@ -281,6 +282,7 @@ class Account(TransactionSigner):
             clear_program,
             global_schema,
             local_schema,
+            extra_pages=extra_pages,
         )
 
         transaction_response = self.sign_send_wait(txn)

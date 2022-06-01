@@ -220,6 +220,17 @@ def is_valid_address_bytes_length(address: Expr) -> Expr:
     return Assert(Len(address) == ADDRESS_BYTES_LENGTH)
 
 
+@Subroutine(TealType.none)
+def getter_preconditions(asset: Expr) -> Expr:
+    smart_asa_id = App.globalGet(SMART_ASA_GS["smart_asa_id"])
+    is_correct_smart_asa_id = smart_asa_id == asset
+
+    return Seq(
+        Assert(smart_asa_id),
+        Assert(is_correct_smart_asa_id),
+    )
+
+
 # / --- --- ABI
 # / --- --- BARE CALLS
 @Subroutine(TealType.none)
@@ -576,6 +587,16 @@ def asset_destroy(destroy_asset: abi.Asset) -> Expr:
 @smart_asa_abi.method
 def is_asset_frozen(freeze_asset: abi.Asset, *, output: abi.Bool) -> Expr:
     freeze_asset = Txn.assets[freeze_asset.get()]
+    getter_preconditions(freeze_asset)
+    return output.set(App.globalGet(SMART_ASA_GS["frozen"]))
+
+
+@smart_asa_abi.method
+def is_account_frozen(
+    freeze_asset: abi.Asset, freeze_account: abi.Account, *, output: abi.Bool
+) -> Expr:
+    freeze_asset = Txn.assets[freeze_asset.get()]
+    freeze_account = Txn.accounts[freeze_account.get()]
     smart_asa_id = App.globalGet(SMART_ASA_GS["smart_asa_id"])
     is_correct_smart_asa_id = smart_asa_id == freeze_asset
 
@@ -583,8 +604,88 @@ def is_asset_frozen(freeze_asset: abi.Asset, *, output: abi.Bool) -> Expr:
         # Preconditions
         Assert(smart_asa_id),
         Assert(is_correct_smart_asa_id),
-        output.set(App.globalGet(SMART_ASA_GS["frozen"])),
+        is_valid_address_bytes_length(freeze_account),
+        output.set(App.localGet(freeze_account, SMART_ASA_LS["frozen"])),
     )
+
+
+@smart_asa_abi.method
+def get_total(asset: abi.Asset, *, output: abi.Uint64) -> Expr:
+    asset = Txn.assets[asset.get()]
+    getter_preconditions(asset)
+    return output.set(App.globalGet(SMART_ASA_GS["total"]))
+
+
+@smart_asa_abi.method
+def get_decimals(asset: abi.Asset, *, output: abi.Uint32) -> Expr:
+    asset = Txn.assets[asset.get()]
+    getter_preconditions(asset)
+    return output.set(App.globalGet(SMART_ASA_GS["decimals"]))
+
+
+@smart_asa_abi.method
+def get_default_frozen(asset: abi.Asset, *, output: abi.Bool) -> Expr:
+    asset = Txn.assets[asset.get()]
+    getter_preconditions(asset)
+    return output.set(App.globalGet(SMART_ASA_GS["default_frozen"]))
+
+
+@smart_asa_abi.method
+def get_unit_name(asset: abi.Asset, *, output: abi.String) -> Expr:
+    asset = Txn.assets[asset.get()]
+    getter_preconditions(asset)
+    return output.set(App.globalGet(SMART_ASA_GS["unit_name"]))
+
+
+@smart_asa_abi.method
+def get_asset_name(asset: abi.Asset, *, output: abi.String) -> Expr:
+    asset = Txn.assets[asset.get()]
+    getter_preconditions(asset)
+    return output.set(App.globalGet(SMART_ASA_GS["name"]))
+
+
+@smart_asa_abi.method
+def get_url(asset: abi.Asset, *, output: abi.String) -> Expr:
+    asset = Txn.assets[asset.get()]
+    getter_preconditions(asset)
+    return output.set(App.globalGet(SMART_ASA_GS["url"]))
+
+
+@smart_asa_abi.method
+def get_metadata_hash(
+    asset: abi.Asset, *, output: abi.String  # FIXME: This was originally Byte in ARC-20
+) -> Expr:
+    asset = Txn.assets[asset.get()]
+    getter_preconditions(asset)
+    return output.set(App.globalGet(SMART_ASA_GS["metadata_hash"]))
+
+
+@smart_asa_abi.method
+def get_manager_addr(asset: abi.Asset, *, output: abi.Address) -> Expr:
+    asset = Txn.assets[asset.get()]
+    getter_preconditions(asset)
+    return output.set(App.globalGet(SMART_ASA_GS["manager_addr"]))
+
+
+@smart_asa_abi.method
+def get_reserve_addr(asset: abi.Asset, *, output: abi.Address) -> Expr:
+    asset = Txn.assets[asset.get()]
+    getter_preconditions(asset)
+    return output.set(App.globalGet(SMART_ASA_GS["reserve_addr"]))
+
+
+@smart_asa_abi.method
+def get_freeze_addr(asset: abi.Asset, *, output: abi.Address) -> Expr:
+    asset = Txn.assets[asset.get()]
+    getter_preconditions(asset)
+    return output.set(App.globalGet(SMART_ASA_GS["freeze_addr"]))
+
+
+@smart_asa_abi.method
+def get_clawback_addr(asset: abi.Asset, *, output: abi.Address) -> Expr:
+    asset = Txn.assets[asset.get()]
+    getter_preconditions(asset)
+    return output.set(App.globalGet(SMART_ASA_GS["clawback_addr"]))
 
 
 def compile_stateful(program: Expr) -> str:
