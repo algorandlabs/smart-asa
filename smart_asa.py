@@ -2,17 +2,16 @@
 Smart ASA (ARC-20 reference implementation)
 
 Usage:
-  smart_asa create  <creator> <total> [--default-frozen] [--decimals=<d>]
-                    [--url=<u>] [--clawback=<c>] [--freeze=<f>] [--manager=<m>]
-                    [--reserve=<r>] [--name=<n>] [--unit-name=<un>]
-                    [--metadata-hash=<mh>]
-  smart_asa config  <asset-id> <manager> [--decimals=<d>] [--url=<u>]
-                    [--clawback=<c>] [--freeze=<f>] [--manager=<m>]
-                    [--reserve=<r>] [--name=<n>] [--unit-name=<un>]
-                    [--metadata-hash=<mh>]
+  smart_asa create  <creator> <total> [--decimals=<d>] [--default-frozen]
+                    [--name=<n>] [--unit-name=<un>] [--metadata-hash=<mh>]
+                    [--url=<l>] [--manager=<m>] [--reserve=<r>]
+                    [--freeze=<f>] [--clawback=<c>]
+  smart_asa config  <asset-id> <manager> [--decimals=<d>] [--name=<n>]
+                    [--unit-name=<un>] [--metadata-hash=<mh>] [--url=<u>]
+                    [--manager=<m>] [--reserve=<r>] [--freeze=<f>]
+                    [--clawback=<c>]
   smart_asa destroy <asset-id> <manager>
-  smart_asa freeze  <asset-id> <manager> (--asset-freeze | --account=<a>)
-                    [--frozen=<z>]
+  smart_asa freeze  <asset-id> <manager> (--asset | <account>) <frozen>
   smart_asa optin   <asset-id> <account>
   smart_asa send    <asset-id> <from> <to> <amount> [--clawback=<c>]
   smart_asa info    <asset-id>
@@ -23,7 +22,7 @@ Commands:
   create     Create a Smart ASA
   config     Configure a Smart ASA
   destroy    Destroy a Smart ASA
-  freeze     Freeze whole Smart ASA or specific account (--frozen is 0 or 1)
+  freeze     Freeze whole Smart ASA or specific account (<frozen> is boolean)
   optin      Optin to Smart ASAs
   send       Transfer Smart ASAs
   info       Look up current parameters for a Smart ASA
@@ -82,6 +81,9 @@ def args_types(args: dict) -> dict:
 
     if args["--decimals"] is not None:
         args["--decimals"] = int(args["--decimals"])
+
+    if args["<frozen>"] is not None:
+        args["<frozen>"] = bool(args["<frozen>"])
 
     return args
 
