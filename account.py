@@ -208,6 +208,17 @@ class Account(TransactionSigner):
         )
         return self.sign_send_wait(txn)
 
+    def close_asset_to(self, asset_id: int, close_to_account: "Account"):
+        txn = transaction.AssetTransferTxn(
+            sender=self.address,
+            sp=self._get_params(),
+            receiver=self.address,
+            amt=0,
+            index=asset_id,
+            close_assets_to=close_to_account.address,
+        )
+        return self.sign_send_wait(txn)
+
     def optin_to_application(
         self,
         asc_id: int,
@@ -254,13 +265,17 @@ class Account(TransactionSigner):
     def asa_balance(self, asa_idx: int) -> int:
         return self.balance().get(asa_idx, 0)
 
-    def local_state(
+    def app_local_state(
         self, app: Union["AppAccount", int]
     ) -> dict[str, Union[bytes, int]]:
         assert self.algod_client
         if isinstance(app, AppAccount):
             app = app.app_id
         return get_local_state(self.algod_client, self.address, app)
+
+    def local_state(self) -> list[dict]:
+        assert self.algod_client
+        return self.algod_client.account_info(self.address)["apps-local-state"]
 
     def create_asc(
         self,
