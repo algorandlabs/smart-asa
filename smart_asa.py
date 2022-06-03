@@ -13,10 +13,11 @@ Usage:
   smart_asa destroy <asset-id> <manager>
   smart_asa freeze  <asset-id> <freeze> (--asset | <account>) <boolean>
   smart_asa optin   <asset-id> <account>
-  smart_asa optout  <asset-id> <account>
-  smart_asa send    <asset-id> <from> <to> <amount> [--clawback=<c>]
+  smart_asa optout  <asset-id> <account> <close-to>
+  smart_asa send    <asset-id> <from> <to> <amount>
+                    [--minter=<i> | --clawback=<c>]
   smart_asa info    <asset-id> [--account=<a>]
-  smart_asa get     <asset-id> <getter> [--account=<a>]
+  smart_asa get     <asset-id> <caller> <getter> [--account=<a>]
   smart_asa         [--help]
 
 Commands:
@@ -37,7 +38,7 @@ Options:
 import sys
 from docopt import docopt
 
-from account import AppAccount
+from account import Account, AppAccount
 from sandbox import Sandbox
 from smart_asa_asc import (
     compile_stateful,
@@ -46,12 +47,15 @@ from smart_asa_asc import (
 from smart_asa_client import (
     get_smart_asa_params,
     smart_asa_account_freeze,
+    smart_asa_app_closeout,
     smart_asa_app_create,
+    smart_asa_app_optin,
     smart_asa_create,
     smart_asa_config,
     smart_asa_destroy,
     smart_asa_freeze,
-    smart_asa_app_optin,
+    smart_asa_get,
+    smart_asa_transfer,
 )
 
 
@@ -61,6 +65,7 @@ def smart_asa_info(smart_asa_id: int) -> None:
         f"""
         Asset ID:         {smart_asa['smart_asa_id']}
         App ID:           {smart_asa['app_id']}
+        App Address:      {smart_asa['app_address']}
         Creator:          {smart_asa['creator_addr']}
         Asset name:       {smart_asa['name']}
 
@@ -92,6 +97,9 @@ def args_types(args: dict) -> dict:
         args["<boolean>"] = int(args["<boolean>"])
         assert args["<boolean>"] == 0 or args["<boolean>"] == 1
         args["<boolean>"] = bool(args["<boolean>"])
+
+    if args["<amount>"] is not None:
+        args["<amount>"] = int(args["<amount>"])
 
     return args
 
@@ -219,10 +227,45 @@ def smart_asa_cli():
         return print(account.app_local_state(smart_asa_app.app_id), "\n")
 
     if args["optout"]:
-        pass  # TODO
+        account = Sandbox.from_public_key(args["<account>"])
+        close_to = Account(address=args["<close-to>"])
+
+        print(f"\n --- Closing Smart ASA {args['<asset-id>']}...")
+        account.close_asset_to(args["<asset-id>"], close_to)
+        smart_asa_app_closeout(
+            smart_asa_contract=contract,
+            smart_asa_app=smart_asa_app,
+            asset_id=args["<asset-id>"],
+            closer=account,
+        )
+        return print(f"\n --- Smart ASA {args['<asset-id>']} closed!")
 
     if args["send"]:
-        pass  # TODO
+        if args["--minter"]:
+            caller = Sandbox.from_public_key(args["--minter"])
+            action = "Minting"
+        elif args["--clawback"]:
+            caller = Sandbox.from_public_key(args["--clawback"])
+            action = "Clawbacking"
+        else:
+            caller = Sandbox.from_public_key(args["<from>"])
+            action = "Sending"
+
+        print(
+            f"\n --- {action} {args['<amount>']} units of Smart ASA "
+            f"{args['<asset-id>']} from {args['<from>']} to "
+            f"{args['<to>']}..."
+        )
+        smart_asa_transfer(
+            smart_asa_contract=contract,
+            smart_asa_app=smart_asa_app,
+            xfer_asset=args["<asset-id>"],
+            asset_amount=args["<amount>"],
+            caller=caller,
+            asset_receiver=args["<to>"],
+            asset_sender=args["<from>"],
+        )
+        return print(f" --- Confirmed!\n")
 
     if args["info"]:
         if args["--account"]:
@@ -230,10 +273,21 @@ def smart_asa_cli():
             print(f"\n --- Smart ASA {args['<asset-id>']} state:")
             return print(account.app_local_state(smart_asa_app.app_id), "\n")
         else:
-            return smart_asa_info(int(args["<asset-id>"]))
+            return smart_asa_info(args["<asset-id>"])
 
     if args["get"]:
-        pass  # TODO
+        caller = Sandbox.from_public_key(args["<caller>"])
+        result = smart_asa_get(
+            smart_asa_contract=contract,
+            smart_asa_app=smart_asa_app,
+            caller=caller,
+            asset_id=args["<asset-id>"],
+            getter=args["<getter>"],
+            account=args["--account"],
+        )
+        return print(
+            f"\n --- Smart ASA {args['<asset-id>']} " f"{args['<getter>']}: {result}\n"
+        )
 
 
 if __name__ == "__main__":

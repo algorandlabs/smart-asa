@@ -37,7 +37,6 @@ from smart_asa_client import (
     smart_asa_destroy,
     smart_asa_freeze,
     smart_asa_get,
-    smart_asa_get_asset_frozen,
     smart_asa_app_optin,
     smart_asa_transfer,
 )
@@ -1362,13 +1361,13 @@ class TestGetters:
             account.algod_client, account.address, smart_asa_app.app_id
         )
         print(f"\n --- Getting 'frozen' param of Account {account.address}...")
-        assert account_local_state["frozen"] == smart_asa_get_asset_frozen(
+        assert account_local_state["frozen"] == smart_asa_get(
             smart_asa_contract=smart_asa_contract,
             smart_asa_app=smart_asa_app,
             caller=creator,
             asset_id=smart_asa_id,
-            getter="is_account_frozen",
             account=account,
+            getter="is_account_frozen",
         )
 
         print(f"\n --- Getting 'total' param of Smart ASA {smart_asa_app.app_id}...")

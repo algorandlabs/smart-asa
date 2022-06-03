@@ -23,11 +23,13 @@ from smart_asa_asc import (
 def get_smart_asa_params(_algod_client: AlgodClient, smart_asa_id: int) -> dict:
     smart_asa = _algod_client.asset_info(smart_asa_id)["params"]
     smart_asa_app_id = int.from_bytes(b64decode(smart_asa["url-b64"]), "big")
+    smart_asa_app_account = AppAccount.from_app_id(smart_asa_app_id)
     smart_asa_state = get_global_state(_algod_client, smart_asa_app_id)
     smart_asa_app = _algod_client.application_info(smart_asa_app_id)["params"]
     return {
         "smart_asa_id": smart_asa_id,
         "app_id": smart_asa_app_id,
+        "app_address": smart_asa_app_account.address,
         "creator_addr": smart_asa_app["creator"],
         "unit_name": smart_asa_state["unit_name"].decode(),
         "name": smart_asa_state["name"].decode(),
@@ -293,31 +295,15 @@ def smart_asa_get(
     caller: Account,
     asset_id: int,
     getter: str,
+    account: Optional[Union[str, Account]] = None,
     save_abi_call: Optional[str] = None,
 ) -> Any:
-
+    args = [asset_id]
+    if account is not None:
+        args.append(account)
     return caller.abi_call(
         get_method(smart_asa_contract, getter),
-        asset_id,
-        app=smart_asa_app,
-        save_abi_call=save_abi_call,
-    )
-
-
-def smart_asa_get_asset_frozen(
-    smart_asa_contract: Contract,
-    smart_asa_app: AppAccount,
-    caller: Account,
-    asset_id: int,
-    getter: str,
-    account: Optional[Account] = None,
-    save_abi_call: Optional[str] = None,
-) -> Any:
-
-    return caller.abi_call(
-        get_method(smart_asa_contract, getter),
-        asset_id,
-        caller if account is None else account,
+        *args,
         app=smart_asa_app,
         save_abi_call=save_abi_call,
     )
