@@ -168,7 +168,7 @@ python3 smart_asa.py info 2991
         Clawback address: KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ
 ```
 
-#### Smart NFT ASA glabal freeze
+#### Smart NFT ASA global freeze
 ```shell
 python3 smart_asa.py freeze 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ --asset 1
 
@@ -227,7 +227,7 @@ python3 smart_asa.py info 2991
         Clawback address: KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ
 ```
 
-#### Smart NFT ASA unfreeze
+#### Smart NFT ASA global unfreeze
 ```shell
 python3 smart_asa.py freeze 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ --asset 0
 
