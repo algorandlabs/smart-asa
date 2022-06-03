@@ -113,9 +113,9 @@ python3 smart_asa.py info 2991
 
         Unit name:        🔴
 
-        Maximum issue:    100 🔴
+        Maximum issue:    100 🔴 <-- 😱
         Issued:           0 🔴
-        Decimals:         2
+        Decimals:         2      <-- 😱
         Global frozen:    False
         Default frozen:   False
         Manager address:  KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ
@@ -189,7 +189,7 @@ python3 smart_asa.py info 2991
         Maximum issue:    100 🔴
         Issued:           100 🔴
         Decimals:         2
-        Global frozen:    True
+        Global frozen:    True   <-- 😱
         Default frozen:   False
         Manager address:  KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ
         Reserve address:  KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ
@@ -212,9 +212,9 @@ python3 smart_asa.py info 2991
         App ID:           2988
         App Address:      T6QBA5AXSJMBG55Y2BVDR6MN5KTXHHLU7LWDY3LGZNAPGIKDOWMP4GF5PU
         Creator:          KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ
-        Asset name:       Blue
+        Asset name:       Blue   <-- 😱
 
-        Unit name:        🔵
+        Unit name:        🔵     <-- 😱
 
         Maximum issue:    100 🔵
         Issued:           100 🔵
@@ -232,6 +232,28 @@ python3 smart_asa.py info 2991
 python3 smart_asa.py freeze 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ --asset 0
 
  --- Unfreezing Smart ASA 2991...
+```
+
+```shell
+python3 smart_asa.py info 2991
+
+        Asset ID:         2991
+        App ID:           2988
+        App Address:      T6QBA5AXSJMBG55Y2BVDR6MN5KTXHHLU7LWDY3LGZNAPGIKDOWMP4GF5PU
+        Creator:          KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ
+        Asset name:       Blue
+
+        Unit name:        🔵
+
+        Maximum issue:    100 🔵
+        Issued:           100 🔵
+        Decimals:         2
+        Global frozen:    False  <-- 😱
+        Default frozen:   False
+        Manager address:  KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ
+        Reserve address:  KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ
+        Freeze address:   KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ
+        Clawback address: KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ
 ```
 
 #### Smart NFT ASA burn
