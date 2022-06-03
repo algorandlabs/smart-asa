@@ -169,9 +169,7 @@ def smart_asa_cli():
             asset_id=args["<asset-id>"],
             config_total=args["--total"],
             config_decimals=args["--decimals"],
-            config_default_frozen=args[
-                "--default-frozen"
-            ],  # FIXME: turn it into a required arg
+            config_default_frozen=args["--default-frozen"],
             config_asset_name=args["--name"],
             config_unit_name=args["--unit-name"],
             config_url=args["--url"],
