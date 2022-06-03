@@ -401,12 +401,14 @@ def asset_config(
     config_asset = Txn.assets[config_asset.get()]
     smart_asa_id = App.globalGet(SMART_ASA_GS["smart_asa_id"])
     current_manager_addr = App.globalGet(SMART_ASA_GS["manager_addr"])
+    current_reserve_addr = App.globalGet(SMART_ASA_GS["reserve_addr"])
     current_freeze_addr = App.globalGet(SMART_ASA_GS["freeze_addr"])
     current_clawback_addr = App.globalGet(SMART_ASA_GS["clawback_addr"])
 
     is_manager_addr = Txn.sender() == current_manager_addr
     is_correct_smart_asa_id = smart_asa_id == config_asset
 
+    update_reserve_addr = current_reserve_addr != reserve_addr.get()
     update_freeze_addr = current_freeze_addr != freeze_addr.get()
     update_clawback_addr = current_clawback_addr != clawback_addr.get()
 
@@ -427,6 +429,9 @@ def asset_config(
         is_valid_address_bytes_length(freeze_addr.get()),
         is_valid_address_bytes_length(clawback_addr.get()),
         Assert(is_manager_addr),
+        If(update_reserve_addr).Then(
+            Assert(current_reserve_addr != Global.zero_address())
+        ),
         If(update_freeze_addr).Then(
             Assert(current_freeze_addr != Global.zero_address())
         ),
