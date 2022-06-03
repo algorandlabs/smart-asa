@@ -219,10 +219,18 @@ def is_valid_address_bytes_length(address: Expr) -> Expr:
     return Assert(Len(address) == ADDRESS_BYTES_LENGTH)
 
 
+@Subroutine(TealType.uint64)
+def circulating_supply(asset_id: Expr):
+    smart_asa_reserve = AssetHolding.balance(
+        Global.current_application_address(), asset_id
+    )
+    return Seq(smart_asa_reserve, UNDERLYING_ASA_TOTAL - smart_asa_reserve.value())
+
+
 @Subroutine(TealType.none)
-def getter_preconditions(asset: Expr) -> Expr:
+def getter_preconditions(asset_id: Expr) -> Expr:
     smart_asa_id = App.globalGet(SMART_ASA_GS["smart_asa_id"])
-    is_correct_smart_asa_id = smart_asa_id == asset
+    is_correct_smart_asa_id = smart_asa_id == asset_id
     return Seq(
         Assert(smart_asa_id),
         Assert(is_correct_smart_asa_id),
@@ -377,9 +385,9 @@ def asset_create(
 @smart_asa_abi.method
 def asset_config(
     config_asset: abi.Asset,
-    total: abi.Uint64,  # NOTE: In ref. impl `total` can not be changed
+    total: abi.Uint64,
     decimals: abi.Uint32,
-    default_frozen: abi.Bool,  # NOTE: In ref. impl `default_frozen` can not be changed
+    default_frozen: abi.Bool,
     unit_name: abi.String,
     asset_name: abi.String,
     url: abi.String,
@@ -402,6 +410,10 @@ def asset_config(
     update_freeze_addr = current_freeze_addr != freeze_addr.get()
     update_clawback_addr = current_clawback_addr != clawback_addr.get()
 
+    # NOTE: In ref. implementation Smart ASA total can not be configured to
+    # less than its current circulating supply.
+    is_valid_total = total.get() >= circulating_supply(smart_asa_id)
+
     return Seq(
         # Preconditions
         Assert(smart_asa_id),
@@ -419,10 +431,11 @@ def asset_config(
         If(update_clawback_addr).Then(
             Assert(current_clawback_addr != Global.zero_address())
         ),
+        Assert(is_valid_total),
         # Effects
-        # NOTE: In ref. impl `total` can not be changed
+        App.globalPut(SMART_ASA_GS["total"], total.get()),
         App.globalPut(SMART_ASA_GS["decimals"], decimals.get()),
-        # NOTE: In ref. impl `default_frozen` can not be changed
+        App.globalPut(SMART_ASA_GS["default_frozen"], default_frozen.get()),
         App.globalPut(SMART_ASA_GS["unit_name"], unit_name.get()),
         App.globalPut(SMART_ASA_GS["name"], asset_name.get()),
         App.globalPut(SMART_ASA_GS["url"], url.get()),
@@ -497,13 +510,12 @@ def asset_transfer(
                     smart_asa_id
                     == App.localGet(asset_receiver, SMART_ASA_LS["smart_asa_id"])
                 ),
+                # NOTE: Ref. implementation prevents minting more than `total`.
+                Assert(
+                    circulating_supply(smart_asa_id) + asset_amount.get()
+                    <= App.globalGet(SMART_ASA_GS["total"])
+                ),
             )
-            # TODO: can not mint more than `total`. This could be checked by
-            #  inspecting the `reserve_addr` balance OR introducing a new
-            #  auxiliary `circulating_supply` modified just by `mint` or
-            #  `burn` (in this second case we should figure out how to
-            #  handle amout of ASA returned to the Smart ASA App bypassing
-            #  the `burn` method).
         )
         .Else(
             Seq(
@@ -610,7 +622,6 @@ def is_account_frozen(
 @smart_asa_abi.method
 def get_total(asset: abi.Asset, *, output: abi.Uint64) -> Expr:
     asset = Txn.assets[asset.get()]
-    getter_preconditions(asset)
     return Seq(
         # Preconditions
         getter_preconditions(asset),
@@ -622,7 +633,6 @@ def get_total(asset: abi.Asset, *, output: abi.Uint64) -> Expr:
 @smart_asa_abi.method
 def get_decimals(asset: abi.Asset, *, output: abi.Uint32) -> Expr:
     asset = Txn.assets[asset.get()]
-    getter_preconditions(asset)
     return Seq(
         # Preconditions
         getter_preconditions(asset),
@@ -634,7 +644,6 @@ def get_decimals(asset: abi.Asset, *, output: abi.Uint32) -> Expr:
 @smart_asa_abi.method
 def get_default_frozen(asset: abi.Asset, *, output: abi.Bool) -> Expr:
     asset = Txn.assets[asset.get()]
-    getter_preconditions(asset)
     return Seq(
         # Preconditions
         getter_preconditions(asset),
@@ -646,7 +655,6 @@ def get_default_frozen(asset: abi.Asset, *, output: abi.Bool) -> Expr:
 @smart_asa_abi.method
 def get_unit_name(asset: abi.Asset, *, output: abi.String) -> Expr:
     asset = Txn.assets[asset.get()]
-    getter_preconditions(asset)
     return Seq(
         # Preconditions
         getter_preconditions(asset),
@@ -658,7 +666,6 @@ def get_unit_name(asset: abi.Asset, *, output: abi.String) -> Expr:
 @smart_asa_abi.method
 def get_asset_name(asset: abi.Asset, *, output: abi.String) -> Expr:
     asset = Txn.assets[asset.get()]
-    getter_preconditions(asset)
     return Seq(
         # Preconditions
         getter_preconditions(asset),
@@ -670,7 +677,6 @@ def get_asset_name(asset: abi.Asset, *, output: abi.String) -> Expr:
 @smart_asa_abi.method
 def get_url(asset: abi.Asset, *, output: abi.String) -> Expr:
     asset = Txn.assets[asset.get()]
-    getter_preconditions(asset)
     return Seq(
         # Preconditions
         getter_preconditions(asset),
@@ -684,7 +690,6 @@ def get_metadata_hash(
     asset: abi.Asset, *, output: abi.String  # FIXME: This was originally Byte in ARC-20
 ) -> Expr:
     asset = Txn.assets[asset.get()]
-    getter_preconditions(asset)
     return Seq(
         # Preconditions
         getter_preconditions(asset),
@@ -696,7 +701,6 @@ def get_metadata_hash(
 @smart_asa_abi.method
 def get_manager_addr(asset: abi.Asset, *, output: abi.Address) -> Expr:
     asset = Txn.assets[asset.get()]
-    getter_preconditions(asset)
     return Seq(
         # Preconditions
         getter_preconditions(asset),
@@ -708,7 +712,6 @@ def get_manager_addr(asset: abi.Asset, *, output: abi.Address) -> Expr:
 @smart_asa_abi.method
 def get_reserve_addr(asset: abi.Asset, *, output: abi.Address) -> Expr:
     asset = Txn.assets[asset.get()]
-    getter_preconditions(asset)
     return Seq(
         # Preconditions
         getter_preconditions(asset),
@@ -720,7 +723,6 @@ def get_reserve_addr(asset: abi.Asset, *, output: abi.Address) -> Expr:
 @smart_asa_abi.method
 def get_freeze_addr(asset: abi.Asset, *, output: abi.Address) -> Expr:
     asset = Txn.assets[asset.get()]
-    getter_preconditions(asset)
     return Seq(
         # Preconditions
         getter_preconditions(asset),
@@ -732,13 +734,26 @@ def get_freeze_addr(asset: abi.Asset, *, output: abi.Address) -> Expr:
 @smart_asa_abi.method
 def get_clawback_addr(asset: abi.Asset, *, output: abi.Address) -> Expr:
     asset = Txn.assets[asset.get()]
-    getter_preconditions(asset)
     return Seq(
         # Preconditions
         getter_preconditions(asset),
         # Effects
         output.set(App.globalGet(SMART_ASA_GS["clawback_addr"])),
     )
+
+
+@smart_asa_abi.method
+def get_circulating_supply(asset: abi.Asset, *, output: abi.Uint64) -> Expr:
+    asset = Txn.assets[asset.get()]
+    return Seq(
+        # Preconditions
+        getter_preconditions(asset),
+        # Effects
+        output.set(circulating_supply(asset)),
+    )
+
+
+# TODO: get_smart_asa_optin_min_balance
 
 
 def compile_stateful(program: Expr) -> str:

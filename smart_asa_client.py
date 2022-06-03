@@ -15,6 +15,7 @@ from account import Account, AppAccount
 from utils import get_global_state, get_method, get_params
 
 from smart_asa_asc import (
+    UNDERLYING_ASA_TOTAL,
     smart_asa_global_state,
     smart_asa_local_state,
 )
@@ -23,14 +24,21 @@ from smart_asa_asc import (
 def get_smart_asa_params(_algod_client: AlgodClient, smart_asa_id: int) -> dict:
     smart_asa = _algod_client.asset_info(smart_asa_id)["params"]
     smart_asa_app_id = int.from_bytes(b64decode(smart_asa["url-b64"]), "big")
-    smart_asa_app_account = AppAccount.from_app_id(smart_asa_app_id)
+    smart_asa_app_account = AppAccount.from_app_id(
+        app_id=smart_asa_app_id,
+        algod_client=_algod_client,
+    )
     smart_asa_state = get_global_state(_algod_client, smart_asa_app_id)
     smart_asa_app = _algod_client.application_info(smart_asa_app_id)["params"]
+    circulating_supply = UNDERLYING_ASA_TOTAL.value - smart_asa_app_account.asa_balance(
+        smart_asa_id
+    )
     return {
         "smart_asa_id": smart_asa_id,
         "app_id": smart_asa_app_id,
         "app_address": smart_asa_app_account.address,
         "creator_addr": smart_asa_app["creator"],
+        "circulating_supply": circulating_supply,
         "unit_name": smart_asa_state["unit_name"].decode(),
         "name": smart_asa_state["name"].decode(),
         "url": smart_asa_state["url"].decode(),

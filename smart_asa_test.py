@@ -23,6 +23,7 @@ from sandbox import Sandbox
 from account import Account, AppAccount
 
 from smart_asa_asc import (
+    UNDERLYING_ASA_TOTAL,
     compile_stateful,
     smart_asa_abi,
 )
@@ -492,7 +493,6 @@ class TestAssetConfig:
             )
         print(" --- Rejected as expected!")
 
-    @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
     def test_happy_path(
         self,
         smart_asa_contract: Contract,
@@ -552,6 +552,67 @@ class TestAssetConfig:
         #     else:
         #         assert smart_asa[k] == config_s_asa[k]
 
+    def test_forbidden_total(
+        self,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        opted_in_creator: Account,
+        smart_asa_id: int,
+    ) -> None:
+
+        print("\n --- Configuring Smart ASA total...")
+        configured_smart_asa_id = smart_asa_config(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            manager=opted_in_creator,
+            asset_id=smart_asa_id,
+            config_total=2,
+        )
+        print(" --- Configured Smart ASA ID:", configured_smart_asa_id)
+
+        print(
+            "\n --- Pre Minting Smart ASA circulating supply:",
+            smart_asa_get(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                caller=opted_in_creator,
+                asset_id=smart_asa_id,
+                getter="get_circulating_supply",
+            ),
+        )
+        print("\n --- Minting Smart ASA...")
+        smart_asa_transfer(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            xfer_asset=smart_asa_id,
+            asset_amount=2,
+            caller=opted_in_creator,
+            asset_receiver=opted_in_creator,
+            asset_sender=smart_asa_app,
+        )
+        print(
+            "\n --- Post Minting Smart ASA circulating supply:",
+            smart_asa_get(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                caller=opted_in_creator,
+                asset_id=smart_asa_id,
+                getter="get_circulating_supply",
+            ),
+        )
+        assert opted_in_creator.asa_balance(smart_asa_id) == 2
+
+        print("\n --- Configuring forbidden Smart ASA total...")
+        with pytest.raises(AlgodHTTPError):
+            smart_asa_config(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                manager=opted_in_creator,
+                asset_id=smart_asa_id,
+                config_total=1,
+            )
+        print(" --- Rejected as expected!")
+
 
 class TestAssetTransfer:
     def test_smart_asa_not_created(
@@ -603,8 +664,14 @@ class TestAssetTransfer:
         smart_asa_id: int,
     ) -> None:
         print(
-            "\n --- Pre Minting Smart ASA Reserve:",
-            smart_asa_app.asa_balance(smart_asa_id),
+            "\n --- Pre Minting Smart ASA circulating supply:",
+            smart_asa_get(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                caller=opted_in_creator,
+                asset_id=smart_asa_id,
+                getter="get_circulating_supply",
+            ),
         )
         print("\n --- Minting Smart ASA...")
         smart_asa_transfer(
@@ -617,10 +684,68 @@ class TestAssetTransfer:
             asset_sender=smart_asa_app,
         )
         print(
-            "\n --- Post Minting Smart ASA Reserve:",
-            smart_asa_app.asa_balance(smart_asa_id),
+            "\n --- Post Minting Smart ASA circulating supply:",
+            smart_asa_get(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                caller=opted_in_creator,
+                asset_id=smart_asa_id,
+                getter="get_circulating_supply",
+            ),
         )
         assert opted_in_creator.asa_balance(smart_asa_id) == 100
+
+    def test_overminting(
+        self,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        opted_in_creator: Account,
+        smart_asa_id: int,
+    ) -> None:
+        print(
+            "\n --- Pre Minting Smart ASA circulating supply:",
+            smart_asa_get(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                caller=opted_in_creator,
+                asset_id=smart_asa_id,
+                getter="get_circulating_supply",
+            ),
+        )
+        print("\n --- Minting Smart ASA...")
+        smart_asa_transfer(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            xfer_asset=smart_asa_id,
+            asset_amount=100,
+            caller=opted_in_creator,
+            asset_receiver=opted_in_creator,
+            asset_sender=smart_asa_app,
+        )
+        print(
+            "\n --- Post Minting Smart ASA circulating supply:",
+            smart_asa_get(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                caller=opted_in_creator,
+                asset_id=smart_asa_id,
+                getter="get_circulating_supply",
+            ),
+        )
+        assert opted_in_creator.asa_balance(smart_asa_id) == 100
+
+        print("\n --- Overminting Smart ASA...")
+        with pytest.raises(AlgodHTTPError):
+            smart_asa_transfer(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                xfer_asset=smart_asa_id,
+                asset_amount=1,
+                caller=opted_in_creator,
+                asset_receiver=opted_in_creator,
+                asset_sender=smart_asa_app,
+            )
+        print(" --- Rejected as expected!")
 
     def test_receiver_not_optedin_to_app(
         self,
@@ -1480,4 +1605,18 @@ class TestGetters:
             caller=creator,
             asset_id=smart_asa_id,
             getter="get_clawback_addr",
+        )
+
+        print(
+            f"\n --- Getting circulating supply of Smart ASA {smart_asa_app.app_id}..."
+        )
+        circulating_supply = UNDERLYING_ASA_TOTAL.value - smart_asa_app.asa_balance(
+            smart_asa_id
+        )
+        assert circulating_supply == smart_asa_get(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            caller=creator,
+            asset_id=smart_asa_id,
+            getter="get_circulating_supply",
         )

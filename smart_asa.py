@@ -2,14 +2,14 @@
 Smart ASA (ARC-20 reference implementation)
 
 Usage:
-  smart_asa create  <creator> <total> [--decimals=<d>] [--default-frozen]
+  smart_asa create  <creator> <total> [--decimals=<d>] [--default-frozen=<df>]
                     [--name=<n>] [--unit-name=<un>] [--metadata-hash=<mh>]
                     [--url=<l>] [--manager=<m>] [--reserve=<r>]
                     [--freeze=<f>] [--clawback=<c>]
-  smart_asa config  <asset-id> <manager> [--decimals=<d>] [--name=<n>]
-                    [--unit-name=<un>] [--metadata-hash=<mh>] [--url=<u>]
-                    [--manager=<m>] [--reserve=<r>] [--freeze=<f>]
-                    [--clawback=<c>]
+  smart_asa config  <asset-id> <manager> [--total=<t>] [--decimals=<d>]
+                    [--default-frozen=<df>] [--name=<n>] [--unit-name=<un>]
+                    [--metadata-hash=<mh>] [--url=<u>] [--manager=<m>]
+                    [--reserve=<r>] [--freeze=<f>] [--clawback=<c>]
   smart_asa destroy <asset-id> <manager>
   smart_asa freeze  <asset-id> <freeze> (--asset | <account>) <boolean>
   smart_asa optin   <asset-id> <account>
@@ -72,6 +72,7 @@ def smart_asa_info(smart_asa_id: int) -> None:
         Unit name:        {smart_asa['unit_name']}
 
         Maximum issue:    {smart_asa['total']} {smart_asa['unit_name']}
+        Issued:           {smart_asa['circulating_supply']} {smart_asa['unit_name']}
         Decimals:         {smart_asa['decimals']}
         Global frozen:    {smart_asa['frozen']}
         Default frozen:   {smart_asa['default_frozen']}
@@ -90,8 +91,16 @@ def args_types(args: dict) -> dict:
     if args["<asset-id>"] is not None:
         args["<asset-id>"] = int(args["<asset-id>"])
 
+    if args["--total"] is not None:
+        args["--total"] = int(args["--total"])
+
     if args["--decimals"] is not None:
         args["--decimals"] = int(args["--decimals"])
+
+    if args["--default-frozen"] is not None:
+        args["--default-frozen"] = int(args["--default-frozen"])
+        assert args["--default-frozen"] == 0 or args["--default-frozen"] == 1
+        args["--default-frozen"] = bool(args["--default-frozen"])
 
     if args["<boolean>"] is not None:
         args["<boolean>"] = int(args["<boolean>"])
@@ -158,9 +167,11 @@ def smart_asa_cli():
             smart_asa_app=smart_asa_app,
             manager=manager,
             asset_id=args["<asset-id>"],
-            config_total=args["<total>"],
+            config_total=args["--total"],
             config_decimals=args["--decimals"],
-            config_default_frozen=args["--default-frozen"],
+            config_default_frozen=args[
+                "--default-frozen"
+            ],  # FIXME: turn it into a required arg
             config_asset_name=args["--name"],
             config_unit_name=args["--unit-name"],
             config_url=args["--url"],
