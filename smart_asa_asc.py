@@ -646,66 +646,66 @@ def is_account_frozen(
 
 
 @smart_asa_abi.method
-def get_total(asset: abi.Asset, *, output: abi.Uint64) -> Expr:
-    asset = Txn.assets[asset.get()]
+def get_total(asset_id: abi.Asset, *, output: abi.Uint64) -> Expr:
+    asset_id = Txn.assets[asset_id.get()]
     return Seq(
         # Preconditions
-        getter_preconditions(asset),
+        getter_preconditions(asset_id),
         # Effects
         output.set(App.globalGet(SMART_ASA_GS["total"])),
     )
 
 
 @smart_asa_abi.method
-def get_decimals(asset: abi.Asset, *, output: abi.Uint32) -> Expr:
-    asset = Txn.assets[asset.get()]
+def get_decimals(asset_id: abi.Asset, *, output: abi.Uint32) -> Expr:
+    asset_id = Txn.assets[asset_id.get()]
     return Seq(
         # Preconditions
-        getter_preconditions(asset),
+        getter_preconditions(asset_id),
         # Effects
         output.set(App.globalGet(SMART_ASA_GS["decimals"])),
     )
 
 
 @smart_asa_abi.method
-def get_default_frozen(asset: abi.Asset, *, output: abi.Bool) -> Expr:
-    asset = Txn.assets[asset.get()]
+def get_default_frozen(asset_id: abi.Asset, *, output: abi.Bool) -> Expr:
+    asset_id = Txn.assets[asset_id.get()]
     return Seq(
         # Preconditions
-        getter_preconditions(asset),
+        getter_preconditions(asset_id),
         # Effects
         output.set(App.globalGet(SMART_ASA_GS["default_frozen"])),
     )
 
 
 @smart_asa_abi.method
-def get_unit_name(asset: abi.Asset, *, output: abi.String) -> Expr:
-    asset = Txn.assets[asset.get()]
+def get_unit_name(asset_id: abi.Asset, *, output: abi.String) -> Expr:
+    asset_id = Txn.assets[asset_id.get()]
     return Seq(
         # Preconditions
-        getter_preconditions(asset),
+        getter_preconditions(asset_id),
         # Effects
         output.set(App.globalGet(SMART_ASA_GS["unit_name"])),
     )
 
 
 @smart_asa_abi.method
-def get_asset_name(asset: abi.Asset, *, output: abi.String) -> Expr:
-    asset = Txn.assets[asset.get()]
+def get_asset_name(asset_id: abi.Asset, *, output: abi.String) -> Expr:
+    asset_id = Txn.assets[asset_id.get()]
     return Seq(
         # Preconditions
-        getter_preconditions(asset),
+        getter_preconditions(asset_id),
         # Effects
         output.set(App.globalGet(SMART_ASA_GS["name"])),
     )
 
 
 @smart_asa_abi.method
-def get_url(asset: abi.Asset, *, output: abi.String) -> Expr:
-    asset = Txn.assets[asset.get()]
+def get_url(asset_id: abi.Asset, *, output: abi.String) -> Expr:
+    asset_id = Txn.assets[asset_id.get()]
     return Seq(
         # Preconditions
-        getter_preconditions(asset),
+        getter_preconditions(asset_id),
         # Effects
         output.set(App.globalGet(SMART_ASA_GS["url"])),
     )
@@ -713,69 +713,71 @@ def get_url(asset: abi.Asset, *, output: abi.String) -> Expr:
 
 @smart_asa_abi.method
 def get_metadata_hash(
-    asset: abi.Asset, *, output: abi.String  # FIXME: This was originally Byte in ARC-20
+    asset_id: abi.Asset,
+    *,
+    output: abi.String,  # FIXME: This was originally Byte in ARC-20
 ) -> Expr:
-    asset = Txn.assets[asset.get()]
+    asset_id = Txn.assets[asset_id.get()]
     return Seq(
         # Preconditions
-        getter_preconditions(asset),
+        getter_preconditions(asset_id),
         # Effects
         output.set(App.globalGet(SMART_ASA_GS["metadata_hash"])),
     )
 
 
 @smart_asa_abi.method
-def get_manager_addr(asset: abi.Asset, *, output: abi.Address) -> Expr:
-    asset = Txn.assets[asset.get()]
+def get_manager_addr(asset_id: abi.Asset, *, output: abi.Address) -> Expr:
+    asset_id = Txn.assets[asset_id.get()]
     return Seq(
         # Preconditions
-        getter_preconditions(asset),
+        getter_preconditions(asset_id),
         # Effects
         output.set(App.globalGet(SMART_ASA_GS["manager_addr"])),
     )
 
 
 @smart_asa_abi.method
-def get_reserve_addr(asset: abi.Asset, *, output: abi.Address) -> Expr:
-    asset = Txn.assets[asset.get()]
+def get_reserve_addr(asset_id: abi.Asset, *, output: abi.Address) -> Expr:
+    asset_id = Txn.assets[asset_id.get()]
     return Seq(
         # Preconditions
-        getter_preconditions(asset),
+        getter_preconditions(asset_id),
         # Effects
         output.set(App.globalGet(SMART_ASA_GS["reserve_addr"])),
     )
 
 
 @smart_asa_abi.method
-def get_freeze_addr(asset: abi.Asset, *, output: abi.Address) -> Expr:
-    asset = Txn.assets[asset.get()]
+def get_freeze_addr(asset_id: abi.Asset, *, output: abi.Address) -> Expr:
+    asset_id = Txn.assets[asset_id.get()]
     return Seq(
         # Preconditions
-        getter_preconditions(asset),
+        getter_preconditions(asset_id),
         # Effects
         output.set(App.globalGet(SMART_ASA_GS["freeze_addr"])),
     )
 
 
 @smart_asa_abi.method
-def get_clawback_addr(asset: abi.Asset, *, output: abi.Address) -> Expr:
-    asset = Txn.assets[asset.get()]
+def get_clawback_addr(asset_id: abi.Asset, *, output: abi.Address) -> Expr:
+    asset_id = Txn.assets[asset_id.get()]
     return Seq(
         # Preconditions
-        getter_preconditions(asset),
+        getter_preconditions(asset_id),
         # Effects
         output.set(App.globalGet(SMART_ASA_GS["clawback_addr"])),
     )
 
 
 @smart_asa_abi.method
-def get_circulating_supply(asset: abi.Asset, *, output: abi.Uint64) -> Expr:
-    asset = Txn.assets[asset.get()]
+def get_circulating_supply(asset_id: abi.Asset, *, output: abi.Uint64) -> Expr:
+    asset_id = Txn.assets[asset_id.get()]
     return Seq(
         # Preconditions
-        getter_preconditions(asset),
+        getter_preconditions(asset_id),
         # Effects
-        output.set(circulating_supply(asset)),
+        output.set(circulating_supply(asset_id)),
     )
 
 

@@ -3,27 +3,13 @@ Smart ASA reference implementation
 
 ## Overview
 
-## Reference implementation
+## Reference implementation rational
 
-### ABI Interface
+## Smart ASA life-cycle example
 
-### Reference implementation rational
+### Smart ASA CLI - Install
 
-#### Smart ASA App create
-
-#### Smart ASA Opt-In and Close-Out
-
-#### Underlying ASA
-
-#### Smart ASA Configuration
-
-#### Smart ASA Minting
-
-## Smart ASA life-cycle
-
-### Smart ASA CLI install
-
-### Smart ASA CLI usage
+### Smart ASA CLI - Usage
 ```shell
 Usage:
   smart_asa create  <creator> <total> [--decimals=<d>] [--default-frozen=<df>]
@@ -59,7 +45,7 @@ Options:
   -h, --help
 ```
 
-#### Create Smart ASA NFT
+### Create Smart ASA NFT
 ```shell
 python3 smart_asa.py create KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ 1 --name Red --unit-name 🔴
 
@@ -94,7 +80,7 @@ python3 smart_asa.py info 2991
         Clawback address: KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ
 ```
 
-#### Fractionalize Smart ASA NFT
+### Fractionalize Smart ASA NFT
 ```shell
 python3 smart_asa.py config 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ --total 100 --decimals 2
 
@@ -124,7 +110,7 @@ python3 smart_asa.py info 2991
         Clawback address: KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ
 ```
 
-#### Smart ASA NFT opt-in
+### Smart ASA NFT opt-in
 ```shell
 python3 smart_asa.py optin 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ
 
@@ -134,7 +120,7 @@ python3 smart_asa.py optin 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAX
 {'frozen': 0, 'smart_asa_id': 2991}
 ```
 
-#### Mint Smart ASA NFT
+### Mint Smart ASA NFT
 ```shell
 python3 smart_asa.py send 2991 T6QBA5AXSJMBG55Y2BVDR6MN5KTXHHLU7LWDY3LGZNAPGIKDOWMP4GF5PU
 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ 100
@@ -168,7 +154,7 @@ python3 smart_asa.py info 2991
         Clawback address: KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ
 ```
 
-#### Smart NFT ASA global freeze
+### Smart NFT ASA global freeze
 ```shell
 python3 smart_asa.py freeze 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ --asset 1
 
@@ -197,7 +183,7 @@ python3 smart_asa.py info 2991
         Clawback address: KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ
 ```
 
-#### Smart NFT ASA rename
+### Smart NFT ASA rename
 ```shell
 python3 smart_asa.py config 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ --name Blue --unit-name 🔵
 
@@ -227,7 +213,7 @@ python3 smart_asa.py info 2991
         Clawback address: KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ
 ```
 
-#### Smart NFT ASA global unfreeze
+### Smart NFT ASA global unfreeze
 ```shell
 python3 smart_asa.py freeze 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ --asset 0
 
@@ -256,7 +242,7 @@ python3 smart_asa.py info 2991
         Clawback address: KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ
 ```
 
-#### Smart NFT ASA burn
+### Smart NFT ASA burn
 ```shell
 python3 smart_asa.py send 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ
 T6QBA5AXSJMBG55Y2BVDR6MN5KTXHHLU7LWDY3LGZNAPGIKDOWMP4GF5PU 100
@@ -290,10 +276,130 @@ python3 smart_asa.py info 2991
         Clawback address: KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ
 ```
 
-#### Smart ASA destroy
+### Smart ASA destroy
 ```shell
 python3 smart_asa.py destroy 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ
 
  --- Destroying Smart ASA 2991...
  --- Smart ASA 2991 destroyed!
 ```
+
+## ABI Interface
+
+### Smart ASA App Create
+
+### Smart ASA Opt-In
+```json
+{
+  "name": "asset_app_optin",
+  "args": [{"type": "asset"}],
+  "returns": {"type": "void"}
+}
+```
+
+### Smart ASA Close-Out
+```json
+{
+  "name": "asset_app_closeout",
+  "args": [{"type": "asset"}],
+  "returns": {"type": "void"}
+}
+```
+### Smart ASA Create Underlying ASA
+```json
+{
+  "name": "asset_create",
+  "args": [
+    {"type": "uint64"},
+    {"type": "uint32"},
+    {"type": "bool"},
+    {"type": "string"},
+    {"type": "string"},
+    {"type": "string"},
+    {"type": "string"},
+    {"type": "address"},
+    {"type": "address"},
+    {"type": "address"},
+    {"type": "address"}
+  ],
+  "returns": {"type": "uint64"}
+}
+```
+
+### Smart ASA Configuration
+```json
+{
+  "name": "asset_config",
+  "args": [
+    {"type": "asset"},
+    {"type": "uint64"},
+    {"type": "uint32"},
+    {"type": "bool"},
+    {"type": "string"},
+    {"type": "string"},
+    {"type": "string"},
+    {"type": "string"},
+    {"type": "address"},
+    {"type": "address"},
+    {"type": "address"},
+    {"type": "address"}
+  ],
+  "returns": {"type": "void"}
+}
+```
+
+### Smart ASA Transfer
+```json
+{
+  "name": "asset_transfer",
+  "args": [
+    {"type": "asset"},
+    {"type": "uint64"},
+    {"type": "account"},
+    {"type": "account"}
+  ],
+  "returns": {"type": "void"}
+}
+```
+#### Minting
+#### Burning
+#### Clawback
+#### Transfer
+
+### Smart ASA Freeze
+```json
+{
+  "name": "asset_freeze",
+  "args": [
+    {"type": "asset"},
+    {"type": "bool"}
+  ],
+  "returns": {"type": "void"}
+}
+```
+
+### Smart ASA Account Freeze
+```json
+{
+  "name": "account_freeze",
+  "args": [
+    {"type": "asset"},
+    {"type": "account"},
+    {"type": "bool"}
+  ],
+  "returns": {"type": "void"}
+}
+```
+
+### Smart ASA Destroy
+```json
+{
+  "name": "asset_destroy",
+  "args": [
+    {"type": "asset"}
+  ],
+  "returns": {"type": "void"}
+}
+```
+
+### Smart ASA Getters
