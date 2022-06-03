@@ -414,6 +414,8 @@ def asset_config(
     # less than its current circulating supply.
     is_valid_total = total.get() >= circulating_supply(smart_asa_id)
 
+    # TODO: should we allow `config` if Smart ASA in globally frozen?
+
     return Seq(
         # Preconditions
         Assert(smart_asa_id),
@@ -487,6 +489,7 @@ def asset_transfer(
         Assert(is_correct_smart_asa_id),
         is_valid_address_bytes_length(asset_sender),
         is_valid_address_bytes_length(asset_receiver),
+        # TODO: check if `is_burning` and skip the following assert:
         Assert(receiver_is_optedin),  # NOTE: if Smart ASA requires Local State
         If(is_not_clawback)
         .Then(
