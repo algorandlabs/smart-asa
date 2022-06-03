@@ -158,7 +158,7 @@ python3 smart_asa.py info 2991
         Unit name:        🔴
 
         Maximum issue:    100 🔴
-        Issued:           100 🔴
+        Issued:           100 🔴 <-- 👀
         Decimals:         2
         Global frozen:    False
         Default frozen:   False
@@ -280,7 +280,7 @@ python3 smart_asa.py info 2991
         Unit name:        🔵
 
         Maximum issue:    100 🔵
-        Issued:           0 🔵
+        Issued:           0 🔵    <-- 👀
         Decimals:         2
         Global frozen:    False
         Default frozen:   False
