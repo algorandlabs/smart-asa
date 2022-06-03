@@ -658,15 +658,15 @@ class TestAssetTransfer:
         print(" --- Rejected as expected!")
 
     @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
-    def test_minting_with_wrong_reserve(self) -> None:
+    def test_minting_with_wrong_reserve(self, smart_asa_id) -> None:
         pass  # TODO
 
     @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
-    def test_minting_fails_with_frozen_reserve(self) -> None:
+    def test_minting_fails_with_frozen_reserve(self, smart_asa_id) -> None:
         pass  # TODO
 
     @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
-    def test_minting_fails_with_frozen_asset(self) -> None:
+    def test_minting_fails_with_frozen_asset(self, smart_asa_id) -> None:
         pass  # TODO
 
     @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
@@ -763,15 +763,15 @@ class TestAssetTransfer:
         print(" --- Rejected as expected!")
 
     @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
-    def test_burning_with_wrong_reserve(self) -> None:
+    def test_burning_with_wrong_reserve(self, smart_asa_id) -> None:
         pass  # TODO
 
     @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
-    def test_burning_fails_with_frozen_reserve(self) -> None:
+    def test_burning_fails_with_frozen_reserve(self, smart_asa_id) -> None:
         pass  # TODO
 
     @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
-    def test_burning_fails_with_frozen_asset(self) -> None:
+    def test_burning_fails_with_frozen_asset(self, smart_asa_id) -> None:
         pass  # TODO
 
     @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
