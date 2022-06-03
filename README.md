@@ -5,6 +5,29 @@ Smart ASA reference implementation
 
 ## Reference implementation rational
 
+### Underlying ASA configuration
+
+### State Schema
+#### Self Validation
+#### Global State
+#### Local State
+
+### Smart Contract ABI's type check
+
+### Smart ASA App Opt-In
+
+### Smart ASA App Close-Out
+
+### Smart ASA Configuration
+
+### Smart ASA Transfer
+#### Minting
+#### Burning
+#### Clawback
+#### Transfer
+
+### Smart ASA Global Freeze
+
 ## Smart ASA life-cycle example
 
 ### Smart ASA CLI - Install
@@ -361,10 +384,6 @@ python3 smart_asa.py destroy 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRS
   "returns": {"type": "void"}
 }
 ```
-#### Minting
-#### Burning
-#### Clawback
-#### Transfer
 
 ### Smart ASA Freeze
 ```json
