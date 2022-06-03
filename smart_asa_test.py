@@ -552,6 +552,7 @@ class TestAssetConfig:
         #     else:
         #         assert smart_asa[k] == config_s_asa[k]
 
+    @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
     def test_forbidden_total(
         self,
         smart_asa_contract: Contract,
@@ -656,6 +657,19 @@ class TestAssetTransfer:
             )
         print(" --- Rejected as expected!")
 
+    @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
+    def test_minting_with_wrong_reserve(self) -> None:
+        pass  # TODO
+
+    @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
+    def test_minting_fails_with_frozen_reserve(self) -> None:
+        pass  # TODO
+
+    @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
+    def test_minting_fails_with_frozen_asset(self) -> None:
+        pass  # TODO
+
+    @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
     def test_happy_path_minting(
         self,
         smart_asa_contract: Contract,
@@ -695,6 +709,7 @@ class TestAssetTransfer:
         )
         assert opted_in_creator.asa_balance(smart_asa_id) == 100
 
+    @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
     def test_overminting(
         self,
         smart_asa_contract: Contract,
@@ -747,6 +762,91 @@ class TestAssetTransfer:
             )
         print(" --- Rejected as expected!")
 
+    @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
+    def test_burning_with_wrong_reserve(self) -> None:
+        pass  # TODO
+
+    @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
+    def test_burning_fails_with_frozen_reserve(self) -> None:
+        pass  # TODO
+
+    @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
+    def test_burning_fails_with_frozen_asset(self) -> None:
+        pass  # TODO
+
+    @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
+    def test_burning_happy_path(
+        self,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        opted_in_creator: Account,
+        smart_asa_id: int,
+    ) -> None:
+        print(
+            "\n --- Pre Minting Smart ASA circulating supply:",
+            smart_asa_get(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                caller=opted_in_creator,
+                asset_id=smart_asa_id,
+                getter="get_circulating_supply",
+            ),
+        )
+        print("\n --- Minting Smart ASA...")
+        smart_asa_transfer(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            xfer_asset=smart_asa_id,
+            asset_amount=100,
+            caller=opted_in_creator,
+            asset_receiver=opted_in_creator,
+            asset_sender=smart_asa_app,
+        )
+        print(
+            "\n --- Post Minting Smart ASA circulating supply:",
+            smart_asa_get(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                caller=opted_in_creator,
+                asset_id=smart_asa_id,
+                getter="get_circulating_supply",
+            ),
+        )
+        assert opted_in_creator.asa_balance(smart_asa_id) == 100
+
+        print(
+            "\n --- Pre Burning Smart ASA circulating supply:",
+            smart_asa_get(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                caller=opted_in_creator,
+                asset_id=smart_asa_id,
+                getter="get_circulating_supply",
+            ),
+        )
+        print("\n --- Burning Smart ASA...")
+        smart_asa_transfer(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            xfer_asset=smart_asa_id,
+            asset_amount=100,
+            caller=opted_in_creator,
+            asset_receiver=smart_asa_app,
+            asset_sender=opted_in_creator,
+        )
+        print(
+            "\n --- Post Burning Smart ASA circulating supply:",
+            smart_asa_get(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                caller=opted_in_creator,
+                asset_id=smart_asa_id,
+                getter="get_circulating_supply",
+            ),
+        )
+        assert smart_asa_app.asa_balance(smart_asa_id) == UNDERLYING_ASA_TOTAL.value
+
+    @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
     def test_receiver_not_optedin_to_app(
         self,
         smart_asa_contract: Contract,
@@ -803,6 +903,7 @@ class TestAssetTransfer:
         assert sender.asa_balance(smart_asa_id) == sender_balance - amount
         assert receiver.asa_balance(smart_asa_id) == receiver_balance + amount
 
+    @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
     def test_clawback_happy_path(
         self,
         smart_asa_contract: Contract,
@@ -837,6 +938,7 @@ class TestAssetTransfer:
             asset_receiver=receiver,
         )
 
+    @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
     def test_wrong_clawback(
         self,
         smart_asa_contract: Contract,
@@ -862,6 +964,7 @@ class TestAssetTransfer:
             )
         print(" --- Rejected as expected!")
 
+    @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
     def test_self_clawback_happy_path(
         self,
         smart_asa_contract: Contract,
@@ -1339,6 +1442,7 @@ class TestAssetDestroy:
             )
         print(" --- Rejected as expected!")
 
+    @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
     def test_is_not_correct_smart_asa(
         self,
         smart_asa_contract: Contract,
@@ -1374,6 +1478,7 @@ class TestAssetDestroy:
             )
         print(" --- Rejected as expected!")
 
+    @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
     def test_smart_asa_still_in_circulation(
         self,
         smart_asa_contract: Contract,

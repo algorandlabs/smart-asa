@@ -15,7 +15,7 @@ Usage:
   smart_asa optin   <asset-id> <account>
   smart_asa optout  <asset-id> <account> <close-to>
   smart_asa send    <asset-id> <from> <to> <amount>
-                    [--minter=<i> | --clawback=<c>]
+                    [--reserve=<r> | --clawback=<c>]
   smart_asa info    <asset-id> [--account=<a>]
   smart_asa get     <asset-id> <caller> <getter> [--account=<a>]
   smart_asa         [--help]
@@ -250,9 +250,20 @@ def smart_asa_cli():
         return print(f"\n --- Smart ASA {args['<asset-id>']} closed!")
 
     if args["send"]:
-        if args["--minter"]:
-            caller = Sandbox.from_public_key(args["--minter"])
-            action = "Minting"
+        if args["--reserve"]:
+            caller = Sandbox.from_public_key(args["--reserve"])
+            if (
+                args["<to>"] == args["--reserve"]
+                and args["<from>"] == smart_asa_app.address
+            ):
+                action = "Minting"
+            elif (
+                args["<to>"] == smart_asa_app.address
+                and args["<from>"] == args["--reserve"]
+            ):
+                action = "Burning"
+            else:
+                action = "Sending"
         elif args["--clawback"]:
             caller = Sandbox.from_public_key(args["--clawback"])
             action = "Clawbacking"

@@ -465,20 +465,36 @@ def asset_transfer(
         Txn.sender() == asset_sender,
         Txn.sender() != clawback_addr,
     )
+
+    # NOTE: Ref. implementation grants _minting_ premission to `reserve_addr`,
+    # has restriction no restriction on minting _receiver_.
+    # WARNING: Setting Smart ASA `reserve` to ZERO_ADDRESS switchs-off minting.
     is_minting = And(
-        Txn.sender() == Global.creator_address(),
+        Txn.sender() == App.globalGet(SMART_ASA_GS["reserve_addr"]),
         Global.current_application_address() == asset_sender,
     )
+
+    # NOTE: Ref. implementation grants _burning_ premission to `reserve_addr`,
+    # has restriction both on burning _sender_ and _receiver_ to prevent
+    # _clawback_ throug burning.
+    # WARNING: Setting Smart ASA `reserve` to ZERO_ADDRESS switchs-off burning.
+    is_burning = And(
+        Txn.sender() == App.globalGet(SMART_ASA_GS["reserve_addr"]),
+        App.globalGet(SMART_ASA_GS["reserve_addr"]) == asset_sender,
+        Global.current_application_address() == asset_receiver,
+    )
+
     is_clawback = Txn.sender() == clawback_addr
     is_correct_smart_asa_id = smart_asa_id == xfer_asset
-    # NOTE: We check that `smart_asa_id` is correct in Local
-    # State since the App could generate a new Smart ASA if the
-    # previous one has been dystroied, forcing users to opt-in
-    # again to gain a coherent `frozen` status.
+    # NOTE: Ref. implementation checks that `smart_asa_id` is correct in Local
+    # State since the App could generate a new Smart ASA (if the previous one
+    # has been dystroied) requiring users to opt-in again to gain a coherent
+    # new `frozen` status.
     is_current_smart_asa_id = And(
         smart_asa_id == App.localGet(asset_sender, SMART_ASA_LS["smart_asa_id"]),
         smart_asa_id == App.localGet(asset_receiver, SMART_ASA_LS["smart_asa_id"]),
     )
+
     receiver_is_optedin = App.optedIn(asset_receiver, Global.current_application_id())
     asset_frozen = App.globalGet(SMART_ASA_GS["frozen"])
     asset_sender_frozen = App.localGet(asset_sender, SMART_ASA_LS["frozen"])
@@ -489,12 +505,11 @@ def asset_transfer(
         Assert(is_correct_smart_asa_id),
         is_valid_address_bytes_length(asset_sender),
         is_valid_address_bytes_length(asset_receiver),
-        # TODO: check if `is_burning` and skip the following assert:
-        Assert(receiver_is_optedin),  # NOTE: if Smart ASA requires Local State
         If(is_not_clawback)
         .Then(
             Seq(
                 # Asset Regular Transfer Preconditions
+                Assert(receiver_is_optedin),  # NOTE: if Smart ASA requires Local State
                 Assert(Not(asset_frozen)),
                 Assert(Not(asset_sender_frozen)),
                 Assert(Not(asset_receiver_frozen)),
@@ -505,10 +520,9 @@ def asset_transfer(
         .Then(
             Seq(
                 # Asset Minting Preconditions
-                # NOTE: The minting premission is granted to `creator`, instead of
-                # `manager`, because a Smart ASA could be created with no
-                # `manager`, resulting in a locked-in Smart ASA.
+                Assert(receiver_is_optedin),  # NOTE: if Smart ASA requires Local State
                 Assert(Not(asset_frozen)),
+                Assert(Not(asset_receiver_frozen)),
                 Assert(
                     smart_asa_id
                     == App.localGet(asset_receiver, SMART_ASA_LS["smart_asa_id"])
@@ -520,10 +534,19 @@ def asset_transfer(
                 ),
             )
         )
+        .ElseIf(is_burning)
+        .Then(
+            Seq(
+                # Asset Burning Preconditions
+                Assert(Not(asset_frozen)),
+                Assert(Not(asset_sender_frozen)),
+            )
+        )
         .Else(
             Seq(
                 Assert(is_clawback),
                 Assert(is_current_smart_asa_id),
+                Assert(receiver_is_optedin),  # NOTE: if Smart ASA requires Local State
             )
         ),
         # Effects
