@@ -17,7 +17,6 @@ from pyteal import Expr, Router
 from algosdk.abi import Contract
 from algosdk.error import AlgodHTTPError
 from algosdk.constants import ZERO_ADDRESS
-from algosdk.future import transaction
 
 from sandbox import Sandbox
 from account import Account, AppAccount
@@ -236,8 +235,6 @@ class TestAppCreate:
             creator.create_asc(
                 approval_program=teal_approval,
                 clear_program=teal_clear,
-                global_schema=transaction.StateSchema(0, 0),
-                local_schema=transaction.StateSchema(0, 0),
             )
         print(" --- Rejected as expected!")
 
