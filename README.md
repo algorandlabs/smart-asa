@@ -1,15 +1,23 @@
 # Smart-ASA
+
 Smart ASA reference implementation
 
 ## Overview
+
+The Smart ASA introduced with [ARC-0020](https://github.com/aldur/ARCs/blob/smartasa/ARCs/arc-0020.md) represents a new building block for complex blockchain applications. It offers a more flexible way to work with ASAs providing re-configuration functionalities and the possibility of building additional business logics around operations like ASA transfers, mints, and burns. This example presents an implementation of the Smart ASA contract as well as an easy to use CLI to interact with its functionalities.
+
+**Disclamer: This code is not audited and should not be used in a production environment.**
 
 ## Reference implementation rational
 
 ### Underlying ASA configuration
 
 ### State Schema
+
 #### Self Validation
+
 #### Global State
+
 #### Local State
 
 ### Smart Contract ABI's type check
@@ -21,9 +29,13 @@ Smart ASA reference implementation
 ### Smart ASA Configuration
 
 ### Smart ASA Transfer
+
 #### Minting
+
 #### Burning
+
 #### Clawback
+
 #### Transfer
 
 ### Smart ASA Global Freeze
@@ -33,6 +45,7 @@ Smart ASA reference implementation
 ### Smart ASA CLI - Install
 
 ### Smart ASA CLI - Usage
+
 ```shell
 Usage:
   smart_asa create  <creator> <total> [--decimals=<d>] [--default-frozen=<df>]
@@ -69,6 +82,7 @@ Options:
 ```
 
 ### Create Smart ASA NFT
+
 ```shell
 python3 smart_asa.py create KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ 1 --name Red --unit-name 🔴
 
@@ -104,6 +118,7 @@ python3 smart_asa.py info 2991
 ```
 
 ### Fractionalize Smart ASA NFT
+
 ```shell
 python3 smart_asa.py config 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ --total 100 --decimals 2
 
@@ -134,6 +149,7 @@ python3 smart_asa.py info 2991
 ```
 
 ### Smart ASA NFT opt-in
+
 ```shell
 python3 smart_asa.py optin 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ
 
@@ -144,6 +160,7 @@ python3 smart_asa.py optin 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAX
 ```
 
 ### Mint Smart ASA NFT
+
 ```shell
 python3 smart_asa.py send 2991 T6QBA5AXSJMBG55Y2BVDR6MN5KTXHHLU7LWDY3LGZNAPGIKDOWMP4GF5PU
 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ 100
@@ -178,6 +195,7 @@ python3 smart_asa.py info 2991
 ```
 
 ### Smart NFT ASA global freeze
+
 ```shell
 python3 smart_asa.py freeze 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ --asset 1
 
@@ -207,6 +225,7 @@ python3 smart_asa.py info 2991
 ```
 
 ### Smart NFT ASA rename
+
 ```shell
 python3 smart_asa.py config 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ --name Blue --unit-name 🔵
 
@@ -237,6 +256,7 @@ python3 smart_asa.py info 2991
 ```
 
 ### Smart NFT ASA global unfreeze
+
 ```shell
 python3 smart_asa.py freeze 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ --asset 0
 
@@ -266,6 +286,7 @@ python3 smart_asa.py info 2991
 ```
 
 ### Smart NFT ASA burn
+
 ```shell
 python3 smart_asa.py send 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ
 T6QBA5AXSJMBG55Y2BVDR6MN5KTXHHLU7LWDY3LGZNAPGIKDOWMP4GF5PU 100
@@ -300,6 +321,7 @@ python3 smart_asa.py info 2991
 ```
 
 ### Smart ASA destroy
+
 ```shell
 python3 smart_asa.py destroy 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ
 
@@ -312,6 +334,7 @@ python3 smart_asa.py destroy 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRS
 ### Smart ASA App Create
 
 ### Smart ASA Opt-In
+
 ```json
 {
   "name": "asset_app_optin",
@@ -321,6 +344,7 @@ python3 smart_asa.py destroy 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRS
 ```
 
 ### Smart ASA Close-Out
+
 ```json
 {
   "name": "asset_app_closeout",
@@ -328,7 +352,9 @@ python3 smart_asa.py destroy 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRS
   "returns": {"type": "void"}
 }
 ```
+
 ### Smart ASA Create Underlying ASA
+
 ```json
 {
   "name": "asset_create",
@@ -350,6 +376,7 @@ python3 smart_asa.py destroy 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRS
 ```
 
 ### Smart ASA Configuration
+
 ```json
 {
   "name": "asset_config",
@@ -372,6 +399,7 @@ python3 smart_asa.py destroy 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRS
 ```
 
 ### Smart ASA Transfer
+
 ```json
 {
   "name": "asset_transfer",
@@ -386,6 +414,7 @@ python3 smart_asa.py destroy 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRS
 ```
 
 ### Smart ASA Freeze
+
 ```json
 {
   "name": "asset_freeze",
@@ -398,6 +427,7 @@ python3 smart_asa.py destroy 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRS
 ```
 
 ### Smart ASA Account Freeze
+
 ```json
 {
   "name": "account_freeze",
@@ -411,6 +441,7 @@ python3 smart_asa.py destroy 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRS
 ```
 
 ### Smart ASA Destroy
+
 ```json
 {
   "name": "asset_destroy",
