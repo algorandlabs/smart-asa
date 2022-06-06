@@ -655,8 +655,51 @@ class TestAssetTransfer:
         print(" --- Rejected as expected!")
 
     @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
-    def test_minting_with_wrong_reserve(self, smart_asa_id) -> None:
-        pass  # TODO
+    def test_minting_with_wrong_reserve(
+        self,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        opted_in_creator: Account,
+        opted_in_account_factory: Account,
+        smart_asa_id: int,
+    ) -> None:
+
+        wrong_reserve_account = opted_in_account_factory()
+        print(
+            "\n --- Pre Minting Smart ASA circulating supply:",
+            smart_asa_get(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                caller=opted_in_creator,
+                asset_id=smart_asa_id,
+                getter="get_circulating_supply",
+            ),
+        )
+
+        print("\n --- Minting Smart ASA with wrong reserve address...")
+        with pytest.raises(AlgodHTTPError):
+            smart_asa_transfer(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                xfer_asset=smart_asa_id,
+                asset_amount=100,
+                caller=wrong_reserve_account,
+                asset_receiver=wrong_reserve_account,
+                asset_sender=smart_asa_app,
+            )
+        print(" --- Rejected as expected!")
+
+        print(
+            "\n --- Post Minting Smart ASA circulating supply:",
+            smart_asa_get(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                caller=opted_in_creator,
+                asset_id=smart_asa_id,
+                getter="get_circulating_supply",
+            ),
+        )
+
 
     @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
     def test_minting_fails_with_frozen_reserve(self, smart_asa_id) -> None:
