@@ -700,7 +700,6 @@ class TestAssetTransfer:
             ),
         )
 
-
     @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
     def test_minting_fails_with_frozen_reserve(self, smart_asa_id) -> None:
         pass  # TODO
