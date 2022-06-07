@@ -261,11 +261,6 @@ def asset_app_create() -> Expr:
     )
 
 
-@Subroutine(TealType.none)
-def on_clear_state() -> Expr:
-    return Reject()
-
-
 smart_asa_abi = Router(
     "Smart ASA ref. implementation",
     BareCallActions(
@@ -276,7 +271,7 @@ smart_asa_abi = Router(
         # Rules governing a Smart ASA are only in place as long as the
         # controlling Smart Contract is not deletable.
         delete_application=OnCompleteAction.always(Reject()),
-        clear_state=OnCompleteAction.always(on_clear_state()),
+        clear_state=OnCompleteAction.always(Reject()),
     ),
 )
 
