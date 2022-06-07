@@ -16,18 +16,18 @@ A Smart ASA is an ASA, called *underlying ASA*, controlled by a Smart Contract, 
 
 The `create` method of the Smart ASA App triggers an `AssetConfigTx` transaction (inner transaction) that creates a new asset with the following parameters:
 
-- `Total`=
-- `Decimals`=
-- `DefaultFrozen`=
-- `UnitName`=
-- `AssetName`=
-- `URL`=
-- `ManagerAddr`=
-- `ReserveAddr`=
-- `FreezeAddr`=
-- `ClawbackAddr`=
+- `Total`= (2**64)-1
+- `Decimals`= 0
+- `DefaultFrozen`= 1
+- `UnitName`= "*S-ASA*"
+- `AssetName`= "*SMART-ASA*"
+- `URL`= \<*SmartASA_App_Id*\>
+- `ManagerAddr`= \<*SmartASA_App_Addr*\>
+- `ReserveAddr`= \<*SmartASA_App_Addr*\>
+- `FreezeAddr`= \<*SmartASA_App_Addr*\>
+- `ClawbackAddr`= \<*SmartASA_App_Addr*\>
 
-The underlying ASA is created with the maximum supply, it is not divisible, and it is frozen by default. The unit and asset names are custom values of the reference implementation, whereas the url field is used to link the ASA with the Smart ASA App. Finally, the the App has full control on the underlying ASA being specified as manager, reserve, freeze, and clawback address of the underlying ASA.
+The underlying ASA is created with maximum supply (max `uint64`), it is not divisible, and it is frozen by default. The unit and asset names are custom strings that identify the Smart ASA, whereas the `url` field is used to link the ASA with the Smart ASA App Id. Finally, the `manager`, `reserve`, `freeze`, and `clawback` roles of the ASA are assigned to the application address. Therefore, the underlying ASA can be only controlled by the smart contract.
 
 ### State Schema
 
