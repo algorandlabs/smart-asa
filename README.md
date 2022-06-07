@@ -31,9 +31,15 @@ The underlying ASA is created with maximum supply (max `uint64`), it is not divi
 
 ### State Schema
 
+The state schema of the Smart Contract implementing the Smart ASA App has been designed to map 1-to-1 the params of an ASA. In addition, to interact with the Smart ASA App of this reference implementation, users must opt-in to the application and initialize their local state.
+
 #### Self Validation
 
+?
+
 #### Global State
+
+The global state of the Smart ASA App is defined by the following variables:
 
 #### Local State
 
