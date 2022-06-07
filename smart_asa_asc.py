@@ -135,7 +135,6 @@ def init_global_state() -> Expr:
         App.globalPut(SMART_ASA_GS["url"], Bytes("")),
         # NOTE: ASA behaves excluding `metadata_hash` field if not declared:
         App.globalPut(SMART_ASA_GS["metadata_hash"], Bytes("")),
-        # TODO: should we initialize Smart ASA roles to App Creator by default?
         App.globalPut(SMART_ASA_GS["manager_addr"], Global.zero_address()),
         App.globalPut(SMART_ASA_GS["reserve_addr"], Global.zero_address()),
         App.globalPut(SMART_ASA_GS["freeze_addr"], Global.zero_address()),
