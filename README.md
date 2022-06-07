@@ -1,6 +1,6 @@
 # Smart-ASA
 
-Smart ASA reference implementation
+Smart ASA reference implementation that combines the semplicity and security of an Algorand Standard Asset with the composability and programmability of Algorand Smart Contracts to obtain a new, powerful, L1 entity that extends a regular ASA up to the limits of your immagination!
 
 ## Overview
 
@@ -66,8 +66,31 @@ The global state of the Smart ASA App is defined by the following variables:
 ## Smart ASA life-cycle example
 
 ### Smart ASA CLI - Install
+The `Pipfile` contains all the dependencies to install the Smart ASA CLI using
+`pipenv` entering:
+
+```shell
+pipenv install --dev
+```
+
+The Smart ASA CLI requires an Algorand `sandbox` up and running (try it in
+`dev` mode first!).
 
 ### Smart ASA CLI - Usage
+The Smart ASA CLI plays the same role as `goal asset` to facilitate a seamless
+understanding of this new "smarter" ASA.
+
+The CLI has been built with `docopt`, which provides an intuitive and standard
+command line usage:
+
+- `<...>` identify mandatory positional arguments;
+- `[...]` identify optional arguments;
+- `(...|...)` identify mandatory mutually exclusive arguments;
+- `[...|...]` identify optional mutually exclusive arguments;
+- `--arguments` could be followed by a `<value>` (if required) or not;
+
+Using the command line you can perform all the actions over a Smart ASA, just
+like an ASA!
 
 ```shell
 Usage:
@@ -105,6 +128,10 @@ Options:
 ```
 
 ### Create Smart ASA NFT
+The `<creator>` must be the address of a wallet account managed by `sandbox`
+KMD.
+
+Let's create a beautiful 🔴 Smart ASA NFT (non-fractional for the moment)...
 
 ```shell
 python3 smart_asa.py create KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ 1 --name Red --unit-name 🔴
