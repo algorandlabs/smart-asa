@@ -35,7 +35,7 @@ The state schema of the Smart Contract implementing the Smart ASA App has been d
 
 #### Self Validation
 
-?
+> param checks onCreate. The ref implementation checks that it is deployed with the following global and local state. Check the state schema size!
 
 #### Global State
 
@@ -45,13 +45,109 @@ The global state of the Smart ASA App is defined by the following variables:
 
 ### Smart Contract ABI's type check
 
+> we rely type checks on the client side. We only enforce checking on the address lengths and the boolean values (0 or 1).
+
+## Smart ASA Methods
+
+### Smart ASA App Create
+
 ### Smart ASA App Opt-In
+
+#### ABI Interface
+
+```json
+{
+  "name": "asset_app_optin",
+  "args": [{"type": "asset"}],
+  "returns": {"type": "void"}
+}
+```
+
+#### Description
 
 ### Smart ASA App Close-Out
 
+#### ABI Interface
+
+```json
+{
+  "name": "asset_app_closeout",
+  "args": [{"type": "asset"}],
+  "returns": {"type": "void"}
+}
+```
+
+#### Description
+
+### Smart ASA Creation
+
+#### ABI Interface
+
+```json
+{
+  "name": "asset_create",
+  "args": [
+    {"type": "uint64"},
+    {"type": "uint32"},
+    {"type": "bool"},
+    {"type": "string"},
+    {"type": "string"},
+    {"type": "string"},
+    {"type": "string"},
+    {"type": "address"},
+    {"type": "address"},
+    {"type": "address"},
+    {"type": "address"}
+  ],
+  "returns": {"type": "uint64"}
+}
+```
+
+#### Description
+
 ### Smart ASA Configuration
 
+#### ABI Interface
+
+```json
+{
+  "name": "asset_config",
+  "args": [
+    {"type": "asset"},
+    {"type": "uint64"},
+    {"type": "uint32"},
+    {"type": "bool"},
+    {"type": "string"},
+    {"type": "string"},
+    {"type": "string"},
+    {"type": "string"},
+    {"type": "address"},
+    {"type": "address"},
+    {"type": "address"},
+    {"type": "address"}
+  ],
+  "returns": {"type": "void"}
+}
+```
+
+#### Description
+
 ### Smart ASA Transfer
+
+#### ABI Interface
+
+```json
+{
+  "name": "asset_transfer",
+  "args": [
+    {"type": "asset"},
+    {"type": "uint64"},
+    {"type": "account"},
+    {"type": "account"}
+  ],
+  "returns": {"type": "void"}
+}
+```
 
 #### Minting
 
@@ -62,6 +158,57 @@ The global state of the Smart ASA App is defined by the following variables:
 #### Transfer
 
 ### Smart ASA Global Freeze
+
+#### ABI Interface
+
+```json
+{
+  "name": "asset_freeze",
+  "args": [
+    {"type": "asset"},
+    {"type": "bool"}
+  ],
+  "returns": {"type": "void"}
+}
+```
+
+#### Description
+
+### Smart ASA Account Freeze
+
+#### ABI Interface
+
+```json
+{
+  "name": "account_freeze",
+  "args": [
+    {"type": "asset"},
+    {"type": "account"},
+    {"type": "bool"}
+  ],
+  "returns": {"type": "void"}
+}
+```
+
+#### Description
+
+### Smart ASA Destroy
+
+#### ABI Interface
+
+```json
+{
+  "name": "asset_destroy",
+  "args": [
+    {"type": "asset"}
+  ],
+  "returns": {"type": "void"}
+}
+```
+
+#### Description
+
+### Smart ASA Getters
 
 ## Smart ASA life-cycle example
 
@@ -351,128 +498,3 @@ python3 smart_asa.py destroy 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRS
  --- Destroying Smart ASA 2991...
  --- Smart ASA 2991 destroyed!
 ```
-
-## ABI Interface
-
-### Smart ASA App Create
-
-### Smart ASA Opt-In
-
-```json
-{
-  "name": "asset_app_optin",
-  "args": [{"type": "asset"}],
-  "returns": {"type": "void"}
-}
-```
-
-### Smart ASA Close-Out
-
-```json
-{
-  "name": "asset_app_closeout",
-  "args": [{"type": "asset"}],
-  "returns": {"type": "void"}
-}
-```
-
-### Smart ASA Create Underlying ASA
-
-```json
-{
-  "name": "asset_create",
-  "args": [
-    {"type": "uint64"},
-    {"type": "uint32"},
-    {"type": "bool"},
-    {"type": "string"},
-    {"type": "string"},
-    {"type": "string"},
-    {"type": "string"},
-    {"type": "address"},
-    {"type": "address"},
-    {"type": "address"},
-    {"type": "address"}
-  ],
-  "returns": {"type": "uint64"}
-}
-```
-
-### Smart ASA Configuration
-
-```json
-{
-  "name": "asset_config",
-  "args": [
-    {"type": "asset"},
-    {"type": "uint64"},
-    {"type": "uint32"},
-    {"type": "bool"},
-    {"type": "string"},
-    {"type": "string"},
-    {"type": "string"},
-    {"type": "string"},
-    {"type": "address"},
-    {"type": "address"},
-    {"type": "address"},
-    {"type": "address"}
-  ],
-  "returns": {"type": "void"}
-}
-```
-
-### Smart ASA Transfer
-
-```json
-{
-  "name": "asset_transfer",
-  "args": [
-    {"type": "asset"},
-    {"type": "uint64"},
-    {"type": "account"},
-    {"type": "account"}
-  ],
-  "returns": {"type": "void"}
-}
-```
-
-### Smart ASA Freeze
-
-```json
-{
-  "name": "asset_freeze",
-  "args": [
-    {"type": "asset"},
-    {"type": "bool"}
-  ],
-  "returns": {"type": "void"}
-}
-```
-
-### Smart ASA Account Freeze
-
-```json
-{
-  "name": "account_freeze",
-  "args": [
-    {"type": "asset"},
-    {"type": "account"},
-    {"type": "bool"}
-  ],
-  "returns": {"type": "void"}
-}
-```
-
-### Smart ASA Destroy
-
-```json
-{
-  "name": "asset_destroy",
-  "args": [
-    {"type": "asset"}
-  ],
-  "returns": {"type": "void"}
-}
-```
-
-### Smart ASA Getters
