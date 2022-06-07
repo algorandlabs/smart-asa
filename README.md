@@ -236,6 +236,9 @@ command line usage:
 - `[...|...]` identify optional mutually exclusive arguments;
 - `--arguments` could be followed by a `<value>` (if required) or not;
 
+All the `<account>`s (e.g. `<creator>`, `<manager>`, etc.) must be addresses of
+a wallet account managed by `sandbox`'s KMD.
+
 Using the command line you can perform all the actions over a Smart ASA, just
 like an ASA!
 
@@ -275,9 +278,6 @@ Options:
 ```
 
 ### Create Smart ASA NFT
-The `<creator>` must be the address of a wallet account managed by `sandbox`
-KMD.
-
 Let's create a beautiful 🔴 Smart ASA NFT (non-fractional for the moment)...
 
 ```shell
@@ -315,6 +315,12 @@ python3 smart_asa.py info 2991
 ```
 
 ### Fractionalize Smart ASA NFT
+One of the amazing new feature of Smart ASAs is that they are **completely**
+re-configurable after creation! Exactly: you can even reconfigure their
+`total` or their `decilams`!
+
+So let's use this new cool feature to **fractionalize** the Smart ASA NFT after
+its creation by setting the new `<total>` to 100 and `<decimals>` to 2!
 
 ```shell
 python3 smart_asa.py config 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ --total 100 --decimals 2
