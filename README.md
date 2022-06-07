@@ -10,7 +10,24 @@ The Smart ASA introduced with [ARC-0020](https://github.com/aldur/ARCs/blob/smar
 
 ## Reference implementation rational
 
+A Smart ASA is an ASA, called *underlying ASA*, controlled by a Smart Contract, called *Smart ASA APP*, that exposes methods to `create`, `configure`, `transfer`, `freeze`, and `destroy` the asset. The `create` method initializes the state of the controlling smart contract and creates the *underlying ASA*. The following sections introduce the configurations used by this reference implementation fof both the underlying ASA and the application state.
+
 ### Underlying ASA configuration
+
+The `create` method of the Smart ASA App triggers an `AssetConfigTx` transaction (inner transaction) that creates a new asset with the following parameters:
+
+- `Total`=
+- `Decimals`=
+- `DefaultFrozen`=
+- `UnitName`=
+- `AssetName`=
+- `URL`=
+- `ManagerAddr`=
+- `ReserveAddr`=
+- `FreezeAddr`=
+- `ClawbackAddr`=
+
+The underlying ASA is created with the maximum supply, it is not divisible, and it is frozen by default. The unit and asset names are custom values of the reference implementation, whereas the url field is used to link the ASA with the Smart ASA App. Finally, the the App has full control on the underlying ASA being specified as manager, reserve, freeze, and clawback address of the underlying ASA.
 
 ### State Schema
 
