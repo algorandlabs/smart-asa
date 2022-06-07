@@ -6,8 +6,7 @@ name = "pypi"
 [packages]
 docopt = "*"
 py-algorand-sdk = "*"
-# pyteal = {editable = true, ref = "bf58a10dbc71207de3dd219faae500e4ab94adfb", git = "https://github.com/algorand/pyteal.git"}
-pyteal = {editable = true, ref = "d79a65ec29d91f109113b2193cbcbeebd56e698f", git = "https://github.com/barnjamin/pyteal.git"}
+pyteal = {editable = true, ref = "c9fe5796753b5fa8ac26c7f3b832fb6850a044bf", git = "https://github.com/algorand/pyteal.git"}
 
 [dev-packages]
 autoflake = "*"

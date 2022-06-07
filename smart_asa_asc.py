@@ -49,6 +49,11 @@ TEAL_VERSION = 6
 # / --- CONSTANTS
 ADDRESS_BYTES_LENGTH = Int(32)
 
+# NOTE: The following costs could change over time with protocol upgrades.
+OPTIN_COST = Int(100_000)
+UINTS_COST = Int(28_500)
+BYTES_COST = Int(50_000)
+
 # / --- --- UNDERLYING ASA CONFIG
 UNDERLYING_ASA_TOTAL = Int(2**64 - 1)
 UNDERLYING_ASA_DECIMALS = Int(0)
@@ -278,6 +283,7 @@ smart_asa_abi = Router(
 
 
 # / --- --- METHODS
+@smart_asa_abi.method(opt_in=CallConfig.ALL)
 def asset_app_optin(asset_id: abi.Asset) -> Expr:
     # TODO: Underlying ASA and Smart ASA App opt-in could be atomic.
     # On OptIn the frozen status must be set to `True` if account owns any
@@ -304,10 +310,7 @@ def asset_app_optin(asset_id: abi.Asset) -> Expr:
     )
 
 
-# FIXME: as decorator in future release of ABI
-smart_asa_abi.method(asset_app_optin, no_op=CallConfig.NEVER, opt_in=CallConfig.ALL)
-
-
+@smart_asa_abi.method(close_out=CallConfig.ALL)
 def asset_app_closeout(asset_id: abi.Asset) -> Expr:
     # TODO: Underlying ASA and Smart ASA App close-out could be atomic.
     asset_id = Txn.assets[asset_id.get()]
@@ -325,12 +328,6 @@ def asset_app_closeout(asset_id: abi.Asset) -> Expr:
         # Effects
         Approve(),
     )
-
-
-# FIXME: as decorator in future release of ABI
-smart_asa_abi.method(
-    asset_app_closeout, no_op=CallConfig.NEVER, close_out=CallConfig.ALL
-)
 
 
 @smart_asa_abi.method
@@ -415,8 +412,6 @@ def asset_config(
     # NOTE: In ref. implementation Smart ASA total can not be configured to
     # less than its current circulating supply.
     is_valid_total = total.get() >= circulating_supply(smart_asa_id)
-
-    # TODO: should we allow `config` if Smart ASA in globally frozen?
 
     return Seq(
         # Preconditions
@@ -786,7 +781,18 @@ def get_circulating_supply(asset_id: abi.Asset, *, output: abi.Uint64) -> Expr:
     )
 
 
-# TODO: get_smart_asa_optin_min_balance
+@smart_asa_abi.method
+def get_optin_min_balance(asset_id: abi.Asset, *, output: abi.Uint64) -> Expr:
+    asset_id = Txn.assets[asset_id.get()]
+    local_uints = Int(smart_asa_local_state.num_uints)
+    local_bytes = Int(smart_asa_local_state.num_byte_slices)
+    min_balance = OPTIN_COST + UINTS_COST * local_uints + BYTES_COST * local_bytes
+    return Seq(
+        # Preconditions
+        getter_preconditions(asset_id),
+        # Effects
+        output.set(min_balance),
+    )
 
 
 def compile_stateful(program: Expr) -> str:

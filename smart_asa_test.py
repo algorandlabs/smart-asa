@@ -25,6 +25,7 @@ from smart_asa_asc import (
     UNDERLYING_ASA_TOTAL,
     compile_stateful,
     smart_asa_abi,
+    smart_asa_local_state,
 )
 
 from smart_asa_client import (
@@ -665,16 +666,14 @@ class TestAssetTransfer:
     ) -> None:
 
         wrong_reserve_account = opted_in_account_factory()
-        print(
-            "\n --- Pre Minting Smart ASA circulating supply:",
-            smart_asa_get(
-                smart_asa_contract=smart_asa_contract,
-                smart_asa_app=smart_asa_app,
-                caller=opted_in_creator,
-                asset_id=smart_asa_id,
-                getter="get_circulating_supply",
-            ),
+        pre_minting_supply = smart_asa_get(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            caller=opted_in_creator,
+            asset_id=smart_asa_id,
+            getter="get_circulating_supply",
         )
+        print("\n --- Pre Minting Smart ASA circulating supply:", pre_minting_supply)
 
         print("\n --- Minting Smart ASA with wrong reserve address...")
         with pytest.raises(AlgodHTTPError):
@@ -689,18 +688,17 @@ class TestAssetTransfer:
             )
         print(" --- Rejected as expected!")
 
-        print(
-            "\n --- Post Minting Smart ASA circulating supply:",
-            smart_asa_get(
-                smart_asa_contract=smart_asa_contract,
-                smart_asa_app=smart_asa_app,
-                caller=opted_in_creator,
-                asset_id=smart_asa_id,
-                getter="get_circulating_supply",
-            ),
+        post_minting_supply = smart_asa_get(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            caller=opted_in_creator,
+            asset_id=smart_asa_id,
+            getter="get_circulating_supply",
         )
+        print("\n --- Post Minting Smart ASA circulating supply:", post_minting_supply)
+        assert pre_minting_supply == post_minting_supply
 
-    @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
+    @pytest.mark.parametrize("smart_asa_id", [True], indirect=True)
     def test_minting_fails_with_frozen_reserve(
         self,
         smart_asa_contract: Contract,
@@ -713,33 +711,16 @@ class TestAssetTransfer:
             opted_in_creator.address,
             smart_asa_app.app_id,
         )
-        assert not creator_state["frozen"]
-        print("\n --- Freezeing Smart ASA reserve...")
-        smart_asa_account_freeze(
-            smart_asa_contract=smart_asa_contract,
-            smart_asa_app=smart_asa_app,
-            freezer=opted_in_creator,
-            freeze_asset=smart_asa_id,
-            target_account=opted_in_creator,
-            account_frozen=True,
-        )
-        creator_state = get_local_state(
-            opted_in_creator.algod_client,
-            opted_in_creator.address,
-            smart_asa_app.app_id,
-        )
         assert creator_state["frozen"]
 
-        print(
-            "\n --- Pre Minting Smart ASA circulating supply:",
-            smart_asa_get(
-                smart_asa_contract=smart_asa_contract,
-                smart_asa_app=smart_asa_app,
-                caller=opted_in_creator,
-                asset_id=smart_asa_id,
-                getter="get_circulating_supply",
-            ),
+        pre_minting_supply = smart_asa_get(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            caller=opted_in_creator,
+            asset_id=smart_asa_id,
+            getter="get_circulating_supply",
         )
+        print("\n --- Pre Minting Smart ASA circulating supply:", pre_minting_supply)
 
         print("\n --- Minting Smart ASA with frozen reserve address...")
         with pytest.raises(AlgodHTTPError):
@@ -754,16 +735,15 @@ class TestAssetTransfer:
             )
         print(" --- Rejected as expected!")
 
-        print(
-            "\n --- Post Minting Smart ASA circulating supply:",
-            smart_asa_get(
-                smart_asa_contract=smart_asa_contract,
-                smart_asa_app=smart_asa_app,
-                caller=opted_in_creator,
-                asset_id=smart_asa_id,
-                getter="get_circulating_supply",
-            ),
+        post_minting_supply = smart_asa_get(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            caller=opted_in_creator,
+            asset_id=smart_asa_id,
+            getter="get_circulating_supply",
         )
+        print("\n --- Post Minting Smart ASA circulating supply:", post_minting_supply)
+        assert pre_minting_supply == post_minting_supply
 
     @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
     def test_minting_fails_with_frozen_asset(
@@ -787,16 +767,14 @@ class TestAssetTransfer:
         smart_asa = get_smart_asa_params(opted_in_creator.algod_client, smart_asa_id)
         assert smart_asa["frozen"]
 
-        print(
-            "\n --- Pre Minting Smart ASA circulating supply:",
-            smart_asa_get(
-                smart_asa_contract=smart_asa_contract,
-                smart_asa_app=smart_asa_app,
-                caller=opted_in_creator,
-                asset_id=smart_asa_id,
-                getter="get_circulating_supply",
-            ),
+        pre_minting_supply = smart_asa_get(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            caller=opted_in_creator,
+            asset_id=smart_asa_id,
+            getter="get_circulating_supply",
         )
+        print("\n --- Pre Minting Smart ASA circulating supply:", pre_minting_supply)
 
         print("\n --- Minting frozen Smart ASA...")
         with pytest.raises(AlgodHTTPError):
@@ -811,16 +789,15 @@ class TestAssetTransfer:
             )
         print(" --- Rejected as expected!")
 
-        print(
-            "\n --- Post Minting Smart ASA circulating supply:",
-            smart_asa_get(
-                smart_asa_contract=smart_asa_contract,
-                smart_asa_app=smart_asa_app,
-                caller=opted_in_creator,
-                asset_id=smart_asa_id,
-                getter="get_circulating_supply",
-            ),
+        post_minting_supply = smart_asa_get(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            caller=opted_in_creator,
+            asset_id=smart_asa_id,
+            getter="get_circulating_supply",
         )
+        print("\n --- Post Minting Smart ASA circulating supply:", post_minting_supply)
+        assert pre_minting_supply == post_minting_supply
 
     @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
     def test_happy_path_minting(
@@ -830,16 +807,15 @@ class TestAssetTransfer:
         opted_in_creator: Account,
         smart_asa_id: int,
     ) -> None:
-        print(
-            "\n --- Pre Minting Smart ASA circulating supply:",
-            smart_asa_get(
-                smart_asa_contract=smart_asa_contract,
-                smart_asa_app=smart_asa_app,
-                caller=opted_in_creator,
-                asset_id=smart_asa_id,
-                getter="get_circulating_supply",
-            ),
+        pre_minting_supply = smart_asa_get(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            caller=opted_in_creator,
+            asset_id=smart_asa_id,
+            getter="get_circulating_supply",
         )
+        print("\n --- Pre Minting Smart ASA circulating supply:", pre_minting_supply)
+
         print("\n --- Minting Smart ASA...")
         smart_asa_transfer(
             smart_asa_contract=smart_asa_contract,
@@ -850,16 +826,16 @@ class TestAssetTransfer:
             asset_receiver=opted_in_creator,
             asset_sender=smart_asa_app,
         )
-        print(
-            "\n --- Post Minting Smart ASA circulating supply:",
-            smart_asa_get(
-                smart_asa_contract=smart_asa_contract,
-                smart_asa_app=smart_asa_app,
-                caller=opted_in_creator,
-                asset_id=smart_asa_id,
-                getter="get_circulating_supply",
-            ),
+        post_minting_supply = smart_asa_get(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            caller=opted_in_creator,
+            asset_id=smart_asa_id,
+            getter="get_circulating_supply",
         )
+        print("\n --- Post Minting Smart ASA circulating supply:", post_minting_supply)
+        assert pre_minting_supply == 0
+        assert post_minting_supply == 100
         assert opted_in_creator.asa_balance(smart_asa_id) == 100
 
     @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
@@ -870,16 +846,14 @@ class TestAssetTransfer:
         opted_in_creator: Account,
         smart_asa_id: int,
     ) -> None:
-        print(
-            "\n --- Pre Minting Smart ASA circulating supply:",
-            smart_asa_get(
-                smart_asa_contract=smart_asa_contract,
-                smart_asa_app=smart_asa_app,
-                caller=opted_in_creator,
-                asset_id=smart_asa_id,
-                getter="get_circulating_supply",
-            ),
+        pre_minting_supply = smart_asa_get(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            caller=opted_in_creator,
+            asset_id=smart_asa_id,
+            getter="get_circulating_supply",
         )
+        print("\n --- Pre Minting Smart ASA circulating supply:", pre_minting_supply)
         print("\n --- Minting Smart ASA...")
         smart_asa_transfer(
             smart_asa_contract=smart_asa_contract,
@@ -889,16 +863,6 @@ class TestAssetTransfer:
             caller=opted_in_creator,
             asset_receiver=opted_in_creator,
             asset_sender=smart_asa_app,
-        )
-        print(
-            "\n --- Post Minting Smart ASA circulating supply:",
-            smart_asa_get(
-                smart_asa_contract=smart_asa_contract,
-                smart_asa_app=smart_asa_app,
-                caller=opted_in_creator,
-                asset_id=smart_asa_id,
-                getter="get_circulating_supply",
-            ),
         )
         assert opted_in_creator.asa_balance(smart_asa_id) == 100
 
@@ -914,6 +878,15 @@ class TestAssetTransfer:
                 asset_sender=smart_asa_app,
             )
         print(" --- Rejected as expected!")
+        post_minting_supply = smart_asa_get(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            caller=opted_in_creator,
+            asset_id=smart_asa_id,
+            getter="get_circulating_supply",
+        )
+        print("\n --- Post Minting Smart ASA circulating supply:", post_minting_supply)
+        assert post_minting_supply == 100
 
     @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
     def test_burning_fails_with_wrong_reserve(
@@ -927,16 +900,16 @@ class TestAssetTransfer:
         wrong_reserve_account = opted_in_account_factory()
         assert creator_with_supply.asa_balance(smart_asa_id) == 50
 
-        print(
-            "\n --- Pre Burning Smart ASA circulating supply:",
-            smart_asa_get(
-                smart_asa_contract=smart_asa_contract,
-                smart_asa_app=smart_asa_app,
-                caller=creator_with_supply,
-                asset_id=smart_asa_id,
-                getter="get_circulating_supply",
-            ),
+        pre_burning_supply = smart_asa_get(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            caller=creator_with_supply,
+            asset_id=smart_asa_id,
+            getter="get_circulating_supply",
         )
+        print("\n --- Pre Burning Smart ASA circulating supply:", pre_burning_supply)
+        assert pre_burning_supply == 50
+
         print("\n --- Burning Smart ASA with wrong reserve...")
         with pytest.raises(AlgodHTTPError):
             smart_asa_transfer(
@@ -949,16 +922,15 @@ class TestAssetTransfer:
                 asset_sender=creator_with_supply,
             )
         print(" --- Rejected as expected!")
-        print(
-            "\n --- Post Burning Smart ASA circulating supply:",
-            smart_asa_get(
-                smart_asa_contract=smart_asa_contract,
-                smart_asa_app=smart_asa_app,
-                caller=creator_with_supply,
-                asset_id=smart_asa_id,
-                getter="get_circulating_supply",
-            ),
+        post_burning_supply = smart_asa_get(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            caller=creator_with_supply,
+            asset_id=smart_asa_id,
+            getter="get_circulating_supply",
         )
+        print("\n --- Post Burning Smart ASA circulating supply:", post_burning_supply)
+        assert post_burning_supply == 50
 
     @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
     def test_burning_fails_with_frozen_reserve(
@@ -990,16 +962,15 @@ class TestAssetTransfer:
         )
         assert creator_state["frozen"]
 
-        print(
-            "\n --- Pre Burning Smart ASA circulating supply:",
-            smart_asa_get(
-                smart_asa_contract=smart_asa_contract,
-                smart_asa_app=smart_asa_app,
-                caller=creator_with_supply,
-                asset_id=smart_asa_id,
-                getter="get_circulating_supply",
-            ),
+        pre_burning_supply = smart_asa_get(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            caller=creator_with_supply,
+            asset_id=smart_asa_id,
+            getter="get_circulating_supply",
         )
+        print("\n --- Pre Burning Smart ASA circulating supply:", pre_burning_supply)
+
         print("\n --- Burning Smart ASA with frozen reserve...")
         with pytest.raises(AlgodHTTPError):
             smart_asa_transfer(
@@ -1012,16 +983,15 @@ class TestAssetTransfer:
                 asset_sender=creator_with_supply,
             )
         print(" --- Rejected as expected!")
-        print(
-            "\n --- Post Burning Smart ASA circulating supply:",
-            smart_asa_get(
-                smart_asa_contract=smart_asa_contract,
-                smart_asa_app=smart_asa_app,
-                caller=creator_with_supply,
-                asset_id=smart_asa_id,
-                getter="get_circulating_supply",
-            ),
+        post_burning_supply = smart_asa_get(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            caller=creator_with_supply,
+            asset_id=smart_asa_id,
+            getter="get_circulating_supply",
         )
+        print("\n --- Post Burning Smart ASA circulating supply:", post_burning_supply)
+        assert pre_burning_supply == post_burning_supply
 
     @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
     def test_burning_fails_with_frozen_asset(
@@ -1045,16 +1015,15 @@ class TestAssetTransfer:
         smart_asa = get_smart_asa_params(creator_with_supply.algod_client, smart_asa_id)
         assert smart_asa["frozen"]
 
-        print(
-            "\n --- Pre Burning Smart ASA circulating supply:",
-            smart_asa_get(
-                smart_asa_contract=smart_asa_contract,
-                smart_asa_app=smart_asa_app,
-                caller=creator_with_supply,
-                asset_id=smart_asa_id,
-                getter="get_circulating_supply",
-            ),
+        pre_burning_supply = smart_asa_get(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            caller=creator_with_supply,
+            asset_id=smart_asa_id,
+            getter="get_circulating_supply",
         )
+        print("\n --- Pre Burning Smart ASA circulating supply:", pre_burning_supply)
+
         print("\n --- Burning frozen Smart ASA...")
         with pytest.raises(AlgodHTTPError):
             smart_asa_transfer(
@@ -1067,16 +1036,15 @@ class TestAssetTransfer:
                 asset_sender=creator_with_supply,
             )
         print(" --- Rejected as expected!")
-        print(
-            "\n --- Post Burning Smart ASA circulating supply:",
-            smart_asa_get(
-                smart_asa_contract=smart_asa_contract,
-                smart_asa_app=smart_asa_app,
-                caller=creator_with_supply,
-                asset_id=smart_asa_id,
-                getter="get_circulating_supply",
-            ),
+        post_burning_supply = smart_asa_get(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            caller=creator_with_supply,
+            asset_id=smart_asa_id,
+            getter="get_circulating_supply",
         )
+        print("\n --- Post Burning Smart ASA circulating supply:", post_burning_supply)
+        assert pre_burning_supply == post_burning_supply
 
     @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
     def test_burning_happy_path(
@@ -1089,16 +1057,16 @@ class TestAssetTransfer:
 
         assert creator_with_supply.asa_balance(smart_asa_id) == 50
 
-        print(
-            "\n --- Pre Burning Smart ASA circulating supply:",
-            smart_asa_get(
-                smart_asa_contract=smart_asa_contract,
-                smart_asa_app=smart_asa_app,
-                caller=creator_with_supply,
-                asset_id=smart_asa_id,
-                getter="get_circulating_supply",
-            ),
+        pre_burning_supply = smart_asa_get(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            caller=creator_with_supply,
+            asset_id=smart_asa_id,
+            getter="get_circulating_supply",
         )
+        print("\n --- Pre Burning Smart ASA circulating supply:", pre_burning_supply)
+        assert pre_burning_supply == 50
+
         print("\n --- Burning Smart ASA...")
         smart_asa_transfer(
             smart_asa_contract=smart_asa_contract,
@@ -1109,16 +1077,15 @@ class TestAssetTransfer:
             asset_receiver=smart_asa_app,
             asset_sender=creator_with_supply,
         )
-        print(
-            "\n --- Post Burning Smart ASA circulating supply:",
-            smart_asa_get(
-                smart_asa_contract=smart_asa_contract,
-                smart_asa_app=smart_asa_app,
-                caller=creator_with_supply,
-                asset_id=smart_asa_id,
-                getter="get_circulating_supply",
-            ),
+        post_burning_supply = smart_asa_get(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            caller=creator_with_supply,
+            asset_id=smart_asa_id,
+            getter="get_circulating_supply",
         )
+        print("\n --- Post Burning Smart ASA circulating supply:", post_burning_supply)
+        assert post_burning_supply == 0
         assert smart_asa_app.asa_balance(smart_asa_id) == UNDERLYING_ASA_TOTAL.value
 
     @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
@@ -1988,7 +1955,8 @@ class TestGetters:
         )
 
         print(
-            f"\n --- Getting circulating supply of Smart ASA {smart_asa_app.app_id}..."
+            f"\n --- Getting 'circulating_supply' of Smart ASA "
+            f"{smart_asa_app.app_id}..."
         )
         circulating_supply = UNDERLYING_ASA_TOTAL.value - smart_asa_app.asa_balance(
             smart_asa_id
@@ -1999,4 +1967,21 @@ class TestGetters:
             caller=creator,
             asset_id=smart_asa_id,
             getter="get_circulating_supply",
+        )
+
+        print(
+            f"\n --- Getting 'optin_min_balance' for Smart ASA "
+            f"{smart_asa_app.app_id}..."
+        )
+        optin_min_balance = (
+            100_000
+            + 28_500 * smart_asa_local_state.num_uints
+            + 50_000 * smart_asa_local_state.num_byte_slices
+        )
+        assert optin_min_balance == smart_asa_get(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            caller=creator,
+            asset_id=smart_asa_id,
+            getter="get_optin_min_balance",
         )
