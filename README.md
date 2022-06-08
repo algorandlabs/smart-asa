@@ -292,6 +292,11 @@ python3 smart_asa.py create KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKP
  --- Created Smart ASA with ID: 2991
 ```
 
+The Smart ASA is created directly by the Smart ASA App, so upon creation the
+whole supply is stored in Smart ASA App account. A *minting* action is required
+to put units of Smart ASA in circulation (see
+[Mint Smart ASA NFT](./README.md#mint-smart-asa-nft)).
+
 ```shell
 python3 smart_asa.py info 2991
 
@@ -352,6 +357,11 @@ python3 smart_asa.py info 2991
 ```
 
 ### Smart ASA NFT opt-in
+We can now opt-in the Smart ASA using the `optin` command that manages both the
+undelying ASA opt-in and the Smart ASA App opt-in under the hood.
+
+> Note that opt-in to Smart ASA App is required only if the Smart ASA need
+> local state (e.g. *account frozen*).
 
 ```shell
 python3 smart_asa.py optin 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ
@@ -363,6 +373,13 @@ python3 smart_asa.py optin 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAX
 ```
 
 ### Mint Smart ASA NFT
+Only Smart ASA Reserve Address can mint units of Smart ASA from the Smart ASA
+App, with the following restrictions:
+
+- Smart ASA can not be *over minted* (putting in circulation more units than
+`total`);
+- Smart ASA can not be minted if the *asset is global frozen*;
+- Smart ASA can not be minted if the minting receiver *account is frozen*;
 
 ```shell
 python3 smart_asa.py send 2991 T6QBA5AXSJMBG55Y2BVDR6MN5KTXHHLU7LWDY3LGZNAPGIKDOWMP4GF5PU
@@ -398,6 +415,13 @@ python3 smart_asa.py info 2991
 ```
 
 ### Smart NFT ASA global freeze
+Differently from regular ASA, Smart ASA can now be *globally frozen* by Freeze
+Account, meaning that the whole Smart ASA in atomically frozen regardless the
+particular *frozen state* of each account (which continues to be managed in
+the same way as regular ASA).
+
+Let's freeze the whole Smart ASA before starting administrative operations on
+it:
 
 ```shell
 python3 smart_asa.py freeze 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ --asset 1
@@ -428,6 +452,8 @@ python3 smart_asa.py info 2991
 ```
 
 ### Smart NFT ASA rename
+Now that the whole Smart ASA is globally frozen, let's take advantage again of
+Smart ASA full reconfigurability to change its `--name` and `--unit-name`!
 
 ```shell
 python3 smart_asa.py config 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ --name Blue --unit-name 🔵
@@ -459,6 +485,7 @@ python3 smart_asa.py info 2991
 ```
 
 ### Smart NFT ASA global unfreeze
+The Smart ASA is all set! Let's *unfreeze* it globally!
 
 ```shell
 python3 smart_asa.py freeze 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ --asset 0
@@ -489,6 +516,11 @@ python3 smart_asa.py info 2991
 ```
 
 ### Smart NFT ASA burn
+Another exclusive capability of Smart ASA Reserve Address is *burning* the
+Smart ASA with the following limitation:
+
+- Smart ASA can not be burned if the *asset is global frozen*;
+- Smart ASA can not be burned if the Reserve *account is frozen*;
 
 ```shell
 python3 smart_asa.py send 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ
@@ -524,6 +556,8 @@ python3 smart_asa.py info 2991
 ```
 
 ### Smart ASA destroy
+Similarly to regular ASA, Smart ASA can be destroyed by Smart ASA Manager
+Address if and only if the Smart ASA Creator hold the `total` supply.
 
 ```shell
 python3 smart_asa.py destroy 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ
@@ -531,3 +565,7 @@ python3 smart_asa.py destroy 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRS
  --- Destroying Smart ASA 2991...
  --- Smart ASA 2991 destroyed!
 ```
+
+
+## Conclusions
+Enjoy experimenting with, expanding the and building on Smart ASA!
