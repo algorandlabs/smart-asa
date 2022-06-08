@@ -606,4 +606,16 @@ python3 smart_asa.py destroy 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRS
 
 
 ## Conclusions
-Enjoy experimenting with, expanding the and building on Smart ASA!
+Smart ASA reference implementation is a building block that shows how regular
+ASA can be turned into a more poweful and sophisticated L1 tool. By adopting
+ABI the Smart ASA will be easily interoperable and composible with the rest of
+Algorand's ecosystem (e.g. wallets, chain explorers, external dApp, etc.).
+
+This reference implementation is intended to be used as initial step for more
+specific and customized transferability logic like: royalties, DAOs' assets,
+NFTs, in-game assets etc.
+
+We encourage the commiunity to expand and customize this new tool to fit
+specific dApp!
+
+Enjoy experimenting and building with Smart ASA!
