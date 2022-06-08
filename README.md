@@ -1,31 +1,33 @@
 # Smart-ASA
 
-Smart ASA reference implementation
+Smart ASA reference implementation that combines the semplicity and security of an Algorand Standard Asset with the composability and programmability of Algorand Smart Contracts to obtain a new, powerful, L1 entity that extends a regular ASA up to the limits of your immagination!
 
 ## Overview
 
 The Smart ASA introduced with [ARC-0020](https://github.com/aldur/ARCs/blob/smartasa/ARCs/arc-0020.md) represents a new building block for complex blockchain applications. It offers a more flexible way to work with ASAs providing re-configuration functionalities and the possibility of building additional business logics around operations like ASA transfers, mints, and burns. This example presents an implementation of the Smart ASA contract as well as an easy to use CLI to interact with its functionalities.
 
-**Disclamer: This code is not audited and should not be used in a production environment.**
+**⚠️ Disclamer: This code is not audited and should not be used in a production environment.**
 
 ## Reference implementation rational
 
-A Smart ASA is an ASA, called *underlying ASA*, controlled by a Smart Contract, called *Smart ASA APP*, that exposes methods to `create`, `configure`, `transfer`, `freeze`, and `destroy` the asset. The `create` method initializes the state of the controlling smart contract and creates the *underlying ASA*. The following sections introduce the configurations used by this reference implementation fof both the underlying ASA and the application state.
+A Smart ASA is an ASA, called *underlying ASA*, controlled by a Smart Contract, called *Smart ASA App*, that exposes methods to `create`, `configure`, `transfer`, `freeze`, and `destroy` the asset. The `create` method initializes the state of the controlling smart contract and creates the *underlying ASA*. The following sections introduce the configurations used by this reference implementation fof both the underlying ASA and the application state.
 
 ### Underlying ASA configuration
 
 The `create` method of the Smart ASA App triggers an `AssetConfigTx` transaction (inner transaction) that creates a new asset with the following parameters:
 
-- `Total`= (2**64)-1
-- `Decimals`= 0
-- `DefaultFrozen`= 1
-- `UnitName`= "*S-ASA*"
-- `AssetName`= "*SMART-ASA*"
-- `URL`= \<*SmartASA_App_Id*\>
-- `ManagerAddr`= \<*SmartASA_App_Addr*\>
-- `ReserveAddr`= \<*SmartASA_App_Addr*\>
-- `FreezeAddr`= \<*SmartASA_App_Addr*\>
-- `ClawbackAddr`= \<*SmartASA_App_Addr*\>
+| Property         | Value                    |
+|------------------|--------------------------|
+| `total`          | 2^61 - 1                 |
+| `decimals`       | 0                        |
+| `default_frozen` | True                     |
+| `unit_name`      | S-ASA                    |
+| `asset_name`     | SMART-ASA                |
+| `url_name`       | \<Smart ASA App ID\>     |
+| `manager_addr`   | \<Smart ASA App Addr\>   |
+| `reserve_addr`   | \<Smart ASA App Addr\>   |
+| `freeze_addr`    | \<Smart ASA App Addr\>   |
+| `clawback_name`  | \<Smart ASA App Addr\>   |
 
 The underlying ASA is created with maximum supply (max `uint64`), it is not divisible, and it is frozen by default. The unit and asset names are custom strings that identify the Smart ASA, whereas the `url` field is used to link the ASA with the Smart ASA App Id. Finally, the `manager`, `reserve`, `freeze`, and `clawback` roles of the ASA are assigned to the application address. Therefore, the underlying ASA can be only controlled by the smart contract.
 
@@ -248,8 +250,34 @@ The local state of the Smart ASA App in this reference implementation is defined
 ## Smart ASA life-cycle example
 
 ### Smart ASA CLI - Install
+The `Pipfile` contains all the dependencies to install the Smart ASA CLI using
+`pipenv` entering:
+
+```shell
+pipenv install --dev
+```
+
+The Smart ASA CLI requires an Algorand `sandbox` up and running (try it in
+`dev` mode first!).
 
 ### Smart ASA CLI - Usage
+The Smart ASA CLI plays the same role as `goal asset` to facilitate a seamless
+understanding of this new "smarter" ASA.
+
+The CLI has been built with `docopt`, which provides an intuitive and standard
+command line usage:
+
+- `<...>` identify mandatory positional arguments;
+- `[...]` identify optional arguments;
+- `(...|...)` identify mandatory mutually exclusive arguments;
+- `[...|...]` identify optional mutually exclusive arguments;
+- `--arguments` could be followed by a `<value>` (if required) or not;
+
+All the `<account>`s (e.g. `<creator>`, `<manager>`, etc.) must be addresses of
+a wallet account managed by `sandbox`'s KMD.
+
+Using the command line you can perform all the actions over a Smart ASA, just
+like an ASA!
 
 ```shell
 Usage:
@@ -287,6 +315,7 @@ Options:
 ```
 
 ### Create Smart ASA NFT
+Let's create a beautiful 🔴 Smart ASA NFT (non-fractional for the moment)...
 
 ```shell
 python3 smart_asa.py create KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ 1 --name Red --unit-name 🔴
@@ -299,6 +328,11 @@ python3 smart_asa.py create KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKP
  --- Creating Smart ASA...
  --- Created Smart ASA with ID: 2991
 ```
+
+The Smart ASA is created directly by the Smart ASA App, so upon creation the
+whole supply is stored in Smart ASA App account. A *minting* action is required
+to put units of Smart ASA in circulation (see
+[Mint Smart ASA NFT](./README.md#mint-smart-asa-nft)).
 
 ```shell
 python3 smart_asa.py info 2991
@@ -323,6 +357,12 @@ python3 smart_asa.py info 2991
 ```
 
 ### Fractionalize Smart ASA NFT
+One of the amazing new feature of Smart ASAs is that they are **completely**
+re-configurable after creation! Exactly: you can even reconfigure their
+`total` or their `decilams`!
+
+So let's use this new cool feature to **fractionalize** the Smart ASA NFT after
+its creation by setting the new `<total>` to 100 and `<decimals>` to 2!
 
 ```shell
 python3 smart_asa.py config 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ --total 100 --decimals 2
@@ -354,6 +394,11 @@ python3 smart_asa.py info 2991
 ```
 
 ### Smart ASA NFT opt-in
+We can now opt-in the Smart ASA using the `optin` command that manages both the
+undelying ASA opt-in and the Smart ASA App opt-in under the hood.
+
+> Note that opt-in to Smart ASA App is required only if the Smart ASA need
+> local state (e.g. *account frozen*).
 
 ```shell
 python3 smart_asa.py optin 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ
@@ -365,6 +410,13 @@ python3 smart_asa.py optin 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAX
 ```
 
 ### Mint Smart ASA NFT
+Only Smart ASA Reserve Address can mint units of Smart ASA from the Smart ASA
+App, with the following restrictions:
+
+- Smart ASA can not be *over minted* (putting in circulation more units than
+`total`);
+- Smart ASA can not be minted if the *asset is global frozen*;
+- Smart ASA can not be minted if the minting receiver *account is frozen*;
 
 ```shell
 python3 smart_asa.py send 2991 T6QBA5AXSJMBG55Y2BVDR6MN5KTXHHLU7LWDY3LGZNAPGIKDOWMP4GF5PU
@@ -400,6 +452,13 @@ python3 smart_asa.py info 2991
 ```
 
 ### Smart NFT ASA global freeze
+Differently from regular ASA, Smart ASA can now be *globally frozen* by Freeze
+Account, meaning that the whole Smart ASA in atomically frozen regardless the
+particular *frozen state* of each account (which continues to be managed in
+the same way as regular ASA).
+
+Let's freeze the whole Smart ASA before starting administrative operations on
+it:
 
 ```shell
 python3 smart_asa.py freeze 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ --asset 1
@@ -430,6 +489,8 @@ python3 smart_asa.py info 2991
 ```
 
 ### Smart NFT ASA rename
+Now that the whole Smart ASA is globally frozen, let's take advantage again of
+Smart ASA full reconfigurability to change its `--name` and `--unit-name`!
 
 ```shell
 python3 smart_asa.py config 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ --name Blue --unit-name 🔵
@@ -461,6 +522,7 @@ python3 smart_asa.py info 2991
 ```
 
 ### Smart NFT ASA global unfreeze
+The Smart ASA is all set! Let's *unfreeze* it globally!
 
 ```shell
 python3 smart_asa.py freeze 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ --asset 0
@@ -491,6 +553,11 @@ python3 smart_asa.py info 2991
 ```
 
 ### Smart NFT ASA burn
+Another exclusive capability of Smart ASA Reserve Address is *burning* the
+Smart ASA with the following limitation:
+
+- Smart ASA can not be burned if the *asset is global frozen*;
+- Smart ASA can not be burned if the Reserve *account is frozen*;
 
 ```shell
 python3 smart_asa.py send 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ
@@ -526,6 +593,8 @@ python3 smart_asa.py info 2991
 ```
 
 ### Smart ASA destroy
+Similarly to regular ASA, Smart ASA can be destroyed by Smart ASA Manager
+Address if and only if the Smart ASA Creator hold the `total` supply.
 
 ```shell
 python3 smart_asa.py destroy 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ
@@ -533,3 +602,7 @@ python3 smart_asa.py destroy 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRS
  --- Destroying Smart ASA 2991...
  --- Smart ASA 2991 destroyed!
 ```
+
+
+## Conclusions
+Enjoy experimenting with, expanding the and building on Smart ASA!
