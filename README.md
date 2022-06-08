@@ -1,80 +1,49 @@
 # Smart-ASA
 
-Smart ASA reference implementation that combines the semplicity and security
-of an Algorand Standard Asset with the composability and programmability of
-Algorand Smart Contracts to obtain a new, powerful, L1 entity that extends a
-regular ASA up to the limits of your immagination!
+Smart ASA reference implementation that combines the semplicity and security of an Algorand Standard Asset with the composability and programmability of Algorand Smart Contracts to obtain a new, powerful, L1 entity that extends a regular ASA up to the limits of your immagination!
 
 ## Overview
 
-The Smart ASA introduced with
-[ARC-0020](https://github.com/aldur/ARCs/blob/smartasa/ARCs/arc-0020.md)
-represents a new building block for complex blockchain applications. It offers
-a more flexible way to work with ASAs providing re-configuration
-functionalities and the possibility of building additional business logics
-around operations like ASA transfers, mints, and burns. This example presents
-an implementation of the Smart ASA contract as well as an easy-to-use CLI to
-interact with its functionalities.
+The Smart ASA introduced with [ARC-0020](https://github.com/aldur/ARCs/blob/smartasa/ARCs/arc-0020.md) represents a new building block for complex blockchain applications. It offers a more flexible way to work with ASAs providing re-configuration functionalities and the possibility of building additional business logics around operations like ASA transfers, mints, and burns. This example presents an implementation of the Smart ASA contract as well as an easy to use CLI to interact with its functionalities.
 
-**⚠️ Disclamer: This code is not audited and should not be used in a
-production environment.**
+**⚠️ Disclamer: This code is not audited and should not be used in a production environment.**
 
 ## Reference implementation rational
 
-A Smart ASA is an ASA, called *Underlying ASA*, controlled by a Smart Contract,
-called *Smart ASA App*, that exposes methods to `create`, `configure`,
-`transfer`, `freeze`, and `destroy` the asset. The `create` method initializes
-the state of the controlling smart contract and creates the *Underlying ASA*.
-
-The following sections introduce the configurations used by this reference
-implementation fof both the Underlying ASA and the Smart ASA App state.
+A Smart ASA is an ASA, called *underlying ASA*, controlled by a Smart Contract, called *Smart ASA App*, that exposes methods to `create`, `configure`, `transfer`, `freeze`, and `destroy` the asset. The `create` method initializes the state of the controlling smart contract and creates the *underlying ASA*. The following sections introduce the configurations used by this reference implementation fof both the underlying ASA and the application state.
 
 ### Underlying ASA configuration
 
-The `create` method of the Smart ASA App triggers an `AssetConfigTx`
-transaction (inner transaction) that creates a new asset with the following
-parameters:
+The `create` method of the Smart ASA App triggers an `AssetConfigTx` transaction (inner transaction) that creates a new asset with the following parameters:
 
-| Property         | Value                  |
-|------------------|------------------------|
-| `total`          | 2^61 - 1               |
-| `decimals`       | 0                      |
-| `default_frozen` | True                   |
-| `unit_name`      | S-ASA                  |
-| `asset_name`     | SMART-ASA              |
-| `url`            | \<Smart ASA App ID\>   |
-| `manager_addr`   | \<Smart ASA App Addr\> |
-| `reserve_addr`   | \<Smart ASA App Addr\> |
-| `freeze_addr`    | \<Smart ASA App Addr\> |
-| `clawback_name`  | \<Smart ASA App Addr\> |
+| Property         | Value                    |
+|------------------|--------------------------|
+| `total`          | 2^61 - 1                 |
+| `decimals`       | 0                        |
+| `default_frozen` | True                     |
+| `unit_name`      | S-ASA                    |
+| `asset_name`     | SMART-ASA                |
+| `url_name`       | \<Smart ASA App ID\>     |
+| `manager_addr`   | \<Smart ASA App Addr\>   |
+| `reserve_addr`   | \<Smart ASA App Addr\>   |
+| `freeze_addr`    | \<Smart ASA App Addr\>   |
+| `clawback_name`  | \<Smart ASA App Addr\>   |
 
-The underlying ASA is created with maximum supply (max `uint64`), it is not
-divisible, and it is frozen by default. The unit and asset names are custom
-strings that identify the Smart ASA, whereas the `url` field is used to link
-the ASA with the Smart ASA App Id. Finally, the `manager`, `reserve`,
-`freeze`, and `clawback` roles of the ASA are assigned to the application
-address. Therefore, the underlying ASA can be only controlled by the smart
-contract.
+The underlying ASA is created with maximum supply (max `uint64`), it is not divisible, and it is frozen by default. The unit and asset names are custom strings that identify the Smart ASA, whereas the `url` field is used to link the ASA with the Smart ASA App Id. Finally, the `manager`, `reserve`, `freeze`, and `clawback` roles of the ASA are assigned to the application address. Therefore, the underlying ASA can be only controlled by the smart contract.
 
 ### State Schema
 
-The state schema of the Smart Contract implementing a Smart ASA App has been
-designed to match 1-to-1 the params of an ASA. In addition, this reference
-implementation requires users to opt-in to the application and initialize a
-local state.
+The state schema of the Smart Contract implementing a Smart ASA App has been designed to match 1-to-1 the params of an ASA. In addition, this reference implementation requires users to opt-in to the application and initialize a local state.
 
 #### Global State
 
-The global state of the Smart ASA App in this reference implementation is
-defined as follows:
+The global state of the Smart ASA App in this reference implementation is defined as follows:
 
 **Integer Variables**
 
-- `total`: available total supply of a Smart ASA. This value cannot be greater
-than the underlying ASA total supply;
-- `decimals`: number of digits to use after the decimal point. If 0, the
-Smart ASA is not divisible. If 1, the base unit of the Smart ASA is in tenth,
-it 2 it is in hundreds, if 3 it is in thousands, and so on;
+
+- `total`: available total supply of a Smart ASA. This value cannot be greater than the underlying ASA total supply;
+- `decimals`: number of digits to use after the decimal point. If 0, the Smart ASA is not divisible. If 1, the base unit of the Smart ASA is in tenth, it 2 it is in hundreds, if 3 it is in thousands, and so on;
 - `default_frozen`: True to freeze Smart ASA holdings by default;
 - `smart_asa_id`: asset ID of the underlying ASA;
 - `frozen`: True to globally freeze Smart ASA transfers for all holders.
@@ -85,38 +54,22 @@ it 2 it is in hundreds, if 3 it is in thousands, and so on;
 - `name`: name of the Smart ASA;
 - `url`: URL with additional information on the Smart ASA;
 - `metadata_hash`: Smart ASA metadata hash;
-- `manager_addr`: Address of the account that can manage the configuration of
-the Smart ASA and destroy it;
-- `reserve_addr`: Address of the account holding the reserve (non-minted)
-units of the Smart ASA;
-- `freeze_addr`: Address of the account used to freeze holdings or even
-globally freeze the Smart ASA;
-- `clawback_addr`: Address of the account that can clawback holdings of the
-Smart ASA.
+- `manager_addr`: Address of the account that can manage the configuration of the Smart ASA and destroy it;
+- `reserve_addr`: Address of the account holding the reserve (non-minted) units of the Smart ASA;
+- `freeze_addr`: Address of the account used to freeze holdings or even globally freeze the Smart ASA;
+- `clawback_addr`: Address of the account that can clawback holdings of the Smart ASA.
 
-The reference implementation introduces new parameters to a Smart ASA. In
-particular, the Smart ASA App controls one ASA at a time. Therefore the
-`smart_asa_id` is used to enforce checks on the current underlying ASA. Is
-also used to initialize the local state of users when they opt-in to the
-Smart ASA.
+The reference implementation introduces new parameters to a Smart ASA. In particular, the Smart ASA App controls one ASA at a time. Therefore the `smart_asa_id` is used to enforce checks on the current underlying ASA. Is is also used to initialize the local state of users when they opt-in to the Smart ASA.
 
-> ref. implementation fosters a Smart ASA App controlling one underlying ASA,
-> and it is stored into the variable smart_asa_id. In this way the App can
-> self verify that users are opted-in to the correct underlying ASA.
+> ref. implementation fosters a Smart ASA App controlling one underlying ASA, and it is stored into the variable smart_asa_id. In this way the App can self verify that users are opted-in to the correct underlying ASA.
 
-> ref. implementation introduces the global variables freeze. This parameters
-> can be configured by the manager of the Smart ASA. If true, transfers of
-> Smart ASA are not allowed. This powerful functionality provides a new
-> feature that allows the global freeze of an asset without need to specify
-> the freezed addresses manually.
+> ref. implementation introduces the global variables freeze. This parameters can be configured by the manager of the Smart ASA. If true, transfers of Smart ASA are not allowed. This powerful functionality provides a new feature that allows the global freeze of an asset without need to specify the freezed addresses manually.
 
-> ref. implementation grants minting and burning permissions to the reserve
-> address.
+> ref. implementation grants minting and burning permissions to the reserve address.
 
 #### Local State
 
-The local state of the Smart ASA App in this reference implementation is
-defined as follows:
+The local state of the Smart ASA App in this reference implementation is defined as follows:
 
 **Integer Variables**
 
@@ -126,13 +79,11 @@ defined as follows:
 
 #### Self Validation
 
-> param checks onCreate. The ref implementation checks that it is deployed
-> with the following global and local state. Check the state schema size!
+> param checks onCreate. The ref implementation checks that it is deployed with the following global and local state. Check the state schema size!
 
 #### Smart Contract ABI's type check
 
-> we rely type checks on the client side. We only enforce checking on the
-> address lengths and the boolean values (0 or 1).
+> we rely type checks on the client side. We only enforce checking on the address lengths and the boolean values (0 or 1).
 
 ## Smart ASA Methods
 
