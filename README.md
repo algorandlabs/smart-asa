@@ -16,18 +16,18 @@ A Smart ASA is an ASA, called *underlying ASA*, controlled by a Smart Contract, 
 
 The `create` method of the Smart ASA App triggers an `AssetConfigTx` transaction (inner transaction) that creates a new asset with the following parameters:
 
-| Property         | Value                    |
-|------------------|--------------------------|
-| `total`          | 2^61 - 1                 |
-| `decimals`       | 0                        |
-| `default_frozen` | True                     |
-| `unit_name`      | S-ASA                    |
-| `asset_name`     | SMART-ASA                |
-| `url_name`       | \<Smart ASA App ID\>     |
-| `manager_addr`   | \<Smart ASA App Addr\>   |
-| `reserve_addr`   | \<Smart ASA App Addr\>   |
-| `freeze_addr`    | \<Smart ASA App Addr\>   |
-| `clawback_name`  | \<Smart ASA App Addr\>   |
+| Property         | Value                  |
+|------------------|------------------------|
+| `total`          | 2^61 - 1               |
+| `decimals`       | 0                      |
+| `default_frozen` | True                   |
+| `unit_name`      | S-ASA                  |
+| `asset_name`     | SMART-ASA              |
+| `url`            | \<Smart ASA App ID\>   |
+| `manager_addr`   | \<Smart ASA App Addr\> |
+| `reserve_addr`   | \<Smart ASA App Addr\> |
+| `freeze_addr`    | \<Smart ASA App Addr\> |
+| `clawback_name`  | \<Smart ASA App Addr\> |
 
 The underlying ASA is created with maximum supply (max `uint64`), it is not divisible, and it is frozen by default. The unit and asset names are custom strings that identify the Smart ASA, whereas the `url` field is used to link the ASA with the Smart ASA App Id. Finally, the `manager`, `reserve`, `freeze`, and `clawback` roles of the ASA are assigned to the application address. Therefore, the underlying ASA can be only controlled by the smart contract.
 
@@ -83,14 +83,11 @@ The local state of the Smart ASA App in this reference implementation is defined
 
 > we rely type checks on the client side. We only enforce checking on the address lengths and the boolean values (0 or 1).
 
-## Smart ASA Methods
+## Smart ASA ABI Interface
 
 ### Smart ASA App Create
 
 ### Smart ASA App Opt-In
-
-#### ABI Interface
-
 ```json
 {
   "name": "asset_app_optin",
@@ -99,12 +96,7 @@ The local state of the Smart ASA App in this reference implementation is defined
 }
 ```
 
-#### Description
-
 ### Smart ASA App Close-Out
-
-#### ABI Interface
-
 ```json
 {
   "name": "asset_app_closeout",
@@ -113,12 +105,7 @@ The local state of the Smart ASA App in this reference implementation is defined
 }
 ```
 
-#### Description
-
 ### Smart ASA Creation
-
-#### ABI Interface
-
 ```json
 {
   "name": "asset_create",
@@ -139,12 +126,7 @@ The local state of the Smart ASA App in this reference implementation is defined
 }
 ```
 
-#### Description
-
 ### Smart ASA Configuration
-
-#### ABI Interface
-
 ```json
 {
   "name": "asset_config",
@@ -166,12 +148,7 @@ The local state of the Smart ASA App in this reference implementation is defined
 }
 ```
 
-#### Description
-
 ### Smart ASA Transfer
-
-#### ABI Interface
-
 ```json
 {
   "name": "asset_transfer",
@@ -194,9 +171,6 @@ The local state of the Smart ASA App in this reference implementation is defined
 #### Transfer
 
 ### Smart ASA Global Freeze
-
-#### ABI Interface
-
 ```json
 {
   "name": "asset_freeze",
@@ -208,12 +182,7 @@ The local state of the Smart ASA App in this reference implementation is defined
 }
 ```
 
-#### Description
-
 ### Smart ASA Account Freeze
-
-#### ABI Interface
-
 ```json
 {
   "name": "account_freeze",
@@ -226,12 +195,7 @@ The local state of the Smart ASA App in this reference implementation is defined
 }
 ```
 
-#### Description
-
 ### Smart ASA Destroy
-
-#### ABI Interface
-
 ```json
 {
   "name": "asset_destroy",
@@ -241,8 +205,6 @@ The local state of the Smart ASA App in this reference implementation is defined
   "returns": {"type": "void"}
 }
 ```
-
-#### Description
 
 ### Smart ASA Getters
 
