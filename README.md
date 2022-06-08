@@ -41,6 +41,7 @@ The global state of the Smart ASA App in this reference implementation is define
 
 **Integer Variables**
 
+
 - `total`: available total supply of a Smart ASA. This value cannot be greater than the underlying ASA total supply;
 - `decimals`: number of digits to use after the decimal point. If 0, the Smart ASA is not divisible. If 1, the base unit of the Smart ASA is in tenth, it 2 it is in hundreds, if 3 it is in thousands, and so on;
 - `default_frozen`: True to freeze Smart ASA holdings by default;
