@@ -2,7 +2,7 @@ import dataclasses
 from typing import Any, Optional, Union, cast
 
 import algosdk
-from algosdk import encoding, mnemonic
+from algosdk import encoding
 from algosdk.abi import Method
 from algosdk.future import transaction
 from algosdk.v2client import algod
@@ -25,10 +25,6 @@ class Account(TransactionSigner):
     address: str
     private_key: Optional[str] = None
     algod_client: Optional[algod.AlgodClient] = None
-
-    def mnemonic(self) -> str:
-        assert self.private_key
-        return mnemonic.from_private_key(self.private_key)
 
     @classmethod
     def create(cls, **kwargs) -> "Account":
@@ -303,18 +299,6 @@ class Account(TransactionSigner):
         return AppAccount.from_app_id(
             transaction_response["application-index"], algod_client=self.algod_client
         )
-
-
-@dataclasses.dataclass(frozen=True)
-class LsigAccount(Account):
-    lsig: transaction.LogicSig = None
-
-    @classmethod
-    def from_lsig(cls, lsig, **kwargs) -> "LsigAccount":
-        return cls(lsig=lsig, **kwargs)
-
-    def sign(self, txn):
-        return transaction.LogicSigTransaction(txn, self.lsig)  # type: ignore
 
 
 @dataclasses.dataclass(frozen=True)

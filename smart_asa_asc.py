@@ -97,8 +97,8 @@ SMART_ASA_GS = {**SMART_ASA_GLOBAL_INTS, **SMART_ASA_GLOBAL_BYTES}
 
 
 smart_asa_global_state = StateSchema(
-    num_uints=len(SMART_ASA_GLOBAL_INTS.keys()),
-    num_byte_slices=len(SMART_ASA_GLOBAL_BYTES.keys()),
+    num_uints=len(SMART_ASA_GLOBAL_INTS),
+    num_byte_slices=len(SMART_ASA_GLOBAL_BYTES),
 )
 
 # / --- --- LOCAL STATE
@@ -461,7 +461,7 @@ def asset_transfer(
     )
 
     # NOTE: Ref. implementation grants _minting_ premission to `reserve_addr`,
-    # has restriction no restriction on minting _receiver_.
+    # has restriction no restriction on who is the minting _receiver_.
     # WARNING: Setting Smart ASA `reserve` to ZERO_ADDRESS switchs-off minting.
     is_minting = And(
         Txn.sender() == App.globalGet(SMART_ASA_GS["reserve_addr"]),
@@ -480,6 +480,7 @@ def asset_transfer(
 
     is_clawback = Txn.sender() == clawback_addr
     is_correct_smart_asa_id = smart_asa_id == xfer_asset
+
     # NOTE: Ref. implementation checks that `smart_asa_id` is correct in Local
     # State since the App could generate a new Smart ASA (if the previous one
     # has been dystroied) requiring users to opt-in again to gain a coherent
