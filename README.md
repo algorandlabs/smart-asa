@@ -6,7 +6,7 @@ Smart ASA reference implementation that combines the semplicity and security of 
 
 The Smart ASA introduced with [ARC-0020](https://github.com/aldur/ARCs/blob/smartasa/ARCs/arc-0020.md) represents a new building block for complex blockchain applications. It offers a more flexible way to work with ASAs providing re-configuration functionalities and the possibility of building additional business logics around operations like ASA transfers, mints, and burns. This example presents an implementation of the Smart ASA contract as well as an easy to use CLI to interact with its functionalities.
 
-**⚠️ Disclamer: This code is not audited and should not be used in a production environment.**
+**⚠️ Disclamer: This code is not audited!**
 
 ## Reference implementation rational
 
@@ -83,15 +83,27 @@ The local state of the Smart ASA App in this reference implementation is defined
 
 > we rely type checks on the client side. We only enforce checking on the address lengths and the boolean values (0 or 1).
 
-## Smart ASA ABI Interface
+## Smart ASA Methods
+Smart ASA reference implementation follows the ABI specifyed by ARC-20 to
+ensure full composability and interoperability with the rest of
+Algorand's ecosystem (e.g. wallets, chain explorers, external dApp, etc.).
+
+The implementation of the ABI relies on the new PyTeal ABI Router, which
+automatically generates ABI JSON by using simple Python _decorators_ for Smart
+Contract methods. PyTeal ABI Router takes care of ABI types and methods'
+signatures ecoding as well.
 
 ### Smart ASA App Create
+Smart ASA Create is a `BareCall` (no argument needed) that istantiate the Smart
+ASA App, verifying the consistency of the `SateSchema` assigned to the create
+Application Call. This method initializes the whole Global State to default
+upon creation.
 
 ### Smart ASA App Opt-In
 ```json
 {
   "name": "asset_app_optin",
-  "args": [{"type": "asset"}],
+  "args": [{"type": "asset", "name": "asset_id"}],
   "returns": {"type": "void"}
 }
 ```
@@ -320,7 +332,7 @@ python3 smart_asa.py info 2991
 ### Fractionalize Smart ASA NFT
 One of the amazing new feature of Smart ASAs is that they are **completely**
 re-configurable after creation! Exactly: you can even reconfigure their
-`total` or their `decilams`!
+`total` or their `decimals`!
 
 So let's use this new cool feature to **fractionalize** the Smart ASA NFT after
 its creation by setting the new `<total>` to 100 and `<decimals>` to 2!
