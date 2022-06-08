@@ -58,7 +58,7 @@ The global state of the Smart ASA App in this reference implementation is define
 - `freeze_addr`: Address of the account used to freeze holdings or even globally freeze the Smart ASA;
 - `clawback_addr`: Address of the account that can clawback holdings of the Smart ASA.
 
-The reference implementation introduces new parameters to a Smart ASA. In particular, the Smart ASA App controls one ASA at a time. Therefore the `smart_asa_id` is used to enforce checks on the current underlying ASA. Is is also used to initialize the local state of users when they opt-in to the Smart ASA. 
+The reference implementation introduces new parameters to a Smart ASA. In particular, the Smart ASA App controls one ASA at a time. Therefore the `smart_asa_id` is used to enforce checks on the current underlying ASA. Is is also used to initialize the local state of users when they opt-in to the Smart ASA.
 
 > ref. implementation fosters a Smart ASA App controlling one underlying ASA, and it is stored into the variable smart_asa_id. In this way the App can self verify that users are opted-in to the correct underlying ASA.
 
