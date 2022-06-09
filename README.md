@@ -39,7 +39,7 @@ The `SateSchema` of the Smart Contract implementing a Smart ASA App has been des
 
 The `GlobalState` of the Smart ASA App in this reference implementation is defined as follows:
 
-**Integer Variables**
+Integer Variables:
 
 - `total`: available total supply of a Smart ASA. This value cannot be greater than the underlying ASA total supply;
 - `decimals`: number of digits to use after the decimal point. If 0, the Smart ASA is not divisible. If 1, the base unit of the Smart ASA is in tenth, it 2 it is in hundreds, if 3 it is in thousands, and so on;
@@ -47,7 +47,7 @@ The `GlobalState` of the Smart ASA App in this reference implementation is defin
 - `smart_asa_id`: asset ID of the underlying ASA;
 - `frozen`: True to globally freeze Smart ASA transfers for all holders.
 
-**Bytes Variables**
+Bytes Variables:
 
 - `unit_name`: name of a unit of the Smart ASA;
 - `name`: name of the Smart ASA;
@@ -68,7 +68,7 @@ In this implementation, new functional authority has been assigned to the `reser
 
 The `LocalState` initialized by the Smart ASA App for opted-in users is defined as follows:
 
-**Integer Variables**
+Integer Variables:
 
 - `smart_asa_id`: asset ID of the underlying ASA of the Smart ASA a user has opted-in;
 - `frozen`: True to freeze the holdings of the account.
@@ -234,44 +234,62 @@ A regular transfer of a Smart ASA can be invoked by any opted-in asset holder. I
 
 ### Smart ASA Global Freeze
 
-
+Smart ASA Global Freeze is the freeze method of a Smart ASA. It enables the `freeze` address to globally freeze a Smart ASA. Freezed assets cannot be transferred, minted or burned.
 
 ```json
 {
   "name": "asset_freeze",
   "args": [
-    {"type": "asset"},
-    {"type": "bool"}
+    {"name": "freeze_asset", "type": "asset"},
+    {"name": "asset_frozen", "type": "bool"}
   ],
   "returns": {"type": "void"}
 }
 ```
 
 ### Smart ASA Account Freeze
+
+Smart ASA Account Freeze is the account freeze method of a Smart ASA. It enables the `freeze` address to freeze a Smart ASA holder. Freezed accounts cannot receive nor send the asset.
+
 ```json
 {
   "name": "account_freeze",
   "args": [
-    {"type": "asset"},
-    {"type": "account"},
-    {"type": "bool"}
+    {"name": "freeze_asset", "type": "asset"},
+    {"name": "freeze_account", "type": "account"},
+    {"name": "asset_frozen", "type": "bool"}
   ],
   "returns": {"type": "void"}
 }
 ```
 
 ### Smart ASA Destroy
+
+Smart ASA Destroy is the destroy method of a Smart ASA. In this reference implementation only the `manager` can invoke the Smart ASA destroy. This method clears the `GlobalState` schema of a Smart ASA, destroying any previous configuration.
+
 ```json
 {
   "name": "asset_destroy",
   "args": [
-    {"type": "asset"}
+    {"name": "destroy_asset", "type": "asset"}
   ],
   "returns": {"type": "void"}
 }
 ```
 
 ### Smart ASA Getters
+
+Getters methods have bee implemented for each `StateSchema` parameter of the Smart ASA. For instance, to retrieve the current circulating supply of a smart ASA, the reference implementation provides the following ABI interface:
+
+```json
+{
+  "name": "get_circulating_supply",
+  "args": [
+    {"name": "asset_id", "type": "asset"}
+  ],
+  "returns": {"type": "uint64"}
+}
+```
 
 ## Smart ASA life-cycle example
 
@@ -437,6 +455,7 @@ python3 smart_asa.py optin 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAX
 ```
 
 ### Mint Smart ASA NFT
+
 Only Smart ASA Reserve Address can mint units of Smart ASA from the Smart ASA
 App, with the following restrictions:
 
