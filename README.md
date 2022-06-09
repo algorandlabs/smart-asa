@@ -226,7 +226,7 @@ The `Pipfile` contains all the dependencies to install the Smart ASA CLI using
 `pipenv` entering:
 
 ```shell
-pipenv install --dev
+pipenv install
 ```
 
 The Smart ASA CLI requires an Algorand `sandbox` up and running (try it in
