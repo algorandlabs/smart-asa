@@ -109,7 +109,7 @@ upon creation.
 
 ### Smart ASA App Opt-In
 
-Smart ASA Opt-In 
+Smart ASA Opt-In
 
 ```json
 {
