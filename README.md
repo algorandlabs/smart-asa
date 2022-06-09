@@ -109,91 +109,133 @@ upon creation.
 
 ### Smart ASA App Opt-In
 
-Smart ASA Opt-In
+Smart ASA Opt-In represents the account opt-in to the Smart ASA. The argument `asset_id` represents the underlying ASA. This method initializes the `LocalState` of the user. If the Smart ASA is `default_frozen` then the opting-in users are `frozen` too.
 
 ```json
 {
   "name": "asset_app_optin",
-  "args": [{"type": "asset", "name": "asset_id"}],
+  "args": [{"name": "asset_id", "type": "asset"}],
   "returns": {"type": "void"}
 }
 ```
 
 ### Smart ASA App Close-Out
+
+Smart ASA Close-Out is the close out of an account from the Smart ASA. The argument `asset_id` represents the underlying ASA. This method removes the `LocalState` from the calling account. It succeeds if the account has no holdings left of the Smart ASA, otherwise fails.
+
 ```json
 {
   "name": "asset_app_closeout",
-  "args": [{"type": "asset"}],
+  "args": [{"name": "asset_id", "type": "asset"}],
   "returns": {"type": "void"}
 }
 ```
 
 ### Smart ASA Creation
+
+Smart ASA Create is the creation method of a Smart ASA. It creates a new underlying ASA and instantiate the controlling Smart Contract with the given properties. The reference implementation requires `total` > 0 (a Smart ASA cannot be created with 0 supply).
+
 ```json
 {
   "name": "asset_create",
   "args": [
-    {"type": "uint64"},
-    {"type": "uint32"},
-    {"type": "bool"},
-    {"type": "string"},
-    {"type": "string"},
-    {"type": "string"},
-    {"type": "string"},
-    {"type": "address"},
-    {"type": "address"},
-    {"type": "address"},
-    {"type": "address"}
+    {"name": "total", "type": "uint64"},
+    {"name": "decimals", "type": "uint32"},
+    {"name": "default_frozen", "type": "bool"},
+    {"name": "unit_name", "type": "string"},
+    {"name": "name", "type": "string"},
+    {"name": "url", "type": "string"},
+    {"name": "metadata_hash", "type": "string"},
+    {"name": "manager_addr", "type": "address"},
+    {"name": "reserve_addr", "type": "address"},
+    {"name": "freeze_addr", "type": "address"},
+    {"name": "clawback_addr", "type": "address"}
   ],
   "returns": {"type": "uint64"}
 }
 ```
 
 ### Smart ASA Configuration
+
+Smart ASA Configuration is the update method of a Smart ASA. It updates the parameters of an existing Smart ASA. Only the `manager` has the authority to configure the asset by invoking this method. In the reference implementation the following restrictions have been applied:
+
+- The Smart ASA `manager_adds` cannot change;
+- `reserve`, `freeze`, and `clawback` address cannot be set to ZERO_ADDRESS;
+- `total` cannot be configured to a value lower than the current circulating supply.
+
 ```json
 {
   "name": "asset_config",
   "args": [
-    {"type": "asset"},
-    {"type": "uint64"},
-    {"type": "uint32"},
-    {"type": "bool"},
-    {"type": "string"},
-    {"type": "string"},
-    {"type": "string"},
-    {"type": "string"},
-    {"type": "address"},
-    {"type": "address"},
-    {"type": "address"},
-    {"type": "address"}
+    {"name": "config_asset", "type": "asset"}
+    {"name": "total", "type": "uint64"},
+    {"name": "decimals", "type": "uint32"},
+    {"name": "default_frozen", "type": "bool"},
+    {"name": "unit_name", "type": "string"},
+    {"name": "name", "type": "string"},
+    {"name": "url", "type": "string"},
+    {"name": "metadata_hash", "type": "string"},
+    {"name": "manager_addr", "type": "address"},
+    {"name": "reserve_addr", "type": "address"},
+    {"name": "freeze_addr", "type": "address"},
+    {"name": "clawback_addr", "type": "address"}
   ],
   "returns": {"type": "void"}
 }
 ```
 
 ### Smart ASA Transfer
+
+Smart ASA Transfer is the asset transfer method of a Smart ASA. It defines the transfer of an asset between an `asset_sender` and `asset_receiver` specifying the `asset_amount` to be transferred. This method distinguishes three types of transfer, such as `mint`, `burn`, `clawback`, and regular `transfer`.
+
 ```json
 {
   "name": "asset_transfer",
   "args": [
-    {"type": "asset"},
-    {"type": "uint64"},
-    {"type": "account"},
-    {"type": "account"}
+    {"name": "xfer_asset", "type": "asset"},
+    {"name": "asset_amount", "type": "uint64"},
+    {"name": "asset_sender", "type": "account"},
+    {"name": "asset_receiver", "type": "account"}
   ],
   "returns": {"type": "void"}
 }
 ```
 
-#### Minting
+#### Mint
 
-#### Burning
+In the reference implementation only the `reserve` address can mint a Smart ASA. A minting succeeds if the following conditions are satisfied:
+
+- the Smart ASA is not globally `frozen`;
+- `asset_sender` is the *Smart ASA App*;
+- `asset_reciver` has opted-in to the Smart ASA and is not `frozen`;
+- `asset_amount` does not exceed the total supply of the Smart ASA.
+
+#### Burn
+
+In the reference implementation only the `reserve` address can burn a Smart ASA. A burning succeeds if the following conditions are satisfied:
+
+- the Smart ASA is not globally `frozen`;
+- `asset_sender` is the `reserve` address and is not `frozen`;
+- `asset_receiver` is the *Smart ASA App*;
 
 #### Clawback
 
+The `clawback` address of a Smart ASA can invoke a clawback transfer from and to any asset holder (or revoke an asset). A clawback succeeds if the following conditions are satisfied:
+
+- `asset_receiver` has opted-in to the Smart ASA.
+
 #### Transfer
 
+A regular transfer of a Smart ASA can be invoked by any opted-in asset holder. It succeeds if the following conditions are satisfied:
+
+- the Smart ASA is not globally `frozen`;
+- `asset_sender` is not `frozen`
+- `asset_receiver` has opted-in to the Smart ASA and is not `frozen`.
+
 ### Smart ASA Global Freeze
+
+
+
 ```json
 {
   "name": "asset_freeze",
@@ -234,6 +276,7 @@ Smart ASA Opt-In
 ## Smart ASA life-cycle example
 
 ### Smart ASA CLI - Install
+
 The `Pipfile` contains all the dependencies to install the Smart ASA CLI using
 `pipenv` entering:
 
@@ -590,6 +633,8 @@ python3 smart_asa.py destroy 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRS
 ## Security Considerations
 
 > Explain why the ref. implementation stores on-chain the underlying asa is both on local and global storage. Give an example with Eve and Smart ASA A / Smart ASA B
+
+> The need for circulating supply variable.
 
 ## Conclusions
 
