@@ -1,7 +1,7 @@
 import functools
 import time
 from algosdk.kmd import KMDClient
-from algosdk.v2client import algod, indexer
+from algosdk.v2client import algod
 from algosdk.wallet import Wallet
 
 from account import Account
@@ -11,16 +11,11 @@ from utils import get_last_round, get_last_timestamp
 class Sandbox:
     ALGOD_ADDRESS = "http://localhost:4001"
     ALGOD_TOKEN = "a" * 64
-    INDEXER_ADDRESS = "http://localhost:8980"
-    INDEXER_TOKEN = "a" * 64
     KMD_ADDRESS = "http://localhost:4002"
     KMD_TOKEN = "a" * 64
 
     algod_client = algod.AlgodClient(
         algod_token=ALGOD_TOKEN, algod_address=ALGOD_ADDRESS
-    )
-    indexer_client = indexer.IndexerClient(
-        indexer_token=INDEXER_TOKEN, indexer_address=INDEXER_ADDRESS
     )
     kmd_client = KMDClient(kmd_token=KMD_TOKEN, kmd_address=KMD_ADDRESS)
 
