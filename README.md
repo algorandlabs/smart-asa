@@ -41,7 +41,6 @@ The global state of the Smart ASA App in this reference implementation is define
 
 **Integer Variables**
 
-
 - `total`: available total supply of a Smart ASA. This value cannot be greater than the underlying ASA total supply;
 - `decimals`: number of digits to use after the decimal point. If 0, the Smart ASA is not divisible. If 1, the base unit of the Smart ASA is in tenth, it 2 it is in hundreds, if 3 it is in thousands, and so on;
 - `default_frozen`: True to freeze Smart ASA holdings by default;
@@ -59,11 +58,11 @@ The global state of the Smart ASA App in this reference implementation is define
 - `freeze_addr`: Address of the account used to freeze holdings or even globally freeze the Smart ASA;
 - `clawback_addr`: Address of the account that can clawback holdings of the Smart ASA.
 
-The reference implementation introduces new parameters to a Smart ASA. In particular, the Smart Contract controls on underlying ASA at a time. Therefore the value of `smart_asa_id` is used to enforce checks on the current underlying ASA. This value is also stored into opted-in users' local storage, ensuring that users are working with the expected Smart ASA (See the Security Considerations for more details).
+The Smart ASA App of the reference implementation has been designed to control one ASA at a time. For this reason, the `smart_asa_id` variable has been added to the global state. It is used to record the current underlying ASA controlled by the application. This value is also stored into the local state of opted-in users, enforcing cross-checks between local and global states and avoiding issues like unauthorized transfers (see Security Considerations for more details).
 
-> ref. implementation introduces the global variables freeze. This parameters can be configured by the manager of the Smart ASA. If true, transfers of Smart ASA are not allowed. This powerful functionality provides a new feature that allows the global freeze of an asset without need to specify the freezed addresses manually.
+This reference implementation also includes the Smart ASA global `frozen` variable. It can be updated only by the freeze address which can now globally freeze the asset through a single action, rather than freezing accounts one by one.
 
-> ref. implementation grants minting and burning permissions to the reserve address.
+In this implementation, new functional authority has been assigned to the `reserve` address of the Smart ASA, which is now the (only) entity in charge of `minting` and `burning` Smart ASAs (see the Smart ASA Transfer interface for more details).
 
 #### Local State
 
@@ -602,8 +601,12 @@ python3 smart_asa.py destroy 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRS
  --- Smart ASA 2991 destroyed!
 ```
 
+## Security Considerations
+
+> Explain why the ref. implementation stores on-chain the underlying asa is both on local and global storage. Give an example with Eve and Smart ASA A / Smart ASA B
 
 ## Conclusions
+
 Smart ASA reference implementation is a building block that shows how regular
 ASA can be turned into a more poweful and sophisticated L1 tool. By adopting
 ABI the Smart ASA will be easily interoperable and composible with the rest of
