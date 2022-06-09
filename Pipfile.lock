@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "27fe540958824b986366d93baf52825b3437a3c91ca1fd4b744470b3a8f440be"
+            "sha256": "201c188c9a25824238c5a5415aa72619516be8e8bec25af7c3c2926a27ff4e02"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -202,7 +202,7 @@
         "pyteal": {
             "editable": true,
             "git": "https://github.com/algorand/pyteal.git",
-            "ref": "c9fe5796753b5fa8ac26c7f3b832fb6850a044bf"
+            "ref": "135f215fd88bb53336554d7797d6537aa5ccb044"
         }
     },
     "develop": {
@@ -340,7 +340,7 @@
                 "sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc",
                 "sha256:de526c12914f0c550d15924c62d72abc48d6fe7364aa87328337a31007fe8a4f"
             ],
-            "markers": "python_version >= '3.7'",
+            "markers": "python_version < '3.11'",
             "version": "==2.0.1"
         }
     }
