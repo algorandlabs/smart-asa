@@ -33,11 +33,11 @@ The underlying ASA is created with maximum supply (max `uint64`), it is not divi
 
 ### State Schema
 
-The state schema of the Smart Contract implementing a Smart ASA App has been designed to match 1-to-1 the parameters of an ASA. In addition, this reference implementation requires users to opt-in to the application and initialize a local state.
+The `SateSchema` of the Smart Contract implementing a Smart ASA App has been designed to match 1-to-1 the parameters of an ASA. In addition, this reference implementation requires users to opt-in to the application and initialize their `LocalState`.
 
 #### Global State
 
-The global state of the Smart ASA App in this reference implementation is defined as follows:
+The `GlobalState` of the Smart ASA App in this reference implementation is defined as follows:
 
 **Integer Variables**
 
@@ -58,7 +58,7 @@ The global state of the Smart ASA App in this reference implementation is define
 - `freeze_addr`: Address of the account used to freeze holdings or even globally freeze the Smart ASA;
 - `clawback_addr`: Address of the account that can clawback holdings of the Smart ASA.
 
-The Smart ASA App of the reference implementation has been designed to control one ASA at a time. For this reason, the `smart_asa_id` variable has been added to the global state. It is used to record the current underlying ASA controlled by the application. This value is also stored into the local state of opted-in users, enforcing cross-checks between local and global states and avoiding issues like unauthorized transfers (see Security Considerations for more details).
+The Smart ASA App of the reference implementation has been designed to control one ASA at a time. For this reason, the `smart_asa_id` variable has been added to the `GlobalState`. It is used to record the current underlying ASA controlled by the application. This value is also stored into the local state of opted-in users, enforcing cross-checks between local and global states and avoiding issues like unauthorized transfers (see Security Considerations for more details).
 
 This reference implementation also includes the Smart ASA global `frozen` variable. It can be updated only by the freeze address which can now globally freeze the asset through a single action, rather than freezing accounts one by one.
 
@@ -66,23 +66,31 @@ In this implementation, new functional authority has been assigned to the `reser
 
 #### Local State
 
-The local state of the Smart ASA App in this reference implementation is defined as follows:
+The `LocalState` initialized by the Smart ASA App for opted-in users is defined as follows:
 
 **Integer Variables**
 
-- `smart_asa_id`
-- `frozen`
-
+- `smart_asa_id`: asset ID of the underlying ASA of the Smart ASA a user has opted-in;
+- `frozen`: True to freeze the holdings of the account.
 
 #### Self Validation
 
-> param checks onCreate. The ref implementation checks that it is deployed with the following global and local state. Check the state schema size!
+The Smart ASA reference implementation enforces self validation of the `StateSchema`. On creation, it controls the size oth the given schema for both the global and local states. The expected values are:
+
+- `GlobalState(Ints)` = 5
+- `GlobalState(Bytes)` = 8
+- `LocalState (Ints)` = 2
+- `LocalState (Bytes)` = 0
 
 #### Smart Contract ABI's type check
 
-> we rely type checks on the client side. We only enforce checking on the address lengths and the boolean values (0 or 1).
+Smart Contract methods has been implemented to comply with the Algorand ABI interface. The validation checks on the ABI types are carried on the client side. The Smart Contract enforces the following on-chain checks:
+
+- `address` length must be equal to 32 bytes;
+- `Bool` values must be equal to 0 or 1.
 
 ## Smart ASA Methods
+
 Smart ASA reference implementation follows the ABI specified by ARC-20 to
 ensure full composability and interoperability with the rest of
 Algorand's ecosystem (e.g. wallets, chain explorers, external dApp, etc.).
@@ -93,12 +101,16 @@ Contract methods. PyTeal ABI Router takes care of ABI types and methods'
 signatures encoding as well.
 
 ### Smart ASA App Create
-Smart ASA Create is a `BareCall` (no argument needed) that istantiate the Smart
+
+Smart ASA Create is a `BareCall` (no argument needed) that instantiate the Smart
 ASA App, verifying the consistency of the `SateSchema` assigned to the create
 Application Call. This method initializes the whole Global State to default
 upon creation.
 
 ### Smart ASA App Opt-In
+
+Smart ASA Opt-In 
+
 ```json
 {
   "name": "asset_app_optin",
