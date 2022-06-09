@@ -73,7 +73,7 @@ def smart_asa_create(
     decimals: Optional[int] = None,
     default_frozen: Optional[bool] = None,
     unit_name: Optional[str] = None,
-    asset_name: Optional[str] = None,
+    name: Optional[str] = None,
     url: Optional[str] = None,
     metadata_hash: Optional[str] = None,
     manager_addr: Optional[Union[str, Account]] = None,
@@ -92,7 +92,7 @@ def smart_asa_create(
         decimals if decimals is not None else 0,
         default_frozen if default_frozen is not None else False,
         unit_name if unit_name is not None else "",
-        asset_name if asset_name is not None else "",
+        name if name is not None else "",
         url if url is not None else "",
         metadata_hash if metadata_hash is not None else "",
         manager_addr if manager_addr is not None else creator,
@@ -156,7 +156,7 @@ def smart_asa_config(
     config_decimals: Optional[int] = None,
     config_default_frozen: Optional[bool] = None,
     config_unit_name: Optional[str] = None,
-    config_asset_name: Optional[str] = None,
+    config_name: Optional[str] = None,
     config_url: Optional[str] = None,
     config_metadata_hash: Optional[str] = None,
     config_manager_addr: Optional[Union[str, Account]] = None,
@@ -189,7 +189,7 @@ def smart_asa_config(
         if config_default_frozen is None
         else config_default_frozen,
         s_asa["unit_name"] if config_unit_name is None else config_unit_name,
-        s_asa["name"] if config_asset_name is None else config_asset_name,
+        s_asa["name"] if config_name is None else config_name,
         s_asa["url"] if config_url is None else config_url,
         s_asa["metadata_hash"]
         if config_metadata_hash is None
