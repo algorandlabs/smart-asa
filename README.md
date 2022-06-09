@@ -1,6 +1,6 @@
 # Smart-ASA
 
-Smart ASA reference implementation that combines the semplicity and security of an Algorand Standard Asset with the composability and programmability of Algorand Smart Contracts to obtain a new, powerful, L1 entity that extends a regular ASA up to the limits of your immagination!
+Smart ASA reference implementation that combines the simplicity and security of an Algorand Standard Asset with the composability and programmability of Algorand Smart Contracts to obtain a new, powerful, L1 entity that extends a regular ASA up to the limits of your imagination!
 
 ## Overview
 
@@ -10,7 +10,7 @@ The Smart ASA introduced with [ARC-0020](https://github.com/aldur/ARCs/blob/smar
 
 ## Reference implementation rational
 
-A Smart ASA is an ASA, called *underlying ASA*, controlled by a Smart Contract, called *Smart ASA App*, that exposes methods to `create`, `configure`, `transfer`, `freeze`, and `destroy` the asset. The `create` method initializes the state of the controlling smart contract and creates the *underlying ASA*. The following sections introduce the configurations used by this reference implementation fof both the underlying ASA and the application state.
+A Smart ASA is an ASA, called *Underlying ASA*, controlled by a Smart Contract, called *Smart ASA App*, that exposes methods to `create`, `configure`, `transfer`, `freeze`, and `destroy` the asset. The `create` method initializes the state of the controlling Smart Contract and creates the *Underlying ASA*. The following sections introduce the configurations used by this reference implementation for both the *Underlying ASA* and the Application state.
 
 ### Underlying ASA configuration
 
@@ -18,7 +18,7 @@ The `create` method of the Smart ASA App triggers an `AssetConfigTx` transaction
 
 | Property         | Value                  |
 |------------------|------------------------|
-| `total`          | 2^61 - 1               |
+| `total`          | 2^61-1                 |
 | `decimals`       | 0                      |
 | `default_frozen` | True                   |
 | `unit_name`      | S-ASA                  |
@@ -29,11 +29,11 @@ The `create` method of the Smart ASA App triggers an `AssetConfigTx` transaction
 | `freeze_addr`    | \<Smart ASA App Addr\> |
 | `clawback_name`  | \<Smart ASA App Addr\> |
 
-The underlying ASA is created with maximum supply (max `uint64`), it is not divisible, and it is frozen by default. The unit and asset names are custom strings that identify the Smart ASA, whereas the `url` field is used to link the ASA with the Smart ASA App Id. Finally, the `manager`, `reserve`, `freeze`, and `clawback` roles of the ASA are assigned to the application address. Therefore, the underlying ASA can be only controlled by the smart contract.
+The underlying ASA is created with maximum supply (max `uint64`), it is not divisible, and it is frozen by default. The unit and asset names are custom strings that identify the Smart ASA, whereas the `url` field is used to link the ASA with the Smart ASA App Id. Finally, the `manager`, `reserve`, `freeze`, and `clawback` roles of the ASA are assigned to the application address. Therefore, the underlying ASA can only be controlled by the smart contract.
 
 ### State Schema
 
-The state schema of the Smart Contract implementing a Smart ASA App has been designed to match 1-to-1 the params of an ASA. In addition, this reference implementation requires users to opt-in to the application and initialize a local state.
+The state schema of the Smart Contract implementing a Smart ASA App has been designed to match 1-to-1 the parameters of an ASA. In addition, this reference implementation requires users to opt-in to the application and initialize a local state.
 
 #### Global State
 
@@ -59,7 +59,7 @@ The global state of the Smart ASA App in this reference implementation is define
 - `freeze_addr`: Address of the account used to freeze holdings or even globally freeze the Smart ASA;
 - `clawback_addr`: Address of the account that can clawback holdings of the Smart ASA.
 
-The reference implementation introduces new parameters to a Smart ASA. In particular, the Smart Contract controls on underlying ASA at a time. Therefore the value of `smart_asa_id` is used to enforce checks on the current underlying ASA. This value is also stored into opted-in users' local storage, ensuring that users are working with the expected Smart ASA (See the Security Considerations for more details).
+The reference implementation introduces new parameters to a Smart ASA. In particular, the Smart Contract controls one *Underlying ASA* at a time. Therefore the value of `smart_asa_id` is used to enforce checks on the current underlying ASA. This value is also stored into opted-in users' local storage, ensuring that users are working with the expected Smart ASA (See the Security Considerations for more details).
 
 > ref. implementation introduces the global variables freeze. This parameters can be configured by the manager of the Smart ASA. If true, transfers of Smart ASA are not allowed. This powerful functionality provides a new feature that allows the global freeze of an asset without need to specify the freezed addresses manually.
 
@@ -84,14 +84,14 @@ The local state of the Smart ASA App in this reference implementation is defined
 > we rely type checks on the client side. We only enforce checking on the address lengths and the boolean values (0 or 1).
 
 ## Smart ASA Methods
-Smart ASA reference implementation follows the ABI specifyed by ARC-20 to
+Smart ASA reference implementation follows the ABI specified by ARC-20 to
 ensure full composability and interoperability with the rest of
 Algorand's ecosystem (e.g. wallets, chain explorers, external dApp, etc.).
 
 The implementation of the ABI relies on the new PyTeal ABI Router, which
 automatically generates ABI JSON by using simple Python _decorators_ for Smart
 Contract methods. PyTeal ABI Router takes care of ABI types and methods'
-signatures ecoding as well.
+signatures encoding as well.
 
 ### Smart ASA App Create
 Smart ASA Create is a `BareCall` (no argument needed) that istantiate the Smart
@@ -580,14 +580,14 @@ python3 smart_asa.py destroy 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRS
 ## Conclusions
 Smart ASA reference implementation is a building block that shows how regular
 ASA can be turned into a more poweful and sophisticated L1 tool. By adopting
-ABI the Smart ASA will be easily interoperable and composible with the rest of
+ABI the Smart ASA will be easily interoperable and composable with the rest of
 Algorand's ecosystem (e.g. wallets, chain explorers, external dApp, etc.).
 
 This reference implementation is intended to be used as initial step for more
 specific and customized transferability logic like: royalties, DAOs' assets,
 NFTs, in-game assets etc.
 
-We encourage the commiunity to expand and customize this new tool to fit
+We encourage the community to expand and customize this new tool to fit
 specific dApp!
 
 Enjoy experimenting and building with Smart ASA!
