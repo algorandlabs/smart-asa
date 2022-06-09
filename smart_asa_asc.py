@@ -43,16 +43,16 @@ from pyteal import (
     compileTeal,
 )
 from algosdk.future.transaction import StateSchema
+from algosdk.constants import key_len_bytes
 
-TEAL_VERSION = 6
 
 # / --- CONSTANTS
-ADDRESS_BYTES_LENGTH = Int(32)
+TEAL_VERSION = 6
 
 # NOTE: The following costs could change over time with protocol upgrades.
-OPTIN_COST = Int(100_000)
-UINTS_COST = Int(28_500)
-BYTES_COST = Int(50_000)
+OPTIN_COST = 100_000
+UINTS_COST = 28_500
+BYTES_COST = 50_000
 
 # / --- --- UNDERLYING ASA CONFIG
 UNDERLYING_ASA_TOTAL = Int(2**64 - 1)
@@ -220,7 +220,7 @@ def smart_asa_destroy_inner_txn(smart_asa_id: Expr) -> Expr:
 def is_valid_address_bytes_length(address: Expr) -> Expr:
     # WARNING: Note this check only ensures proper bytes' length on `address`,
     # but doesn't ensure that those 32 bytes are a _proper_ Algorand address.
-    return Assert(Len(address) == ADDRESS_BYTES_LENGTH)
+    return Assert(Len(address) == Int(key_len_bytes))
 
 
 @Subroutine(TealType.uint64)
@@ -779,9 +779,12 @@ def get_circulating_supply(asset_id: abi.Asset, *, output: abi.Uint64) -> Expr:
 @smart_asa_abi.method
 def get_optin_min_balance(asset_id: abi.Asset, *, output: abi.Uint64) -> Expr:
     asset_id = Txn.assets[asset_id.get()]
-    local_uints = Int(smart_asa_local_state.num_uints)
-    local_bytes = Int(smart_asa_local_state.num_byte_slices)
-    min_balance = OPTIN_COST + UINTS_COST * local_uints + BYTES_COST * local_bytes
+    min_balance = Int(
+        OPTIN_COST
+        + UINTS_COST * smart_asa_local_state.num_uints
+        + BYTES_COST * smart_asa_local_state.num_byte_slices
+    )
+
     return Seq(
         # Preconditions
         getter_preconditions(asset_id),
