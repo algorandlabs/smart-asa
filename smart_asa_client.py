@@ -212,7 +212,7 @@ def smart_asa_transfer(
     asset_amount: int,
     caller: Account,
     asset_receiver: Account,
-    asset_sender: Optional[Account] = None,
+    asset_sender: Optional[Union[str, Account]] = None,
     save_abi_call: Optional[str] = None,
 ) -> None:
 
