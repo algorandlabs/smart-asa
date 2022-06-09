@@ -236,7 +236,7 @@ def smart_asa_freeze(
     smart_asa_app: AppAccount,
     freezer: Account,
     freeze_asset: int,
-    asset_frozen: Optional[bool] = None,
+    asset_frozen: bool = False,
     save_abi_call: Optional[str] = None,
 ) -> None:
 
@@ -246,7 +246,7 @@ def smart_asa_freeze(
     freezer.abi_call(
         get_method(smart_asa_contract, "asset_freeze"),
         freeze_asset,
-        False if asset_frozen is None else asset_frozen,
+        asset_frozen,
         app=smart_asa_app,
         fee=abi_call_fee,
         save_abi_call=save_abi_call,
@@ -259,7 +259,7 @@ def smart_asa_account_freeze(
     freezer: Account,
     freeze_asset: int,
     target_account: Account,
-    account_frozen: Optional[bool] = None,
+    account_frozen: bool = False,
     save_abi_call: Optional[str] = None,
 ) -> None:
 
@@ -270,7 +270,7 @@ def smart_asa_account_freeze(
         get_method(smart_asa_contract, "account_freeze"),
         freeze_asset,
         target_account,
-        False if account_frozen is None else account_frozen,
+        account_frozen,
         app=smart_asa_app,
         fee=abi_call_fee,
         save_abi_call=save_abi_call,
