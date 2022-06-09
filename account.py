@@ -9,7 +9,6 @@ from algosdk.future import transaction
 from algosdk.v2client import algod
 from algosdk.atomic_transaction_composer import (
     TransactionSigner,
-    TransactionWithSigner,
     AtomicTransactionComposer,
 )
 
@@ -89,10 +88,8 @@ class Account(TransactionSigner):
         method: Method,
         *args,
         app: Optional[Union[int, "AppAccount"]] = None,
-        group_extra_txns: Optional[list[TransactionWithSigner]] = None,
         on_complete: transaction.OnComplete = transaction.OnComplete.NoOpOC,
         fee: Optional[int] = None,
-        extra_app_call_nop: int = 0,
         max_wait_rounds: int = 10,
         save_abi_call: str = None
     ) -> Any:  # TODO: Correctly specify the return type here.
@@ -131,24 +128,6 @@ class Account(TransactionSigner):
             signer=self,
             on_complete=on_complete,
         )
-
-        if group_extra_txns is not None:
-            for transaction_with_signer in group_extra_txns:
-                atc.add_transaction(transaction_with_signer)
-
-        if extra_app_call_nop:
-            for i in range(extra_app_call_nop):
-                atc.add_transaction(
-                    TransactionWithSigner(
-                        transaction.ApplicationNoOpTxn(
-                            sender=self.address,
-                            sp=self._get_params(fee),
-                            index=app,
-                            note=bytes(i),
-                        ),
-                        self,
-                    )
-                )
 
         atc.build_group()
         atc.gather_signatures()
