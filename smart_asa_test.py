@@ -528,7 +528,7 @@ class TestAssetConfig:
             config_decimals=config_s_asa["decimals"],
             config_default_frozen=config_s_asa["default_frozen"],
             config_unit_name=config_s_asa["unit_name"],
-            config_asset_name=config_s_asa["name"],
+            config_name=config_s_asa["name"],
             config_url=config_s_asa["url"],
             config_metadata_hash=config_s_asa["metadata_hash"],
             config_manager_addr=config_s_asa["manager_addr"],
