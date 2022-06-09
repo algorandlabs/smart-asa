@@ -299,7 +299,7 @@ def asset_app_optin(asset_id: abi.Asset) -> Expr:
         Assert(optin_to_underlying_asa),
         # Effects
         init_local_state(),
-        If(Or(default_frozen, account_balance.value() > Int(0)), freeze_account),
+        If(Or(default_frozen, account_balance.value() > Int(0))).Then(freeze_account),
         Approve(),
     )
 
