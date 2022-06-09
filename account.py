@@ -1,4 +1,5 @@
 import dataclasses
+import base64
 from typing import Any, Optional, Union, cast
 
 import algosdk
@@ -70,8 +71,6 @@ class Account(TransactionSigner):
             drr = transaction.create_dryrun(self.algod_client, [signed_txn])
             filename = "/tmp/dryrun.msgp"
             with open(filename, "wb") as f:
-                import base64
-
                 f.write(base64.b64decode(encoding.msgpack_encode(drr)))
             raise err
 
@@ -169,8 +168,6 @@ class Account(TransactionSigner):
             drr = transaction.create_dryrun(self.algod_client, atc.signed_txns)
             filename = "/tmp/dryrun.msgp"
             with open(filename, "wb") as f:
-                import base64
-
                 f.write(base64.b64decode(encoding.msgpack_encode(drr)))
             raise err
 
