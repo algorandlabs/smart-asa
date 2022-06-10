@@ -280,7 +280,7 @@ Smart ASA Account Freeze is the account freeze method of a Smart ASA. It enables
 
 Smart ASA Destroy is the destroy method of a Smart ASA. In this reference implementation only the `manager` can invoke the Smart ASA destroy. This method clears the `GlobalState` schema of a Smart ASA, destroying any previous configuration.
 
-> A Smart ASA can be destroyed if and only if the `circulating supply = 0`. After a destroy, users remain opted-in to the Smart ASA App, but with an outdated `smart_asa_is` in their local state. See Security Considerations to understand the side effects of a Smart ASA destroy.
+> A Smart ASA can be destroyed if and only if the `circulating supply = 0`. After a destroy, users remain opted-in to the Smart ASA App, but with an outdated `smart_asa_id` in their local state. See Security Considerations to understand the side effects of a Smart ASA destroy.
 
 ```json
 {
@@ -308,7 +308,7 @@ Getters ABI interface example:
 {
   "name": "get_<param>",
   "args": [
-    {"name": "asset_id", "type": "asset"}
+    {"name": "asset", "type": "asset"}
   ],
   "returns": {"type": "uint64"}
 }
@@ -348,21 +348,24 @@ Using the command line you can perform all the actions over a Smart ASA, just
 like an ASA!
 
 ```shell
+Smart ASA (ARC-20 reference implementation)
+
 Usage:
-  smart_asa create  <creator> <total> [--decimals=<d>] [--default-frozen=<df>]
-                    [--name=<n>] [--unit-name=<un>] [--metadata-hash=<mh>]
+  smart_asa create  <creator> <total> [--decimals=<d>] [--default-frozen=<z>]
+                    [--name=<n>] [--unit-name=<u>] [--metadata-hash=<s>]
                     [--url=<l>] [--manager=<m>] [--reserve=<r>]
                     [--freeze=<f>] [--clawback=<c>]
-  smart_asa config  <asset-id> <manager> [--total=<t>] [--decimals=<d>]
-                    [--default-frozen=<df>] [--name=<n>] [--unit-name=<un>]
-                    [--metadata-hash=<mh>] [--url=<u>] [--manager=<m>]
-                    [--reserve=<r>] [--freeze=<f>] [--clawback=<c>]
+  smart_asa config  <asset-id> <manager> [--new-total=<t>] [--new-decimals=<d>]
+                    [--new-default-frozen=<z>] [--new-name=<n>]
+                    [--new-unit-name=<u>] [--new-metadata-hash=<s>]
+                    [--new-url=<u>] [--new-manager=<m>] [--new-reserve=<r>]
+                    [--new-freeze=<f>] [--new-clawback=<c>]
   smart_asa destroy <asset-id> <manager>
-  smart_asa freeze  <asset-id> <freeze> (--asset | <account>) <boolean>
+  smart_asa freeze  <asset-id> <freeze> (--asset | --account=<a>) <status>
   smart_asa optin   <asset-id> <account>
   smart_asa optout  <asset-id> <account> <close-to>
   smart_asa send    <asset-id> <from> <to> <amount>
-                    [--minter=<i> | --clawback=<c>]
+                    [--reserve=<r> | --clawback=<c>]
   smart_asa info    <asset-id> [--account=<a>]
   smart_asa get     <asset-id> <caller> <getter> [--account=<a>]
   smart_asa         [--help]
@@ -371,7 +374,7 @@ Commands:
   create     Create a Smart ASA
   config     Configure a Smart ASA
   destroy    Destroy a Smart ASA
-  freeze     Freeze whole Smart ASA or specific account
+  freeze     Freeze whole Smart ASA or specific account, <status> = 1 is forzen
   optin      Optin Smart ASAs
   optout     Optout Smart ASAs
   send       Transfer Smart ASAs
@@ -380,6 +383,16 @@ Commands:
 
 Options:
   -h, --help
+  -d, --decimals=<d>           [default: 0]
+  -z, --default-frozen=<z>     [default: 0]
+  -n, --name=<n>               [default: ]
+  -u, --unit-name=<u>          [default: ]
+  -l, --url=<l>                [default: ]
+  -s, --metadata-hash=<s>      [default: ]
+  -m, --manager=<m>            Default to Smart ASA Creator
+  -r, --reserve=<r>            Default to Smart ASA Creator
+  -f, --freeze=<f>             Default to Smart ASA Creator
+  -c, --clawback=<c>           Default to Smart ASA Creator
 ```
 
 ### Create Smart ASA NFT
@@ -433,7 +446,7 @@ So let's use this new cool feature to **fractionalize** the Smart ASA NFT after
 its creation by setting the new `<total>` to 100 and `<decimals>` to 2!
 
 ```shell
-python3 smart_asa.py config 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ --total 100 --decimals 2
+python3 smart_asa.py config 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ --new-total 100 --new-decimals 2
 
  --- Configuring Smart ASA 2991...
  --- Smart ASA 2991 configured!
@@ -562,7 +575,7 @@ Now that the whole Smart ASA is globally frozen, let's take advantage again of
 Smart ASA full reconfigurability to change its `--name` and `--unit-name`!
 
 ```shell
-python3 smart_asa.py config 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ --name Blue --unit-name 🔵
+python3 smart_asa.py config 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ --new-name Blue --new-unit-name 🔵
 
  --- Configuring Smart ASA 2991...
  --- Smart ASA 2991 configured!
