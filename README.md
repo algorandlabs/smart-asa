@@ -10,11 +10,11 @@ The Smart ASA introduced with [ARC-0020](https://github.com/aldur/ARCs/blob/smar
 
 ## Reference implementation rational
 
-A Smart ASA is an ASA, called *Underlying ASA*, controlled by a Smart Contract, called *Smart ASA App*, that exposes methods to `create`, `configure`, `transfer`, `freeze`, and `destroy` the asset. The `create` method initializes the state of the controlling Smart Contract and creates the *Underlying ASA*. The following sections introduce the configurations used by this reference implementation for both the *Underlying ASA* and the Application state.
+A Smart ASA is an ASA, called *Underlying ASA*, controlled by a Smart Contract, called *Smart ASA App*, that exposes methods to `create`, `configure`, `transfer`, `freeze`, and `destroy` the asset. The `create` method configures the initial the state of the controlling Smart Contract and creates the *Underlying ASA*. The following sections introduce the both the *Underlying ASA* and the Application state of this implementation.
 
 ### Underlying ASA configuration
 
-The `create` method of the Smart ASA App triggers an `AssetConfigTx` transaction (inner transaction) that creates a new asset with the following parameters:
+The `create` method triggers an `AssetConfigTx` transaction (inner transaction) that generates a new asset with the following parameters:
 
 | Property         | Value                  |
 |------------------|------------------------|
@@ -29,19 +29,19 @@ The `create` method of the Smart ASA App triggers an `AssetConfigTx` transaction
 | `freeze_addr`    | \<Smart ASA App Addr\> |
 | `clawback_name`  | \<Smart ASA App Addr\> |
 
-The underlying ASA is created with maximum supply (max `uint64`), it is not divisible, and it is frozen by default. The unit and asset names are custom strings that identify the Smart ASA, whereas the `url` field is used to link the ASA with the Smart ASA App Id. Finally, the `manager`, `reserve`, `freeze`, and `clawback` roles of the ASA are assigned to the application address. Therefore, the underlying ASA can only be controlled by the smart contract.
+The underlying ASA is created with maximum supply (max `uint64`), it is not divisible, and it is frozen by default. The unit and asset names are custom strings that identify the Smart ASA, whereas the `url` field is used to link the ASA with the Smart ASA App Id. Finally, the `manager`, `reserve`, `freeze`, and `clawback` roles of the ASA are assigned to the application address. Therefore, **the underlying ASA can only be controlled by the smart contract**.
 
 ### State Schema
 
-The `SateSchema` of the Smart Contract implementing a Smart ASA App has been designed to match 1-to-1 the parameters of an ASA. In addition, this reference implementation requires users to opt-in to the application and initialize their `LocalState`.
+The `SateSchema` of the Smart Contract has been designed to match 1-to-1 the parameters of an ASA. In addition, this reference implementation requires users to opt-in to the application and initialize their `LocalState`.
 
 #### Global State
 
-The `GlobalState` of the Smart ASA App in this reference implementation is defined as follows:
+The `GlobalState` of the Smart ASA App is defined as follows:
 
 Integer Variables:
 
-- `total`: available total supply of a Smart ASA. This value cannot be greater than the underlying ASA total supply;
+- `total`: total supply of a Smart ASA. This value cannot be greater than the underlying ASA total supply;
 - `decimals`: number of digits to use after the decimal point. If 0, the Smart ASA is not divisible. If 1, the base unit of the Smart ASA is in tenth, it 2 it is in hundreds, if 3 it is in thousands, and so on;
 - `default_frozen`: True to freeze Smart ASA holdings by default;
 - `smart_asa_id`: asset ID of the underlying ASA;
@@ -58,9 +58,9 @@ Bytes Variables:
 - `freeze_addr`: Address of the account used to freeze holdings or even globally freeze the Smart ASA;
 - `clawback_addr`: Address of the account that can clawback holdings of the Smart ASA.
 
-The Smart ASA App of the reference implementation has been designed to control one ASA at a time. For this reason, the `smart_asa_id` variable has been added to the `GlobalState`. It is used to record the current underlying ASA controlled by the application. This value is also stored into the local state of opted-in users, enforcing cross-checks between local and global states and avoiding issues like unauthorized transfers (see Security Considerations for more details).
+**The Smart ASA App of the reference implementation has been designed to control one ASA at a time**. For this reason, the `smart_asa_id` variable has been added to the `GlobalState`. It is used to record the current underlying ASA controlled by the application. This value is also stored into the local state of opted-in users, enforcing cross-checks between local and global states and avoiding issues like unauthorized transfers (see Security Considerations for more details).
 
-This reference implementation also includes the Smart ASA global `frozen` variable. It can be updated only by the freeze address which can now globally freeze the asset through a single action, rather than freezing accounts one by one.
+As additional feature, this reference implementation also includes the Smart ASA global `frozen` variable. It can only be updated by the freeze address which has the authority of globally freezing the asset with a single action, rather than freezing accounts one by one.
 
 In this implementation, new functional authority has been assigned to the `reserve` address of the Smart ASA, which is now the (only) entity in charge of `minting` and `burning` Smart ASAs (see the Smart ASA Transfer interface for more details).
 
@@ -95,7 +95,7 @@ Smart ASA reference implementation follows the ABI specified by ARC-20 to
 ensure full composability and interoperability with the rest of
 Algorand's ecosystem (e.g. wallets, chain explorers, external dApp, etc.).
 
-The implementation of the ABI relies on the new PyTeal ABI Router, which
+The implementation of the ABI relies on the new PyTeal ABI Router component, which
 automatically generates ABI JSON by using simple Python _decorators_ for Smart
 Contract methods. PyTeal ABI Router takes care of ABI types and methods'
 signatures encoding as well.
@@ -122,6 +122,8 @@ Smart ASA Opt-In represents the account opt-in to the Smart ASA. The argument `a
 ### Smart ASA App Close-Out
 
 Smart ASA Close-Out is the close out of an account from the Smart ASA. The argument `asset_id` represents the underlying ASA. This method removes the `LocalState` from the calling account. It succeeds if the account has no holdings left of the Smart ASA, otherwise fails.
+
+> For Smart ASA `default_frozen = False`, a freezed malicious user could close-out and opt-in again to change is `frozen` state. Checking the Smart ASA holdings before approving a close-out addresses this issue.
 
 ```json
 {
@@ -157,10 +159,10 @@ Smart ASA Create is the creation method of a Smart ASA. It creates a new underly
 
 ### Smart ASA Configuration
 
-Smart ASA Configuration is the update method of a Smart ASA. It updates the parameters of an existing Smart ASA. Only the `manager` has the authority to configure the asset by invoking this method. In the reference implementation the following restrictions have been applied:
+Smart ASA Configuration is the update method of a Smart ASA. It updates the parameters of an existing Smart ASA. Only the `manager` has the authority to configure the asset by invoking this method. The reference implementation applies the following restrictions:
 
-- The Smart ASA `manager_adds` cannot change;
-- `reserve`, `freeze`, and `clawback` address cannot be set to ZERO_ADDRESS;
+- the Smart ASA `manager_addr` cannot change;
+- `reserve`, `freeze`, and `clawback` addresses cannot be set to the ZERO_ADDRESS;
 - `total` cannot be configured to a value lower than the current circulating supply.
 
 ```json
@@ -186,7 +188,7 @@ Smart ASA Configuration is the update method of a Smart ASA. It updates the para
 
 ### Smart ASA Transfer
 
-Smart ASA Transfer is the asset transfer method of a Smart ASA. It defines the transfer of an asset between an `asset_sender` and `asset_receiver` specifying the `asset_amount` to be transferred. This method distinguishes three types of transfer, such as `mint`, `burn`, `clawback`, and regular `transfer`.
+Smart ASA Transfer is the asset transfer method of a Smart ASA. It defines the transfer of an asset between an `asset_sender` and `asset_receiver` specifying the `asset_amount` to be transferred. This method distinguishes four types of transfer, such as `mint`, `burn`, `clawback`, and regular `transfer`.
 
 ```json
 {
@@ -267,6 +269,8 @@ Smart ASA Account Freeze is the account freeze method of a Smart ASA. It enables
 
 Smart ASA Destroy is the destroy method of a Smart ASA. In this reference implementation only the `manager` can invoke the Smart ASA destroy. This method clears the `GlobalState` schema of a Smart ASA, destroying any previous configuration.
 
+> A Smart ASA can be destroyed if and only if the `circulating supply = 0`. After a destroy, users remain opted-in to the Smart ASA App, but with an outdated `smart_asa_is` in their local state. See Security Considerations to understand the side effects of a Smart ASA destroy.
+
 ```json
 {
   "name": "asset_destroy",
@@ -279,11 +283,19 @@ Smart ASA Destroy is the destroy method of a Smart ASA. In this reference implem
 
 ### Smart ASA Getters
 
-Getters methods have bee implemented for each `StateSchema` parameter of the Smart ASA. For instance, to retrieve the current circulating supply of a smart ASA, the reference implementation provides the following ABI interface:
+Getters methods have bee implemented for each `StateSchema` parameter of the Smart ASA. Refer the ARC-0020 for a comprehensive list of available getters.
+
+Smart ASA reference implementation introduces two new getters:
+
+- `get_circulating_supply`: returns the current circulating supply of a smart ASA;
+- `get_optin_min_balance`: returns the minimum balance (in ALGO) required to opt-in the Smart ASA.
+
+Getters ABI interface example:
+
 
 ```json
 {
-  "name": "get_circulating_supply",
+  "name": "get_<param>",
   "args": [
     {"name": "asset_id", "type": "asset"}
   ],
@@ -651,9 +663,28 @@ python3 smart_asa.py destroy 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRS
 
 ## Security Considerations
 
-> Explain why the ref. implementation stores on-chain the underlying asa is both on local and global storage. Give an example with Eve and Smart ASA A / Smart ASA B
+### 1. Prevent malicious close-out
 
-> The need for circulating supply variable.
+A malicious user could attempt to close-out its local state to hack the `frozen` state of a Smart ASA. Consider the following scenario:
+
+- Smart ASA `default_frozen = false`;
+- Eve has regularly opted-in to the Smart ASA;
+- Eve receives 5 Smart ASA from Bob (Smart ASA manager and freezer) and get freezed afterwards;
+- Eve can now close-out its state and opt-in again to clear its `frozen` state and spend the Smart ASA.
+
+To avoid this situation, the reference implementation introduces a close-out condition which succeeds if and only if Eve has not holdings of the Smart ASA.
+
+### 2. Conscious Smart ASA Destroy
+
+Upon a call to `asset_destroy`, the `GlobalState` of the Smart ASA App is initialized and the underlying ASA destroyed. However, the `LocalState` of opted-in users is not affected. Let's consider the case a `manager` invokes an `asset_destroy` over `Smart ASA A` and afterwards an `asset_create` to instantiate `Smart ASA B` with the same *Smart ASA App*.
+
+- Eve was opted-in to *Smart ASA App* and was not frozen;
+- Bob (manager) destroys `Smart ASA A` (assuming `circulating_supply = 0`);
+- Bob creates `Smart ASA B` with param `default_frozen = True`;
+- Eve is opted-in with `frozen = False`;
+- Eve can freely receive and spend `Smart ASA B`.
+
+To avoid this issue, the reference implementation includes the current `smart_asa_id` both in `GlobalState` and `LocalState`. Smart ASA transfers can now be approved only for users opted-in with the current underlying ASA.
 
 ## Conclusions
 
