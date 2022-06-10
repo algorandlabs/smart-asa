@@ -800,8 +800,67 @@ class TestAssetTransfer:
         assert pre_minting_supply == post_minting_supply
 
     @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
-    def test_minting_fails_as_clawback(self, smart_asa_id: int) -> None:
-        pass
+    def test_minting_fails_as_clawback(
+        self,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        opted_in_creator: Account,
+        opted_in_account_factory: Callable,
+        smart_asa_id: int,
+    ) -> None:
+
+        clawback = opted_in_account_factory()
+
+        old_global_state = get_global_state(
+            opted_in_creator.algod_client, smart_asa_app.app_id
+        )
+        assert old_global_state["clawback_addr"] == opted_in_creator.decoded_address
+
+        print("\n --- Configuring clawback in Smart ASA...")
+        smart_asa_config(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            manager=opted_in_creator,
+            asset_id=smart_asa_id,
+            config_clawback_addr=clawback,
+        )
+
+        new_global_state = get_global_state(
+            opted_in_creator.algod_client, smart_asa_app.app_id
+        )
+        assert new_global_state["clawback_addr"] == clawback.decoded_address
+
+        pre_minting_supply = smart_asa_get(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            caller=opted_in_creator,
+            asset_id=smart_asa_id,
+            getter="get_circulating_supply",
+        )
+        print("\n --- Pre Minting Smart ASA circulating supply:", pre_minting_supply)
+
+        print("\n --- Clawbacking Smart ASA from App...")
+        with pytest.raises(AlgodHTTPError):
+            smart_asa_transfer(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                xfer_asset=smart_asa_id,
+                asset_amount=100,
+                caller=clawback,
+                asset_receiver=clawback,
+                asset_sender=smart_asa_app,
+            )
+        print(" --- Rejected as expected!")
+
+        post_minting_supply = smart_asa_get(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            caller=opted_in_creator,
+            asset_id=smart_asa_id,
+            getter="get_circulating_supply",
+        )
+        print("\n --- Post Minting Smart ASA circulating supply:", post_minting_supply)
+        assert pre_minting_supply == post_minting_supply
 
     @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
     def test_happy_path_minting(
