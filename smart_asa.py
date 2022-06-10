@@ -2,16 +2,17 @@
 Smart ASA (ARC-20 reference implementation)
 
 Usage:
-  smart_asa create  <creator> <total> [--decimals=<d>] [--default-frozen=<df>]
-                    [--name=<n>] [--unit-name=<un>] [--metadata-hash=<mh>]
+  smart_asa create  <creator> <total> [--decimals=<d>] [--default-frozen=<z>]
+                    [--name=<n>] [--unit-name=<u>] [--metadata-hash=<s>]
                     [--url=<l>] [--manager=<m>] [--reserve=<r>]
                     [--freeze=<f>] [--clawback=<c>]
-  smart_asa config  <asset-id> <manager> [--total=<t>] [--decimals=<d>]
-                    [--default-frozen=<df>] [--name=<n>] [--unit-name=<un>]
-                    [--metadata-hash=<mh>] [--url=<u>] [--manager=<m>]
-                    [--reserve=<r>] [--freeze=<f>] [--clawback=<c>]
+  smart_asa config  <asset-id> <manager> [--new-total=<t>] [--new-decimals=<d>]
+                    [--new-default-frozen=<z>] [--new-name=<n>]
+                    [--new-unit-name=<u>] [--new-metadata-hash=<s>]
+                    [--new-url=<u>] [--new-manager=<m>] [--new-reserve=<r>]
+                    [--new-freeze=<f>] [--new-clawback=<c>]
   smart_asa destroy <asset-id> <manager>
-  smart_asa freeze  <asset-id> <freeze> (--asset | <account>) <boolean>
+  smart_asa freeze  <asset-id> <freeze> (--asset | --account=<a>) <status>
   smart_asa optin   <asset-id> <account>
   smart_asa optout  <asset-id> <account> <close-to>
   smart_asa send    <asset-id> <from> <to> <amount>
@@ -24,7 +25,7 @@ Commands:
   create     Create a Smart ASA
   config     Configure a Smart ASA
   destroy    Destroy a Smart ASA
-  freeze     Freeze whole Smart ASA or specific account
+  freeze     Freeze whole Smart ASA or specific account, <status> = 1 is forzen
   optin      Optin Smart ASAs
   optout     Optout Smart ASAs
   send       Transfer Smart ASAs
@@ -33,6 +34,16 @@ Commands:
 
 Options:
   -h, --help
+  -d, --decimals=<d>           [default: 0]
+  -z, --default-frozen=<z>     [default: 0]
+  -n, --name=<n>               [default: ]
+  -u, --unit-name=<u>          [default: ]
+  -l, --url=<l>                [default: ]
+  -s, --metadata-hash=<s>      [default: ]
+  -m, --manager=<m>            Default to Smart ASA Creator
+  -r, --reserve=<r>            Default to Smart ASA Creator
+  -f, --freeze=<f>             Default to Smart ASA Creator
+  -c, --clawback=<c>           Default to Smart ASA Creator
 """
 
 import sys
@@ -90,24 +101,30 @@ def args_types(args: dict) -> dict:
     if args["<total>"] is not None:
         args["<total>"] = int(args["<total>"])
 
+    args["--decimals"] = int(args["--decimals"])
+
+    args["--default-frozen"] = int(args["--default-frozen"])
+    assert args["--default-frozen"] == 0 or args["--default-frozen"] == 1
+    args["--default-frozen"] = bool(args["--default-frozen"])
+
     if args["<asset-id>"] is not None:
         args["<asset-id>"] = int(args["<asset-id>"])
 
-    if args["--total"] is not None:
-        args["--total"] = int(args["--total"])
+    if args["--new-total"] is not None:
+        args["--new-total"] = int(args["--new-total"])
 
-    if args["--decimals"] is not None:
-        args["--decimals"] = int(args["--decimals"])
+    if args["--new-decimals"] is not None:
+        args["--new-decimals"] = int(args["--new-decimals"])
 
-    if args["--default-frozen"] is not None:
-        args["--default-frozen"] = int(args["--default-frozen"])
-        assert args["--default-frozen"] == 0 or args["--default-frozen"] == 1
-        args["--default-frozen"] = bool(args["--default-frozen"])
+    if args["--new-default-frozen"] is not None:
+        args["--new-default-frozen"] = int(args["--new-default-frozen"])
+        assert args["--new-default-frozen"] == 0 or args["--new-default-frozen"] == 1
+        args["--new-default-frozen"] = bool(args["--new-default-frozen"])
 
-    if args["<boolean>"] is not None:
-        args["<boolean>"] = int(args["<boolean>"])
-        assert args["<boolean>"] == 0 or args["<boolean>"] == 1
-        args["<boolean>"] = bool(args["<boolean>"])
+    if args["<status>"] is not None:
+        args["<status>"] = int(args["<status>"])
+        assert args["<status>"] == 0 or args["<status>"] == 1
+        args["<status>"] = bool(args["<status>"])
 
     if args["<amount>"] is not None:
         args["<amount>"] = int(args["<amount>"])
@@ -163,17 +180,17 @@ def asset_config(
         smart_asa_app=smart_asa_app,
         manager=manager,
         asset_id=args["<asset-id>"],
-        config_total=args["--total"],
-        config_decimals=args["--decimals"],
-        config_default_frozen=args["--default-frozen"],
-        config_name=args["--name"],
-        config_unit_name=args["--unit-name"],
-        config_url=args["--url"],
-        config_metadata_hash=args["--metadata-hash"],
-        config_manager_addr=args["--manager"],
-        config_reserve_addr=args["--reserve"],
-        config_freeze_addr=args["--freeze"],
-        config_clawback_addr=args["--clawback"],
+        config_total=args["--new-total"],
+        config_decimals=args["--new-decimals"],
+        config_default_frozen=args["--new-default-frozen"],
+        config_name=args["--new-name"],
+        config_unit_name=args["--new-unit-name"],
+        config_url=args["--new-url"],
+        config_metadata_hash=args["--new-metadata-hash"],
+        config_manager_addr=args["--new-manager"],
+        config_reserve_addr=args["--new-reserve"],
+        config_freeze_addr=args["--new-freeze"],
+        config_clawback_addr=args["--new-clawback"],
     )
     return print(f" --- Smart ASA {args['<asset-id>']} configured!\n")
 
@@ -202,7 +219,7 @@ def asset_or_account_freeze(
 ) -> None:
     freezer = Sandbox.from_public_key(args["<freeze>"])
 
-    if args["<boolean>"]:
+    if args["<status>"]:
         action = "Freezing"
     else:
         action = "Unfreezing"
@@ -214,17 +231,17 @@ def asset_or_account_freeze(
             smart_asa_app=smart_asa_app,
             freezer=freezer,
             freeze_asset=args["<asset-id>"],
-            asset_frozen=args["<boolean>"],
+            asset_frozen=args["<status>"],
         )
     else:
-        print(f"\n --- {action} account {args['<account>']}...\n")
+        print(f"\n --- {action} account {args['--account']}...\n")
         return smart_asa_account_freeze(
             smart_asa_contract=contract,
             smart_asa_app=smart_asa_app,
             freezer=freezer,
             freeze_asset=args["<asset-id>"],
-            account_frozen=args["<boolean>"],
-            target_account=args["<account>"],
+            account_frozen=args["<status>"],
+            target_account=args["--account"],
         )
 
 

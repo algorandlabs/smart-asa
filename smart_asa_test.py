@@ -800,6 +800,10 @@ class TestAssetTransfer:
         assert pre_minting_supply == post_minting_supply
 
     @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
+    def test_minting_fails_as_clawback(self, smart_asa_id: int) -> None:
+        pass
+
+    @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
     def test_happy_path_minting(
         self,
         smart_asa_contract: Contract,
@@ -1045,6 +1049,10 @@ class TestAssetTransfer:
         )
         print("\n --- Post Burning Smart ASA circulating supply:", post_burning_supply)
         assert pre_burning_supply == post_burning_supply
+
+    @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
+    def test_burning_fails_as_clawback(self, smart_asa_id: int) -> None:
+        pass
 
     @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
     def test_burning_happy_path(

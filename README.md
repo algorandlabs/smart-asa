@@ -4,7 +4,7 @@ Smart ASA reference implementation that combines the simplicity and security of 
 
 ## Overview
 
-The Smart ASA introduced with [ARC-0020](https://github.com/aldur/ARCs/blob/smartasa/ARCs/arc-0020.md) represents a new building block for complex blockchain applications. It offers a more flexible way to work with ASAs providing re-configuration functionalities and the possibility of building additional business logics around operations like ASA transfers, mints, and burns. This example presents an implementation of the Smart ASA contract as well as an easy to use CLI to interact with its functionalities.
+The Smart ASA introduced with [ARC-0020](https://github.com/aldur/ARCs/blob/smartasa/ARCs/arc-0020.md) represents a new building block for complex blockchain applications. It offers a more flexible way to work with ASAs providing re-configuration functionalities and the possibility of building additional business logics around operations like ASA transfers, _royalties_, _role-based-transfers_, _limit-amount-transfers_, _mints_, and _burns_. This example presents an implementation of the Smart ASA contract as well as an easy to use CLI to interact with its functionalities.
 
 **⚠️ Disclamer: This code is not audited!**
 
@@ -29,7 +29,7 @@ The `create` method triggers an `AssetConfigTx` transaction (inner transaction) 
 | `freeze_addr`    | \<Smart ASA App Addr\> |
 | `clawback_name`  | \<Smart ASA App Addr\> |
 
-The underlying ASA is created with maximum supply (max `uint64`), it is not divisible, and it is frozen by default. The unit and asset names are custom strings that identify the Smart ASA, whereas the `url` field is used to link the ASA with the Smart ASA App Id. Finally, the `manager`, `reserve`, `freeze`, and `clawback` roles of the ASA are assigned to the application address. Therefore, **the underlying ASA can only be controlled by the smart contract**.
+The Underlying ASA is created with maximum supply (max `uint64`), it is not divisible, and it is frozen by default. The unit and asset names are custom strings that identify the Smart ASA, whereas the `url` field is used to link the ASA with the Smart ASA App ID. Finally, the `manager`, `reserve`, `freeze`, and `clawback` roles of the ASA are assigned to the application address. Therefore, **the Underlying ASA can only be controlled by the smart contract**.
 
 ### State Schema
 
@@ -41,10 +41,10 @@ The `GlobalState` of the Smart ASA App is defined as follows:
 
 Integer Variables:
 
-- `total`: total supply of a Smart ASA. This value cannot be greater than the underlying ASA total supply;
+- `total`: total supply of a Smart ASA. This value cannot be greater than the Underlying ASA total supply or lower than the current cirulating supply (in case of reconfiguration);
 - `decimals`: number of digits to use after the decimal point. If 0, the Smart ASA is not divisible. If 1, the base unit of the Smart ASA is in tenth, it 2 it is in hundreds, if 3 it is in thousands, and so on;
 - `default_frozen`: True to freeze Smart ASA holdings by default;
-- `smart_asa_id`: asset ID of the underlying ASA;
+- `smart_asa_id`: asset ID of the Underlying ASA;
 - `frozen`: True to globally freeze Smart ASA transfers for all holders.
 
 Bytes Variables:
@@ -54,11 +54,11 @@ Bytes Variables:
 - `url`: URL with additional information on the Smart ASA;
 - `metadata_hash`: Smart ASA metadata hash;
 - `manager_addr`: Address of the account that can manage the configuration of the Smart ASA and destroy it;
-- `reserve_addr`: Address of the account holding the reserve (non-minted) units of the Smart ASA;
+- `reserve_addr`: Address of the account used to mint and burn the Smart ASA;
 - `freeze_addr`: Address of the account used to freeze holdings or even globally freeze the Smart ASA;
 - `clawback_addr`: Address of the account that can clawback holdings of the Smart ASA.
 
-**The Smart ASA App of the reference implementation has been designed to control one ASA at a time**. For this reason, the `smart_asa_id` variable has been added to the `GlobalState`. It is used to record the current underlying ASA controlled by the application. This value is also stored into the local state of opted-in users, enforcing cross-checks between local and global states and avoiding issues like unauthorized transfers (see Security Considerations for more details).
+**The Smart ASA App of the reference implementation has been designed to control one ASA at a time**. For this reason, the `smart_asa_id` variable has been added to the `GlobalState`. It is used to record the current Underlying ASA controlled by the application. This value is also stored into the local state of opted-in users, enforcing cross-checks between local and global states and avoiding issues like unauthorized transfers (see Security Considerations for more details).
 
 As additional feature, this reference implementation also includes the Smart ASA global `frozen` variable. It can only be updated by the freeze address which has the authority of globally freezing the asset with a single action, rather than freezing accounts one by one.
 
@@ -70,17 +70,17 @@ The `LocalState` initialized by the Smart ASA App for opted-in users is defined 
 
 Integer Variables:
 
-- `smart_asa_id`: asset ID of the underlying ASA of the Smart ASA a user has opted-in;
+- `smart_asa_id`: asset ID of the Underlying ASA of the Smart ASA a user has opted-in;
 - `frozen`: True to freeze the holdings of the account.
 
 #### Self Validation
 
 The Smart ASA reference implementation enforces self validation of the `StateSchema`. On creation, it controls the size oth the given schema for both the global and local states. The expected values are:
 
-- `GlobalState(Ints)` = 5
-- `GlobalState(Bytes)` = 8
-- `LocalState (Ints)` = 2
-- `LocalState (Bytes)` = 0
+|           | Global | Local |
+|-----------|--------|-------|
+| **Ints**  | 5      | 2     |
+| **Bytes** | 8      | 0     |
 
 #### Smart Contract ABI's type check
 
@@ -109,33 +109,33 @@ upon creation.
 
 ### Smart ASA App Opt-In
 
-Smart ASA Opt-In represents the account opt-in to the Smart ASA. The argument `asset_id` represents the underlying ASA. This method initializes the `LocalState` of the user. If the Smart ASA is `default_frozen` then the opting-in users are `frozen` too.
+Smart ASA Opt-In represents the account opt-in to the Smart ASA. The argument `asset` represents the Underlying ASA. This method initializes the `LocalState` of the user. If the Smart ASA is `default_frozen` then the opting-in users are `frozen` too.
 
 ```json
 {
   "name": "asset_app_optin",
-  "args": [{"name": "asset_id", "type": "asset"}],
+  "args": [{"name": "asset", "type": "asset"}],
   "returns": {"type": "void"}
 }
 ```
 
 ### Smart ASA App Close-Out
 
-Smart ASA Close-Out is the close out of an account from the Smart ASA. The argument `asset_id` represents the underlying ASA. This method removes the `LocalState` from the calling account. It succeeds if the account has no holdings left of the Smart ASA, otherwise fails.
+Smart ASA Close-Out is the close out of an account from the Smart ASA. The argument `asset` represents the Underlying ASA. This method removes the `LocalState` from the calling account. It succeeds if the account has no holdings left of the Smart ASA, otherwise fails.
 
 > For Smart ASA `default_frozen = False`, a freezed malicious user could close-out and opt-in again to change is `frozen` state. Checking the Smart ASA holdings before approving a close-out addresses this issue.
 
 ```json
 {
   "name": "asset_app_closeout",
-  "args": [{"name": "asset_id", "type": "asset"}],
+  "args": [{"name": "asset", "type": "asset"}],
   "returns": {"type": "void"}
 }
 ```
 
 ### Smart ASA Creation
 
-Smart ASA Create is the creation method of a Smart ASA. It creates a new underlying ASA and instantiate the controlling Smart Contract with the given properties. The reference implementation requires `total` > 0 (a Smart ASA cannot be created with 0 supply).
+Smart ASA Create is the creation method of a Smart ASA. It creates a new Underlying ASA and instantiate the controlling Smart Contract with the given properties.
 
 ```json
 {
@@ -161,15 +161,14 @@ Smart ASA Create is the creation method of a Smart ASA. It creates a new underly
 
 Smart ASA Configuration is the update method of a Smart ASA. It updates the parameters of an existing Smart ASA. Only the `manager` has the authority to configure the asset by invoking this method. The reference implementation applies the following restrictions:
 
-- the Smart ASA `manager_addr` cannot change;
-- `reserve`, `freeze`, and `clawback` addresses cannot be set to the ZERO_ADDRESS;
+- `manager_addr`, `reserve_addr`, `freeze_addr` and `clawback_addr` addresses can no longer be configured once set to `ZERO_ADDRESS`;
 - `total` cannot be configured to a value lower than the current circulating supply.
 
 ```json
 {
   "name": "asset_config",
   "args": [
-    {"name": "config_asset", "type": "asset"}
+    {"name": "config_asset", "type": "asset"},
     {"name": "total", "type": "uint64"},
     {"name": "decimals", "type": "uint32"},
     {"name": "default_frozen", "type": "bool"},
@@ -209,30 +208,42 @@ In the reference implementation only the `reserve` address can mint a Smart ASA.
 
 - the Smart ASA is not globally `frozen`;
 - `asset_sender` is the *Smart ASA App*;
-- `asset_reciver` has opted-in to the Smart ASA and is not `frozen`;
-- `asset_amount` does not exceed the total supply of the Smart ASA.
+- `asset_receiver` is not `frozen`;
+- `asset_receiver` Smart ASA ID in Local State is up-to-date;
+- `asset_amount` does not exceed the outstanding available supply of the Smart ASA.
 
 #### Burn
 
 In the reference implementation only the `reserve` address can burn a Smart ASA. A burning succeeds if the following conditions are satisfied:
 
 - the Smart ASA is not globally `frozen`;
-- `asset_sender` is the `reserve` address and is not `frozen`;
-- `asset_receiver` is the *Smart ASA App*;
+- `asset_sender` is the `reserve` address;
+- `asset_sender` is not `frozen`;
+- `asset_sender` Smart ASA ID in Local State is up-to-date;
+- `asset_receiver` is the *Smart ASA App*.
 
 #### Clawback
 
 The `clawback` address of a Smart ASA can invoke a clawback transfer from and to any asset holder (or revoke an asset). A clawback succeeds if the following conditions are satisfied:
 
-- `asset_receiver` has opted-in to the Smart ASA.
+- `asset_sender` Smart ASA ID in Local State is up-to-date;
+- `asset_receiver` Smart ASA ID in Local State is up-to-date;.
+
+Checking that Smart ASA ID in Local State is up-to-date both for `asset_sender`
+and `asset_receiver`, by looking at their respective Local States, implicitly
+checks that both `asset_sender` and `asset_receiver` opted-in the Smart ASA
+App. This ensures that _minting_ and _burning_ can not be executed as
+_clawback_, since the Smart ASA App can not opt-in to itself.
 
 #### Transfer
 
 A regular transfer of a Smart ASA can be invoked by any opted-in asset holder. It succeeds if the following conditions are satisfied:
 
 - the Smart ASA is not globally `frozen`;
-- `asset_sender` is not `frozen`
-- `asset_receiver` has opted-in to the Smart ASA and is not `frozen`.
+- `asset_sender` is not `frozen`;
+- `asset_sender` Smart ASA ID in Local State is up-to-date;
+- `asset_receiver` is not `frozen`;
+- `asset_receiver` Smart ASA ID in Local State is up-to-date.
 
 ### Smart ASA Global Freeze
 
@@ -676,7 +687,7 @@ To avoid this situation, the reference implementation introduces a close-out con
 
 ### 2. Conscious Smart ASA Destroy
 
-Upon a call to `asset_destroy`, the `GlobalState` of the Smart ASA App is initialized and the underlying ASA destroyed. However, the `LocalState` of opted-in users is not affected. Let's consider the case a `manager` invokes an `asset_destroy` over `Smart ASA A` and afterwards an `asset_create` to instantiate `Smart ASA B` with the same *Smart ASA App*.
+Upon a call to `asset_destroy`, the `GlobalState` of the Smart ASA App is initialized and the Underlying ASA destroyed. However, the `LocalState` of opted-in users is not affected. Let's consider the case a `manager` invokes an `asset_destroy` over `Smart ASA A` and afterwards an `asset_create` to instantiate `Smart ASA B` with the same *Smart ASA App*.
 
 - Eve was opted-in to *Smart ASA App* and was not frozen;
 - Bob (manager) destroys `Smart ASA A` (assuming `circulating_supply = 0`);
@@ -684,7 +695,7 @@ Upon a call to `asset_destroy`, the `GlobalState` of the Smart ASA App is initia
 - Eve is opted-in with `frozen = False`;
 - Eve can freely receive and spend `Smart ASA B`.
 
-To avoid this issue, the reference implementation includes the current `smart_asa_id` both in `GlobalState` and `LocalState`. Smart ASA transfers can now be approved only for users opted-in with the current underlying ASA.
+To avoid this issue, the reference implementation includes the current `smart_asa_id` both in `GlobalState` and `LocalState`. Smart ASA transfers can now be approved only for users opted-in with the current Underlying ASA.
 
 ## Conclusions
 

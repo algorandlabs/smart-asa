@@ -367,7 +367,6 @@ def asset_create(
         # Preconditions
         Assert(is_creator),
         Assert(smart_asa_not_created),
-        Assert(total.get() > Int(0)),  # NOTE: Ref. imlp requires `total` > 0
         is_valid_address_bytes_length(manager_addr.get()),
         is_valid_address_bytes_length(reserve_addr.get()),
         is_valid_address_bytes_length(freeze_addr.get()),
@@ -503,10 +502,6 @@ def asset_transfer(
         smart_asa_id == App.localGet(asset_sender.address(), LocalState.smart_asa_id),
         smart_asa_id == App.localGet(asset_receiver.address(), LocalState.smart_asa_id),
     )
-
-    receiver_is_optedin = App.optedIn(
-        asset_receiver.address(), Global.current_application_id()
-    )
     asset_frozen = App.globalGet(GlobalState.frozen)
     asset_sender_frozen = App.localGet(asset_sender.address(), LocalState.frozen)
     asset_receiver_frozen = App.localGet(asset_receiver.address(), LocalState.frozen)
@@ -520,7 +515,6 @@ def asset_transfer(
         .Then(
             Seq(
                 # Asset Regular Transfer Preconditions
-                Assert(receiver_is_optedin),  # NOTE: if Smart ASA requires Local State
                 Assert(Not(asset_frozen)),
                 Assert(Not(asset_sender_frozen)),
                 Assert(Not(asset_receiver_frozen)),
@@ -531,7 +525,6 @@ def asset_transfer(
         .Then(
             Seq(
                 # Asset Minting Preconditions
-                Assert(receiver_is_optedin),  # NOTE: if Smart ASA requires Local State
                 Assert(Not(asset_frozen)),
                 Assert(Not(asset_receiver_frozen)),
                 Assert(
@@ -551,13 +544,22 @@ def asset_transfer(
                 # Asset Burning Preconditions
                 Assert(Not(asset_frozen)),
                 Assert(Not(asset_sender_frozen)),
+                Assert(
+                    smart_asa_id
+                    == App.localGet(asset_sender.address(), LocalState.smart_asa_id)
+                ),
             )
         )
         .Else(
             Seq(
+                # Asset Clawback Preconditions
                 Assert(is_clawback),
+                # NOTE: `is_current_smart_asa_id` implicitly checks that both
+                # `asset_sender` and `asset_receiver` opted-in the Smart ASA
+                # App. This ensures that _mint_ and _burn_ can not be
+                # executed as _clawback_, since the Smart ASA App can not
+                # opt-in to itself.
                 Assert(is_current_smart_asa_id),
-                Assert(receiver_is_optedin),  # NOTE: if Smart ASA requires Local State
             )
         ),
         # Effects
