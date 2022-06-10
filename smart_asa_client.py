@@ -16,8 +16,8 @@ from utils import get_global_state, get_method, get_params
 
 from smart_asa_asc import (
     UNDERLYING_ASA_TOTAL,
-    smart_asa_global_state,
-    smart_asa_local_state,
+    GlobalState,
+    LocalState,
 )
 
 
@@ -60,8 +60,8 @@ def smart_asa_app_create(
     return creator.create_asc(
         approval_program=teal_approval,
         clear_program=teal_clear,
-        global_schema=smart_asa_global_state,
-        local_schema=smart_asa_local_state,
+        global_schema=GlobalState.schema(),
+        local_schema=LocalState.schema(),
     )
 
 

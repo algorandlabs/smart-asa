@@ -23,9 +23,9 @@ from account import Account, AppAccount
 
 from smart_asa_asc import (
     UNDERLYING_ASA_TOTAL,
+    LocalState,
     compile_stateful,
     smart_asa_abi,
-    smart_asa_local_state,
 )
 
 from smart_asa_client import (
@@ -1974,9 +1974,7 @@ class TestGetters:
             f"{smart_asa_app.app_id}..."
         )
         optin_min_balance = (
-            100_000
-            + 28_500 * smart_asa_local_state.num_uints
-            + 50_000 * smart_asa_local_state.num_byte_slices
+            100_000 + 28_500 * LocalState.num_uints() + 50_000 * LocalState.num_bytes()
         )
         assert optin_min_balance == smart_asa_get(
             smart_asa_contract=smart_asa_contract,
