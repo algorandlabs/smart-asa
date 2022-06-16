@@ -17,6 +17,7 @@ from pyteal import (
     BareCallActions,
     Bytes,
     CallConfig,
+    Concat,
     Expr,
     Global,
     If,
@@ -61,10 +62,10 @@ UNDERLYING_ASA_DEFAULT_FROZEN = Int(1)
 UNDERLYING_ASA_UNIT_NAME = Bytes("S-ASA")
 UNDERLYING_ASA_NAME = Bytes("SMART-ASA")
 # FIXME
-# UNDERLYING_ASA_URL = Concat(
-#     Bytes("smart-asa-app-id:"), Itob(Global.current_application_id())
-# )
-UNDERLYING_ASA_URL = Itob(Global.current_application_id())
+UNDERLYING_ASA_URL = Concat(
+    Bytes("smart-asa-app-id:"), Itob(Global.current_application_id())
+)
+# UNDERLYING_ASA_URL = Itob(Global.current_application_id())
 UNDERLYING_ASA_METADATA_HASH = Bytes("")
 UNDERLYING_ASA_MANAGER_ADDR = Global.current_application_address()
 UNDERLYING_ASA_RESERVE_ADDR = Global.current_application_address()
@@ -350,7 +351,7 @@ def asset_create(
     unit_name: abi.String,
     name: abi.String,
     url: abi.String,
-    metadata_hash: abi.String,  # FIXME: This was originally Byte in ARC-20
+    metadata_hash: abi.DynamicArray[abi.Byte],
     manager_addr: abi.Address,
     reserve_addr: abi.Address,
     freeze_addr: abi.Address,
@@ -381,7 +382,7 @@ def asset_create(
         App.globalPut(GlobalState.unit_name, unit_name.get()),
         App.globalPut(GlobalState.name, name.get()),
         App.globalPut(GlobalState.url, url.get()),
-        App.globalPut(GlobalState.metadata_hash, metadata_hash.get()),
+        App.globalPut(GlobalState.metadata_hash, metadata_hash.encode()),
         App.globalPut(GlobalState.manager_addr, manager_addr.get()),
         App.globalPut(GlobalState.reserve_addr, reserve_addr.get()),
         App.globalPut(GlobalState.freeze_addr, freeze_addr.get()),
@@ -399,7 +400,7 @@ def asset_config(
     unit_name: abi.String,
     name: abi.String,
     url: abi.String,
-    metadata_hash: abi.String,  # FIXME: This was originally Byte in ARC-20
+    metadata_hash: abi.DynamicArray[abi.Byte],
     manager_addr: abi.Address,
     reserve_addr: abi.Address,
     freeze_addr: abi.Address,
@@ -451,7 +452,7 @@ def asset_config(
         App.globalPut(GlobalState.unit_name, unit_name.get()),
         App.globalPut(GlobalState.name, name.get()),
         App.globalPut(GlobalState.url, url.get()),
-        App.globalPut(GlobalState.metadata_hash, metadata_hash.get()),
+        App.globalPut(GlobalState.metadata_hash, metadata_hash.encode()),
         App.globalPut(GlobalState.manager_addr, manager_addr.get()),
         App.globalPut(GlobalState.reserve_addr, reserve_addr.get()),
         App.globalPut(GlobalState.freeze_addr, freeze_addr.get()),
@@ -715,13 +716,13 @@ def get_url(asset: abi.Asset, *, output: abi.String) -> Expr:
 def get_metadata_hash(
     asset: abi.Asset,
     *,
-    output: abi.String,  # FIXME: This was originally Byte in ARC-20
+    output: abi.DynamicArray[abi.Byte],
 ) -> Expr:
     return Seq(
         # Preconditions
         getter_preconditions(asset.asset_id()),
         # Effects
-        output.set(App.globalGet(GlobalState.metadata_hash)),
+        output.decode(App.globalGet(GlobalState.metadata_hash)),
     )
 
 

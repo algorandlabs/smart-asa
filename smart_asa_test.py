@@ -124,6 +124,7 @@ def smart_asa_id(
         creator=creator,
         smart_asa_contract=smart_asa_contract,
         total=100,
+        metadata_hash=b"XYZXYZ",
         default_frozen=request.param,
     )
 
@@ -507,7 +508,7 @@ class TestAssetConfig:
             "unit_name": "NEW_TEST_!!!",
             "name": "New Test !!!",
             "url": "https://new_test.io",
-            "metadata_hash": "a" * 32,
+            "metadata_hash": b"a" * 32,
             "total": 0,
             "decimals": 100,
             "frozen": False,
@@ -1964,13 +1965,15 @@ class TestGetters:
         print(
             f"\n --- Getting 'metadata_hash' param of Smart ASA {smart_asa_app.app_id}..."
         )
-        smart_asa = get_smart_asa_params(creator.algod_client, smart_asa_id)
-        assert smart_asa["metadata_hash"] == smart_asa_get(
-            smart_asa_contract=smart_asa_contract,
-            smart_asa_app=smart_asa_app,
-            caller=creator,
-            asset_id=smart_asa_id,
-            getter="get_metadata_hash",
+        # smart_asa = get_smart_asa_params(creator.algod_client, smart_asa_id_with_metadata)
+        assert b"XYZXYZ" == bytes(
+            smart_asa_get(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                caller=creator,
+                asset_id=smart_asa_id,
+                getter="get_metadata_hash",
+            )
         )
 
         print(

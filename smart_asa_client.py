@@ -75,7 +75,7 @@ def smart_asa_create(
     unit_name: str = "",
     name: str = "",
     url: str = "",
-    metadata_hash: str = "",
+    metadata_hash: bytes = b"",
     manager_addr: Optional[Union[str, Account]] = None,
     reserve_addr: Optional[Union[str, Account]] = None,
     freeze_addr: Optional[Union[str, Account]] = None,
@@ -158,7 +158,7 @@ def smart_asa_config(
     config_unit_name: Optional[str] = None,
     config_name: Optional[str] = None,
     config_url: Optional[str] = None,
-    config_metadata_hash: Optional[str] = None,
+    config_metadata_hash: Optional[bytes] = None,
     config_manager_addr: Optional[Union[str, Account]] = None,
     config_reserve_addr: Optional[Union[str, Account]] = None,
     config_freeze_addr: Optional[Union[str, Account]] = None,
@@ -167,6 +167,16 @@ def smart_asa_config(
 ) -> int:
 
     s_asa = get_smart_asa_params(manager.algod_client, asset_id)
+    if config_metadata_hash is None:
+        config_metadata_hash = bytes(
+            smart_asa_get(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                caller=manager,
+                asset_id=asset_id,
+                getter="get_metadata_hash",
+            )
+        )
 
     if config_manager_addr is None:
         config_manager_addr = Account(address=s_asa["manager_addr"])
@@ -191,9 +201,7 @@ def smart_asa_config(
         s_asa["unit_name"] if config_unit_name is None else config_unit_name,
         s_asa["name"] if config_name is None else config_name,
         s_asa["url"] if config_url is None else config_url,
-        s_asa["metadata_hash"]
-        if config_metadata_hash is None
-        else config_metadata_hash,
+        config_metadata_hash,
         config_manager_addr,
         config_reserve_addr,
         config_freeze_addr,
