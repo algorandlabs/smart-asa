@@ -61,7 +61,7 @@ UNDERLYING_ASA_DECIMALS = Int(0)
 UNDERLYING_ASA_DEFAULT_FROZEN = Int(1)
 UNDERLYING_ASA_UNIT_NAME = Bytes("S-ASA")
 UNDERLYING_ASA_NAME = Bytes("SMART-ASA")
-# FIXME
+# FIXME: Implement Itoa rather than big endian
 UNDERLYING_ASA_URL = Concat(
     Bytes("smart-asa-app-id:"), Itob(Global.current_application_id())
 )
