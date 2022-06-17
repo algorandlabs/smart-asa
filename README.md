@@ -135,7 +135,7 @@ Smart ASA Close-Out is the close out of an account from the Smart ASA. The argum
 
 ### Smart ASA Creation
 
-Smart ASA Create is the creation method of a Smart ASA. It creates a new Underlying ASA and instantiate the controlling Smart Contract with the given properties.
+Smart ASA Create is the creation method of a Smart ASA. It creates a new Underlying ASA and instantiates the controlling Smart Contract with the given properties.
 
 ```json
 {
