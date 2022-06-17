@@ -32,19 +32,20 @@ from smart_asa_client import (
     get_smart_asa_params,
     smart_asa_account_freeze,
     smart_asa_app_create,
-    smart_asa_app_closeout,
+    smart_asa_closeout,
     smart_asa_config,
     smart_asa_create,
     smart_asa_destroy,
     smart_asa_freeze,
     smart_asa_get,
-    smart_asa_app_optin,
+    smart_asa_optin,
     smart_asa_transfer,
 )
 
 from utils import (
     get_global_state,
     get_local_state,
+    get_method,
 )
 
 INITIAL_FUNDS = 100_000_000
@@ -136,8 +137,7 @@ def opted_in_creator(
     creator: Account,
     smart_asa_id: int,
 ) -> Account:
-    creator.optin_to_asset(smart_asa_id)
-    smart_asa_app_optin(
+    smart_asa_optin(
         smart_asa_contract=smart_asa_contract,
         smart_asa_app=smart_asa_app,
         asset_id=smart_asa_id,
@@ -171,8 +171,7 @@ def opted_in_account_factory(
 ) -> Callable:
     def _factory() -> Account:
         account = Sandbox.create(funds_amount=INITIAL_FUNDS)
-        account.optin_to_asset(smart_asa_id)
-        smart_asa_app_optin(
+        smart_asa_optin(
             smart_asa_contract=smart_asa_contract,
             smart_asa_app=smart_asa_app,
             asset_id=smart_asa_id,
@@ -323,7 +322,7 @@ class TestAssetOptin:
     ) -> None:
         print("\n --- Opt-In App with no Smart ASA ID...")
         with pytest.raises(AlgodHTTPError):
-            smart_asa_app_optin(
+            smart_asa_optin(
                 smart_asa_contract=smart_asa_contract,
                 smart_asa_app=smart_asa_app,
                 asset_id=1,
@@ -342,7 +341,7 @@ class TestAssetOptin:
         creator.optin_to_asset(smart_asa_id)
         print("\n --- Opt-In App with wrong Smart ASA ID...")
         with pytest.raises(AlgodHTTPError):
-            smart_asa_app_optin(
+            smart_asa_optin(
                 smart_asa_contract=smart_asa_contract,
                 smart_asa_app=smart_asa_app,
                 asset_id=smart_asa_id + 1,
@@ -350,24 +349,23 @@ class TestAssetOptin:
             )
         print(" --- Rejected as expected!")
 
-    @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
-    def test_no_optin_to_underlying_asa(
-        self,
-        smart_asa_contract: Contract,
-        smart_asa_app: AppAccount,
-        creator: Account,
-        smart_asa_id: int,
-    ) -> None:
+    def test_optin_group_wrong_txn_type(self) -> None:
+        pass  # TODO
 
-        print("\n --- Opt-In App without optin to underlying ASA...")
-        with pytest.raises(AlgodHTTPError):
-            smart_asa_app_optin(
-                smart_asa_contract=smart_asa_contract,
-                smart_asa_app=smart_asa_app,
-                asset_id=smart_asa_id,
-                caller=creator,
-            )
-        print(" --- Rejected as expected!")
+    def test_optin_group_wrong_asa(self) -> None:
+        pass  # TODO
+
+    def test_optin_group_wrong_sender(self) -> None:
+        pass  # TODO
+
+    def test_optin_group_wrong_receiver(self) -> None:
+        pass  # TODO
+
+    def test_optin_group_wrong_amount(self) -> None:
+        pass  # TODO
+
+    def test_optin_group_with_asset_close_to(self) -> None:
+        pass  # TODO
 
     def test_happy_path(
         self,
@@ -397,15 +395,26 @@ class TestAssetConfig:
         creator: Account,
     ) -> None:
 
+        wrong_asa = creator.create_asset()
+
         print("\n --- Configuring unexisting Smart ASA...")
         with pytest.raises(AlgodHTTPError):
-            smart_asa_config(
-                smart_asa_contract=smart_asa_contract,
-                smart_asa_app=smart_asa_app,
-                manager=creator,
-                asset_id=42,
-                config_manager_addr=ZERO_ADDRESS,
-                save_abi_call="/tmp/txn.signed",
+            creator.abi_call(
+                get_method(smart_asa_contract, "asset_config"),
+                wrong_asa,
+                100,
+                2,
+                True,
+                "FOO",
+                "Foo",
+                "foo.spam",
+                b"foo",
+                creator.address,
+                creator.address,
+                creator.address,
+                creator.address,
+                app=smart_asa_app,
+                fee=creator.algod_client.suggested_params().fee,
             )
         print(" --- Rejected as expected!")
 
@@ -438,15 +447,26 @@ class TestAssetConfig:
         smart_asa_id: int,
     ) -> None:
 
+        wrong_asa = creator.create_asset()
+
         print("\n --- Configuring Smart ASA with wrong Asset ID...")
         with pytest.raises(AlgodHTTPError):
-            smart_asa_config(
-                smart_asa_contract=smart_asa_contract,
-                smart_asa_app=smart_asa_app,
-                manager=creator,
-                asset_id=42,
-                config_manager_addr=ZERO_ADDRESS,
-                save_abi_call="/tmp/txn.signed",
+            creator.abi_call(
+                get_method(smart_asa_contract, "asset_config"),
+                wrong_asa,
+                100,
+                2,
+                True,
+                "FOO",
+                "Foo",
+                "foo.spam",
+                b"foo",
+                creator.address,
+                creator.address,
+                creator.address,
+                creator.address,
+                app=smart_asa_app,
+                fee=creator.algod_client.suggested_params().fee,
             )
         print(" --- Rejected as expected!")
 
@@ -1462,11 +1482,11 @@ class TestAssetTransfer:
         opted_in_creator.close_asset_to(smart_asa_id, smart_asa_app)
 
         print(f"\n --- Closing out Smart ASA in App {smart_asa_app.app_id}...")
-        smart_asa_app_closeout(
+        smart_asa_closeout(
             smart_asa_contract=smart_asa_contract,
             smart_asa_app=smart_asa_app,
             asset_id=smart_asa_id,
-            closer=opted_in_creator,
+            caller=opted_in_creator,
         )
 
         print(f"\n --- Creator optin new Smart ASA {new_smart_asa_id}...")
@@ -1475,7 +1495,7 @@ class TestAssetTransfer:
         print(
             f"\n --- Creator optin again to Smart ASA App" f" {smart_asa_app.app_id}..."
         )
-        smart_asa_app_optin(
+        smart_asa_optin(
             smart_asa_contract=smart_asa_contract,
             smart_asa_app=smart_asa_app,
             asset_id=new_smart_asa_id,
@@ -1836,11 +1856,11 @@ class TestAssetCloseout:
     ) -> None:
         with pytest.raises(AlgodHTTPError):
             print(f"\n --- Closing App while still opted in to Smart ASA...")
-            smart_asa_app_closeout(
+            smart_asa_closeout(
                 smart_asa_contract=smart_asa_contract,
                 smart_asa_app=smart_asa_app,
                 asset_id=smart_asa_id,
-                closer=opted_in_account_factory(),
+                caller=opted_in_account_factory(),
             )
         print(" --- Rejected as expected!")
 
@@ -1866,11 +1886,11 @@ class TestAssetCloseout:
         )
 
         print(f"\n --- Closing out Smart ASA in App {smart_asa_app.app_id}...")
-        smart_asa_app_closeout(
+        smart_asa_closeout(
             smart_asa_contract=smart_asa_contract,
             smart_asa_app=smart_asa_app,
             asset_id=smart_asa_id,
-            closer=opted_in_account,
+            caller=opted_in_account,
         )
         print(" --- Closed out Smart ASA ID:", smart_asa_id)
         assert not opted_in_account.local_state()

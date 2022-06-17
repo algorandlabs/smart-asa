@@ -164,9 +164,9 @@ def init_local_state() -> Expr:
 
 
 @Subroutine(TealType.bytes)
-def int_to_ascii(arg: Expr) -> Expr:
+def int_to_ascii(i: Expr) -> Expr:
     """int_to_ascii converts an integer to the ASCII byte that represents it"""
-    return Extract(Bytes("0123456789"), arg, Int(1))
+    return Extract(Bytes("0123456789"), i, Int(1))
 
 
 @Subroutine(TealType.bytes)
@@ -323,7 +323,6 @@ def asset_app_optin(
     asset: abi.Asset,
     underlying_asa_optin: abi.AssetTransferTransaction,
 ) -> Expr:
-    # TODO: Underlying ASA and Smart ASA App opt-in could be atomic.
     # On OptIn the frozen status must be set to `True` if account owns any
     # units of the underlying ASA. This prevents malicious users to circumvent
     # the `default_frozen` status by clearing their Local State. Note that this
@@ -343,6 +342,7 @@ def asset_app_optin(
         Assert(underlying_asa_optin.get().sender() == Txn.sender()),
         Assert(underlying_asa_optin.get().asset_receiver() == Txn.sender()),
         Assert(underlying_asa_optin.get().asset_amount() == Int(0)),
+        Assert(underlying_asa_optin.get().asset_close_to() == Global.zero_address()),
         account_balance,
         Assert(optin_to_underlying_asa),
         # Effects
@@ -353,8 +353,10 @@ def asset_app_optin(
 
 
 @smart_asa_abi.method(close_out=CallConfig.ALL)
-def asset_app_closeout(asset: abi.Asset) -> Expr:
-    # TODO: Underlying ASA and Smart ASA App close-out could be atomic.
+def asset_app_closeout(
+    asset: abi.Asset,
+    # underlying_asa_closeout: abi.AssetTransferTransaction,
+) -> Expr:
     current_smart_asa_id = App.localGet(Txn.sender(), LocalState.smart_asa_id)
     is_correct_smart_asa_id = current_smart_asa_id == asset.asset_id()
     account_balance = AssetHolding().balance(Txn.sender(), asset.asset_id())
@@ -364,6 +366,10 @@ def asset_app_closeout(asset: abi.Asset) -> Expr:
         # NOTE: Smart ASA existence is not checked on close-out since
         # would be impossible to close-out destroyed assets.
         Assert(is_correct_smart_asa_id),
+        # Assert(underlying_asa_closeout.get().type_enum() == TxnType.AssetTransfer),
+        # Assert(underlying_asa_closeout.get().xfer_asset() == asset.asset_id()),
+        # Assert(underlying_asa_closeout.get().sender() == Txn.sender()),
+        # Assert(underlying_asa_closeout.get().asset_close_to() != Global.zero_address()),
         account_balance,
         Assert(Not(optin_to_underlying_asa)),
         # Effects

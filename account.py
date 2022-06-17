@@ -8,7 +8,6 @@ from algosdk.future import transaction
 from algosdk.v2client import algod
 from algosdk.atomic_transaction_composer import (
     TransactionSigner,
-    TransactionWithSigner,
     AtomicTransactionComposer,
 )
 
@@ -88,7 +87,6 @@ class Account(TransactionSigner):
         method,
         *args,
         app: Optional[Union[int, "AppAccount"]] = None,
-        group_extra_txns: Optional[list[TransactionWithSigner]] = None,
         on_complete: transaction.OnComplete = transaction.OnComplete.NoOpOC,
         fee: Optional[int] = None,
         max_wait_rounds: int = 10,
@@ -130,10 +128,6 @@ class Account(TransactionSigner):
             on_complete=on_complete,
         )
 
-        if group_extra_txns is not None:
-            for transaction_with_signer in group_extra_txns:
-                atc.add_transaction(transaction_with_signer)
-
         atc.build_group()
         atc.gather_signatures()
         if save_abi_call:
@@ -167,7 +161,7 @@ class Account(TransactionSigner):
             "reserve": self.address,
             "freeze": self.address,
             "clawback": self.address,
-            "decimals": 6,
+            "decimals": 0,
         }
         args.update(**kwargs)
         txn = transaction.AssetConfigTxn(sender=self.address, **args)
@@ -296,7 +290,7 @@ class AppAccount(Account):
                     encoding.checksum(b"appID" + app_id.to_bytes(8, "big"))
                 ),
             ),
-            **kwargs
+            **kwargs,
         )
 
     def global_state(self) -> dict[str, Union[bytes, int]]:
