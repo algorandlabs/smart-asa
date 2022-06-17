@@ -33,7 +33,7 @@ The Underlying ASA is created with maximum supply (max `uint64`), it is not divi
 
 ### State Schema
 
-The `SateSchema` of the Smart Contract has been designed to match 1-to-1 the parameters of an ASA. In addition, this reference implementation requires users to opt-in to the application and initialize their `LocalState`.
+The `StateSchema` of the Smart Contract has been designed to match 1-to-1 the parameters of an ASA. In addition, this reference implementation requires users to opt-in to the application and initialize their `LocalState`.
 
 #### Global State
 
