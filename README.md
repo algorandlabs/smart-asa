@@ -247,7 +247,7 @@ A regular transfer of a Smart ASA can be invoked by any opted-in asset holder. I
 
 ### Smart ASA Global Freeze
 
-Smart ASA Global Freeze is the freeze method of a Smart ASA. It enables the `freeze` address to globally freeze a Smart ASA. Freezed assets cannot be transferred, minted or burned.
+Smart ASA Global Freeze is the freeze method of a Smart ASA. It enables the `freeze` address to globally freeze a Smart ASA. A frozen Smart ASA cannot be transferred, minted or burned.
 
 ```json
 {
