@@ -4,11 +4,11 @@ from typing import Any, Optional, Union, cast
 
 import algosdk
 from algosdk import encoding
-from algosdk.abi import Method
 from algosdk.future import transaction
 from algosdk.v2client import algod
 from algosdk.atomic_transaction_composer import (
     TransactionSigner,
+    TransactionWithSigner,
     AtomicTransactionComposer,
 )
 
@@ -85,13 +85,14 @@ class Account(TransactionSigner):
 
     def abi_call(
         self,
-        method: Method,
+        method,
         *args,
         app: Optional[Union[int, "AppAccount"]] = None,
+        group_extra_txns: Optional[list[TransactionWithSigner]] = None,
         on_complete: transaction.OnComplete = transaction.OnComplete.NoOpOC,
         fee: Optional[int] = None,
         max_wait_rounds: int = 10,
-        save_abi_call: str = None
+        save_abi_call: str = None,
     ) -> Any:  # TODO: Correctly specify the return type here.
         """
         ABI call from `sender` to `app` `method`, with `*args`. Txn-type args are supplied
@@ -128,6 +129,10 @@ class Account(TransactionSigner):
             signer=self,
             on_complete=on_complete,
         )
+
+        if group_extra_txns is not None:
+            for transaction_with_signer in group_extra_txns:
+                atc.add_transaction(transaction_with_signer)
 
         atc.build_group()
         atc.gather_signatures()

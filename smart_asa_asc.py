@@ -19,12 +19,12 @@ from pyteal import (
     CallConfig,
     Concat,
     Expr,
+    Extract,
     Global,
     If,
     InnerTxn,
     InnerTxnBuilder,
     Int,
-    Itob,
     Len,
     Mode,
     Not,
@@ -50,27 +50,12 @@ from algosdk.constants import key_len_bytes
 # / --- CONSTANTS
 TEAL_VERSION = 6
 
+SMART_ASA_APP_BINDING = "smart-asa-app-id:"
+
 # NOTE: The following costs could change over time with protocol upgrades.
 OPTIN_COST = 100_000
 UINTS_COST = 28_500
 BYTES_COST = 50_000
-
-# / --- --- UNDERLYING ASA CONFIG
-UNDERLYING_ASA_TOTAL = Int(2**64 - 1)
-UNDERLYING_ASA_DECIMALS = Int(0)
-UNDERLYING_ASA_DEFAULT_FROZEN = Int(1)
-UNDERLYING_ASA_UNIT_NAME = Bytes("S-ASA")
-UNDERLYING_ASA_NAME = Bytes("SMART-ASA")
-# FIXME: Implement Itoa rather than big endian
-UNDERLYING_ASA_URL = Concat(
-    Bytes("smart-asa-app-id:"), Itob(Global.current_application_id())
-)
-# UNDERLYING_ASA_URL = Itob(Global.current_application_id())
-UNDERLYING_ASA_METADATA_HASH = Bytes("")
-UNDERLYING_ASA_MANAGER_ADDR = Global.current_application_address()
-UNDERLYING_ASA_RESERVE_ADDR = Global.current_application_address()
-UNDERLYING_ASA_FREEZE_ADDR = Global.current_application_address()
-UNDERLYING_ASA_CLAWBACK_ADDR = Global.current_application_address()
 
 
 def static_attrs(cls):
@@ -176,6 +161,41 @@ def init_local_state() -> Expr:
         App.localPut(Txn.sender(), LocalState.smart_asa_id, smart_asa_id),
         App.localPut(Txn.sender(), LocalState.frozen, Int(0)),
     )
+
+
+@Subroutine(TealType.bytes)
+def int_to_ascii(arg: Expr) -> Expr:
+    """int_to_ascii converts an integer to the ASCII byte that represents it"""
+    return Extract(Bytes("0123456789"), arg, Int(1))
+
+
+@Subroutine(TealType.bytes)
+def itoa(i: Expr) -> Expr:
+    """itoa converts an integer to the ASCII byte string it represents."""
+    return If(
+        i == Int(0),
+        Bytes("0"),
+        Concat(
+            If(i / Int(10) > Int(0), itoa(i / Int(10)), Bytes("")),
+            int_to_ascii(i % Int(10)),
+        ),
+    )
+
+
+# / --- --- UNDERLYING ASA CONFIG
+UNDERLYING_ASA_TOTAL = Int(2**64 - 1)
+UNDERLYING_ASA_DECIMALS = Int(0)
+UNDERLYING_ASA_DEFAULT_FROZEN = Int(1)
+UNDERLYING_ASA_UNIT_NAME = Bytes("S-ASA")
+UNDERLYING_ASA_NAME = Bytes("SMART-ASA")
+UNDERLYING_ASA_URL = Concat(
+    Bytes(SMART_ASA_APP_BINDING), itoa(Global.current_application_id())
+)
+UNDERLYING_ASA_METADATA_HASH = Bytes("")
+UNDERLYING_ASA_MANAGER_ADDR = Global.current_application_address()
+UNDERLYING_ASA_RESERVE_ADDR = Global.current_application_address()
+UNDERLYING_ASA_FREEZE_ADDR = Global.current_application_address()
+UNDERLYING_ASA_CLAWBACK_ADDR = Global.current_application_address()
 
 
 @Subroutine(TealType.uint64)
@@ -299,7 +319,10 @@ smart_asa_abi = Router(
 
 # / --- --- METHODS
 @smart_asa_abi.method(opt_in=CallConfig.ALL)
-def asset_app_optin(asset: abi.Asset) -> Expr:
+def asset_app_optin(
+    asset: abi.Asset,
+    underlying_asa_optin: abi.AssetTransferTransaction,
+) -> Expr:
     # TODO: Underlying ASA and Smart ASA App opt-in could be atomic.
     # On OptIn the frozen status must be set to `True` if account owns any
     # units of the underlying ASA. This prevents malicious users to circumvent
@@ -315,6 +338,11 @@ def asset_app_optin(asset: abi.Asset) -> Expr:
         # Preconditions
         Assert(smart_asa_id),
         Assert(is_correct_smart_asa_id),
+        Assert(underlying_asa_optin.get().type_enum() == TxnType.AssetTransfer),
+        Assert(underlying_asa_optin.get().xfer_asset() == smart_asa_id),
+        Assert(underlying_asa_optin.get().sender() == Txn.sender()),
+        Assert(underlying_asa_optin.get().asset_receiver() == Txn.sender()),
+        Assert(underlying_asa_optin.get().asset_amount() == Int(0)),
         account_balance,
         Assert(optin_to_underlying_asa),
         # Effects

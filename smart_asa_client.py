@@ -5,16 +5,17 @@ Smart ASA client
 __author__ = "Cosimo Bassi, Stefano De Angelis"
 __email__ = "<cosimo.bassi@algorand.com>, <stefano.deangelis@algorand.com>"
 
-from base64 import b64decode
 from typing import Any, Optional, Union
 from algosdk.abi import Contract
+from algosdk.atomic_transaction_composer import TransactionWithSigner
 from algosdk.v2client.algod import AlgodClient
 from algosdk.encoding import encode_address
-from algosdk.future.transaction import OnComplete
+from algosdk.future.transaction import AssetTransferTxn, OnComplete
 from account import Account, AppAccount
 from utils import get_global_state, get_method, get_params
 
 from smart_asa_asc import (
+    SMART_ASA_APP_BINDING,
     UNDERLYING_ASA_TOTAL,
     GlobalState,
     LocalState,
@@ -23,7 +24,8 @@ from smart_asa_asc import (
 
 def get_smart_asa_params(_algod_client: AlgodClient, smart_asa_id: int) -> dict:
     smart_asa = _algod_client.asset_info(smart_asa_id)["params"]
-    smart_asa_app_id = int.from_bytes(b64decode(smart_asa["url-b64"]), "big")
+    assert SMART_ASA_APP_BINDING in smart_asa["url"]
+    smart_asa_app_id = int(smart_asa["url"].replace(SMART_ASA_APP_BINDING, ""))
     smart_asa_app_account = AppAccount.from_app_id(
         app_id=smart_asa_app_id,
         algod_client=_algod_client,
@@ -116,12 +118,26 @@ def smart_asa_app_optin(
     params = get_params(caller.algod_client)
     abi_call_fee = params.fee
 
+    asa_optin_txn = AssetTransferTxn(
+        sender=caller.address,
+        sp=params,
+        receiver=caller.address,
+        amt=0,
+        index=asset_id,
+    )
+
+    asa_optin_txn = TransactionWithSigner(
+        txn=asa_optin_txn,
+        signer=caller,
+    )
+
     caller.abi_call(
         get_method(smart_asa_contract, "asset_app_optin"),
         asset_id,
         on_complete=OnComplete.OptInOC,
         app=smart_asa_app,
         fee=abi_call_fee,
+        group_extra_txns=[asa_optin_txn],
         save_abi_call=save_abi_call,
     )
 

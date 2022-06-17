@@ -137,11 +137,11 @@
         },
         "py-algorand-sdk": {
             "hashes": [
-                "sha256:70dee371aee1bf7d6c1d8601e2b4bd82d2ae29951fc6c9a72cba02064b75c437",
-                "sha256:c7c1e5a929ad3430ba8a2a38c47460a57fbf818c31b98ed3cf52208721aad6e0"
+                "sha256:ecfab5180090a23a4001463dd3a05612ce9bd5923326c01996c48105886a8569",
+                "sha256:efc2fb02905dbbc5e369adb024ae92ed6bedefa542676939ae1b817c3b84f95f"
             ],
             "index": "pypi",
-            "version": "==1.14.0"
+            "version": "==1.15.0"
         },
         "pycparser": {
             "hashes": [
@@ -340,8 +340,16 @@
                 "sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc",
                 "sha256:de526c12914f0c550d15924c62d72abc48d6fe7364aa87328337a31007fe8a4f"
             ],
-            "markers": "python_version < '3.11'",
+            "markers": "python_version >= '3.7'",
             "version": "==2.0.1"
+        },
+        "typing-extensions": {
+            "hashes": [
+                "sha256:6657594ee297170d19f67d55c05852a874e7eb634f4f753dbd667855e07c1708",
+                "sha256:f1c24655a0da0d1b67f07e17a5e6b2a105894e6824b92096378bb3668ef02376"
+            ],
+            "markers": "python_version < '3.10'",
+            "version": "==4.2.0"
         }
     }
 }
