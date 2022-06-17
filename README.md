@@ -75,7 +75,7 @@ Integer Variables:
 
 #### Self Validation
 
-The Smart ASA reference implementation enforces self validation of the `StateSchema`. On creation, it controls the size oth the given schema for both the global and local states. The expected values are:
+The Smart ASA reference implementation enforces self validation of the `StateSchema`. On creation, it controls the size of the given schema for both the global and local states. The expected values are:
 
 |           | Global | Local |
 |-----------|--------|-------|
