@@ -21,6 +21,7 @@ from pyteal import (
     Expr,
     Extract,
     Global,
+    Gtxn,
     If,
     InnerTxn,
     InnerTxnBuilder,
@@ -352,31 +353,6 @@ def asset_app_optin(
     )
 
 
-@smart_asa_abi.method(close_out=CallConfig.ALL)
-def asset_app_closeout(
-    asset: abi.Asset,
-    # underlying_asa_closeout: abi.AssetTransferTransaction,
-) -> Expr:
-    current_smart_asa_id = App.localGet(Txn.sender(), LocalState.smart_asa_id)
-    is_correct_smart_asa_id = current_smart_asa_id == asset.asset_id()
-    account_balance = AssetHolding().balance(Txn.sender(), asset.asset_id())
-    optin_to_underlying_asa = account_balance.hasValue()
-    return Seq(
-        # Preconditions
-        # NOTE: Smart ASA existence is not checked on close-out since
-        # would be impossible to close-out destroyed assets.
-        Assert(is_correct_smart_asa_id),
-        # Assert(underlying_asa_closeout.get().type_enum() == TxnType.AssetTransfer),
-        # Assert(underlying_asa_closeout.get().xfer_asset() == asset.asset_id()),
-        # Assert(underlying_asa_closeout.get().sender() == Txn.sender()),
-        # Assert(underlying_asa_closeout.get().asset_close_to() != Global.zero_address()),
-        account_balance,
-        Assert(Not(optin_to_underlying_asa)),
-        # Effects
-        Approve(),
-    )
-
-
 @smart_asa_abi.method
 def asset_create(
     total: abi.Uint64,
@@ -643,6 +619,43 @@ def account_freeze(
         Assert(is_freeze_addr),
         # Effects
         App.localPut(freeze_account.address(), LocalState.frozen, asset_frozen.get()),
+    )
+
+
+@smart_asa_abi.method(close_out=CallConfig.ALL)
+def asset_app_closeout(
+    close_asset: abi.Asset,
+    close_to: abi.Account,
+) -> Expr:
+    current_smart_asa_id = App.localGet(Txn.sender(), LocalState.smart_asa_id)
+    is_correct_smart_asa_id = current_smart_asa_id == close_asset.asset_id()
+    account_balance = AssetHolding().balance(Txn.sender(), close_asset.asset_id())
+    asset_frozen = App.globalGet(GlobalState.frozen)
+    asset_closer_frozen = App.localGet(Txn.sender(), LocalState.frozen)
+    return Seq(
+        # Preconditions
+        # NOTE: Smart ASA existence is not checked on close-out since
+        # would be impossible to close-out destroyed assets.
+        Assert(is_correct_smart_asa_id),
+        is_valid_address_bytes_length(close_to.address()),
+        Assert(Global.group_size() >= Int(2)),
+        Assert(Gtxn[1].type_enum() == TxnType.AssetTransfer),
+        Assert(Gtxn[1].xfer_asset() == close_asset.asset_id()),
+        Assert(Gtxn[1].sender() == Txn.sender()),
+        Assert(Gtxn[1].asset_amount() == Int(0)),
+        Assert(Gtxn[1].asset_close_to() == Global.current_application_address()),
+        # Effects
+        If(Or(asset_frozen, asset_closer_frozen)).Then(
+            Assert(close_to.address() == Global.current_application_address())
+        ),
+        account_balance,
+        smart_asa_transfer_inner_txn(
+            close_asset.asset_id(),
+            account_balance.value(),
+            Txn.sender(),
+            close_to.address(),
+        ),
+        Approve(),
     )
 
 

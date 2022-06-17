@@ -1487,6 +1487,7 @@ class TestAssetTransfer:
             smart_asa_app=smart_asa_app,
             asset_id=smart_asa_id,
             caller=opted_in_creator,
+            close_to=smart_asa_app,
         )
 
         print(f"\n --- Creator optin new Smart ASA {new_smart_asa_id}...")
@@ -1847,40 +1848,43 @@ class TestAssetDestroy:
 
 
 class TestAssetCloseout:
-    def test_still_opted_in_to_undelying_asa(
+    def test_closeout_group_wrong_txn_type(self) -> None:
+        pass  # TODO
+
+    def test_closeout_group_wrong_asa(self) -> None:
+        pass  # TODO
+
+    def test_closeout_group_wrong_sender(self) -> None:
+        pass  # TODO
+
+    def test_closeout_group_wrong_amount(self) -> None:
+        pass  # TODO
+
+    def test_closeout_group_with_asset_close_to(self) -> None:
+        pass  # TODO
+
+    @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
+    def test_frozen_happy_path(
+        self,
+        smart_asa_id: int,
+    ) -> None:
+        pass  # TODO
+
+    @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
+    def test_not_frozen_happy_path(
         self,
         smart_asa_contract: Contract,
         smart_asa_app: AppAccount,
         smart_asa_id: int,
-        opted_in_account_factory: Callable,
+        account_with_supply_factory: Callable,
     ) -> None:
-        with pytest.raises(AlgodHTTPError):
-            print(f"\n --- Closing App while still opted in to Smart ASA...")
-            smart_asa_closeout(
-                smart_asa_contract=smart_asa_contract,
-                smart_asa_app=smart_asa_app,
-                asset_id=smart_asa_id,
-                caller=opted_in_account_factory(),
-            )
-        print(" --- Rejected as expected!")
-
-    def test_happy_path(
-        self,
-        smart_asa_contract: Contract,
-        smart_asa_app: AppAccount,
-        smart_asa_id: int,
-        opted_in_account_factory: Callable,
-    ) -> None:
-        opted_in_account = opted_in_account_factory()
-
-        print(f"\n --- Closing underlying ASA {smart_asa_id}...")
-        opted_in_account.close_asset_to(smart_asa_id, smart_asa_app)
+        account_with_supply = account_with_supply_factory()
 
         print(
             f"\n --- Smart ASA App Local State:\n",
             get_local_state(
-                opted_in_account.algod_client,
-                opted_in_account.address,
+                account_with_supply.algod_client,
+                account_with_supply.address,
                 smart_asa_app.app_id,
             ),
         )
@@ -1890,10 +1894,11 @@ class TestAssetCloseout:
             smart_asa_contract=smart_asa_contract,
             smart_asa_app=smart_asa_app,
             asset_id=smart_asa_id,
-            caller=opted_in_account,
+            caller=account_with_supply,
+            close_to=smart_asa_app,
         )
         print(" --- Closed out Smart ASA ID:", smart_asa_id)
-        assert not opted_in_account.local_state()
+        assert not account_with_supply.local_state()
 
 
 class TestGetters:

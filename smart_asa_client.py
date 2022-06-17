@@ -147,35 +147,35 @@ def smart_asa_closeout(
     smart_asa_app: AppAccount,
     asset_id: int,
     caller: Account,
-    # receiver: Union[str, Account],
-    # amount: int,
-    # close_to: Union[str, Account],
+    close_to: Union[str, Account],
     save_abi_call: Optional[str] = None,
 ) -> None:
 
     params = get_params(caller.algod_client)
-    abi_call_fee = params.fee
+    abi_call_fee = params.fee * 2
 
-    # asa_close_out_txn = AssetTransferTxn(
-    #     sender=caller.address,
-    #     sp=params,
-    #     receiver=receiver if isinstance(receiver, str) else receiver.address,
-    #     amt=amount,
-    #     index=asset_id,
-    #     close_assets_to=close_to if isinstance(close_to, str) else close_to.address,
-    # )
-    #
-    # asa_close_out_txn = TransactionWithSigner(
-    #     txn=asa_close_out_txn,
-    #     signer=caller,
-    # )
+    asa_close_to_txn = AssetTransferTxn(
+        sender=caller.address,
+        sp=params,
+        receiver=caller.address,
+        amt=0,
+        index=asset_id,
+        close_assets_to=close_to if isinstance(close_to, str) else close_to.address,
+    )
+
+    asa_close_to_txn = TransactionWithSigner(
+        txn=asa_close_to_txn,
+        signer=caller,
+    )
 
     caller.abi_call(
         get_method(smart_asa_contract, "asset_app_closeout"),
         asset_id,
+        close_to,
         on_complete=OnComplete.CloseOutOC,
         app=smart_asa_app,
         fee=abi_call_fee,
+        group_extra_txns=[asa_close_to_txn],
         save_abi_call=save_abi_call,
     )
 

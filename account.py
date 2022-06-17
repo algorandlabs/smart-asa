@@ -8,6 +8,7 @@ from algosdk.future import transaction
 from algosdk.v2client import algod
 from algosdk.atomic_transaction_composer import (
     TransactionSigner,
+    TransactionWithSigner,
     AtomicTransactionComposer,
 )
 
@@ -87,6 +88,7 @@ class Account(TransactionSigner):
         method,
         *args,
         app: Optional[Union[int, "AppAccount"]] = None,
+        group_extra_txns: Optional[list[TransactionWithSigner]] = None,
         on_complete: transaction.OnComplete = transaction.OnComplete.NoOpOC,
         fee: Optional[int] = None,
         max_wait_rounds: int = 10,
@@ -127,6 +129,10 @@ class Account(TransactionSigner):
             signer=self,
             on_complete=on_complete,
         )
+
+        if group_extra_txns is not None:
+            for transaction_with_signer in group_extra_txns:
+                atc.add_transaction(transaction_with_signer)
 
         atc.build_group()
         atc.gather_signatures()
@@ -169,7 +175,7 @@ class Account(TransactionSigner):
         ptx = self.sign_send_wait(txn)
         return ptx["asset-index"]
 
-    def optin_to_asset(self, asset_id: int):
+    def optin_to_asset(self, asset_id: int) -> dict:
         txn = transaction.AssetTransferTxn(
             sender=self.address,
             sp=self._get_params(),
@@ -179,12 +185,18 @@ class Account(TransactionSigner):
         )
         return self.sign_send_wait(txn)
 
-    def close_asset_to(self, asset_id: int, close_to_account: "Account"):
+    def close_asset_to(
+        self,
+        asset_id: int,
+        close_to_account: "Account",
+        amount: int = 0,
+        receiver: Optional["Account"] = None,
+    ) -> dict:
         txn = transaction.AssetTransferTxn(
             sender=self.address,
             sp=self._get_params(),
-            receiver=self.address,
-            amt=0,
+            receiver=self.address if not receiver else receiver.address,
+            amt=amount,
             index=asset_id,
             close_assets_to=close_to_account.address,
         )
@@ -197,7 +209,7 @@ class Account(TransactionSigner):
         accounts: Any = None,
         foreign_apps: Any = None,
         foreign_assets: Any = None,
-    ):
+    ) -> dict:
         txn = transaction.ApplicationOptInTxn(
             sender=self.address,
             sp=self._get_params(),
@@ -209,7 +221,7 @@ class Account(TransactionSigner):
         )
         return self.sign_send_wait(txn)
 
-    def transfer_asset(self, receiver: "Account", asset_id: int, amount: int):
+    def transfer_asset(self, receiver: "Account", asset_id: int, amount: int) -> dict:
         txn = transaction.AssetTransferTxn(
             sender=self.address,
             sp=self._get_params(),
@@ -219,7 +231,7 @@ class Account(TransactionSigner):
         )
         return self.sign_send_wait(txn)
 
-    def close_out_application(self, app_id: int):
+    def close_out_application(self, app_id: int) -> dict:
         txn = transaction.ApplicationCloseOutTxn(
             self.address, self._get_params(), app_id
         )
