@@ -102,14 +102,14 @@ signatures encoding as well.
 
 ### Smart ASA App Create
 
-Smart ASA Create is a `BareCall` (no argument needed) that instantiate the Smart
+_Smart ASA Create_ is a `BareCall` (no argument needed) that instantiate the Smart
 ASA App, verifying the consistency of the `SateSchema` assigned to the create
 Application Call. This method initializes the whole Global State to default
 upon creation.
 
 ### Smart ASA App Opt-In
 
-Smart ASA Opt-In represents the account opt-in to the Smart ASA. The argument `asset` represents the Underlying ASA. This method initializes the `LocalState` of the user. If the Smart ASA is `default_frozen` then the opting-in users are `frozen` too.
+_Smart ASA Opt-In_ represents the account opt-in to the Smart ASA. The argument `asset` represents the Underlying ASA. This method initializes the `LocalState` of the user. If the Smart ASA is `default_frozen` then the opting-in users are `frozen` too.
 
 ```json
 {
@@ -121,7 +121,7 @@ Smart ASA Opt-In represents the account opt-in to the Smart ASA. The argument `a
 
 ### Smart ASA App Close-Out
 
-Smart ASA Close-Out is the close out of an account from the Smart ASA. The argument `asset` represents the Underlying ASA. This method removes the `LocalState` from the calling account. It succeeds if the account has no holdings left of the Smart ASA, otherwise fails.
+_Smart ASA Close-Out_ is the close out of an account from the Smart ASA. The argument `asset` represents the Underlying ASA. This method removes the `LocalState` from the calling account. It succeeds if the account has no holdings left of the Smart ASA, otherwise fails.
 
 > For Smart ASA `default_frozen = False`, a freezed malicious user could close-out and opt-in again to change is `frozen` state. Checking the Smart ASA holdings before approving a close-out addresses this issue.
 
@@ -135,7 +135,7 @@ Smart ASA Close-Out is the close out of an account from the Smart ASA. The argum
 
 ### Smart ASA Creation
 
-Smart ASA Create is the creation method of a Smart ASA. It creates a new Underlying ASA and instantiates the controlling Smart Contract with the given properties.
+_Smart ASA Create_ is the creation method of a Smart ASA. It creates a new Underlying ASA and instantiates the controlling Smart Contract with the given properties.
 
 ```json
 {
@@ -159,7 +159,22 @@ Smart ASA Create is the creation method of a Smart ASA. It creates a new Underly
 
 ### Smart ASA Configuration
 
-Smart ASA Configuration is the update method of a Smart ASA. It updates the parameters of an existing Smart ASA. Only the `manager` has the authority to configure the asset by invoking this method. The reference implementation applies the following restrictions:
+_Smart ASA Configuration_ is the update method of a Smart ASA. It updates the
+parameters of an existing Smart ASA. Only the `manager` has the authority to
+reconfigure the asset by invoking this method.
+
+It is worth noting that Smart ASA extends ASA configurability to **any field**!
+With Smart ASA users can now reconfigure properties like `name`, `unit_name`,
+`url` and even properties like `total`, `decimals` or `default_frozen`! This
+makes the Smart ASA a perfect fit for "evolvable" assets, like NFTs.
+
+> The ABI method requires specifying always all Smart ASA fields,
+even those one not to be changed, by assigning the current value to
+the unchanged fields. The Smart ASA Client of this reference
+implementation abstracts this taking care of unspecified fields by
+replicating current Smart ASA state for the unchanged fields as default.
+
+The reference implementation applies the following restrictions:
 
 - `manager_addr`, `reserve_addr`, `freeze_addr` and `clawback_addr` addresses can no longer be configured once set to `ZERO_ADDRESS`;
 - `total` cannot be configured to a value lower than the current circulating supply.
@@ -187,7 +202,7 @@ Smart ASA Configuration is the update method of a Smart ASA. It updates the para
 
 ### Smart ASA Transfer
 
-Smart ASA Transfer is the asset transfer method of a Smart ASA. It defines the transfer of an asset between an `asset_sender` and `asset_receiver` specifying the `asset_amount` to be transferred. This method distinguishes four types of transfer, such as `mint`, `burn`, `clawback`, and regular `transfer`.
+_Smart ASA Transfer_ is the asset transfer method of a Smart ASA. It defines the transfer of an asset between an `asset_sender` and `asset_receiver` specifying the `asset_amount` to be transferred. This method automatically distinguishes four types of transfer, such as `mint`, `burn`, `clawback`, and regular `transfer`.
 
 ```json
 {
@@ -211,6 +226,12 @@ In the reference implementation only the `reserve` address can mint a Smart ASA.
 - `asset_receiver` is not `frozen`;
 - `asset_receiver` Smart ASA ID in Local State is up-to-date;
 - `asset_amount` does not exceed the outstanding available supply of the Smart ASA.
+
+> Reference implementation checks that `smart_asa_id` is _up-to-date_ in Local
+> State since the Smart ASA App could create a new Underlying ASA (if the
+> previous one has been dystroied by the Manager Address). This requires users
+> to opt-in again and initialize accordingly a coherent `frozen` status for the
+> new Smart ASA (which could potentially have been created as `default_frozen`).
 
 #### Burn
 
@@ -247,7 +268,7 @@ A regular transfer of a Smart ASA can be invoked by any opted-in asset holder. I
 
 ### Smart ASA Global Freeze
 
-Smart ASA Global Freeze is the freeze method of a Smart ASA. It enables the `freeze` address to globally freeze a Smart ASA. A frozen Smart ASA cannot be transferred, minted or burned.
+_Smart ASA Global Freeze_ is the freeze method of a Smart ASA. It enables the `freeze` address to globally freeze a Smart ASA. A frozen Smart ASA cannot be transferred, minted or burned.
 
 ```json
 {
@@ -262,7 +283,7 @@ Smart ASA Global Freeze is the freeze method of a Smart ASA. It enables the `fre
 
 ### Smart ASA Account Freeze
 
-Smart ASA Account Freeze is the account freeze method of a Smart ASA. It enables the `freeze` address to freeze a Smart ASA holder. Freezed accounts cannot receive nor send the asset.
+_Smart ASA Account Freeze_ is the account freeze method of a Smart ASA. It enables the `freeze` address to freeze a Smart ASA holder. Freezed accounts cannot receive nor send the asset.
 
 ```json
 {
@@ -278,7 +299,7 @@ Smart ASA Account Freeze is the account freeze method of a Smart ASA. It enables
 
 ### Smart ASA Destroy
 
-Smart ASA Destroy is the destroy method of a Smart ASA. In this reference implementation only the `manager` can invoke the Smart ASA destroy. This method clears the `GlobalState` schema of a Smart ASA, destroying any previous configuration.
+_Smart ASA Destroy_ is the destroy method of a Smart ASA. In this reference implementation only the `manager` can invoke the Smart ASA destroy. This method clears the `GlobalState` schema of a Smart ASA, destroying any previous configuration.
 
 > A Smart ASA can be destroyed if and only if the `circulating supply = 0`. After a destroy, users remain opted-in to the Smart ASA App, but with an outdated `smart_asa_id` in their local state. See Security Considerations to understand the side effects of a Smart ASA destroy.
 
@@ -294,7 +315,7 @@ Smart ASA Destroy is the destroy method of a Smart ASA. In this reference implem
 
 ### Smart ASA Getters
 
-Getters methods have bee implemented for each `StateSchema` parameter of the Smart ASA. Refer the ARC-0020 for a comprehensive list of available getters.
+_Getters_ methods have bee implemented for each `StateSchema` parameter of the Smart ASA. Refer the ARC-0020 for a comprehensive list of available getters.
 
 Smart ASA reference implementation introduces two new getters:
 
