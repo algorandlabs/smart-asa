@@ -18,7 +18,7 @@ The `create` method triggers an `AssetConfigTx` transaction (inner transaction) 
 
 | Property         | Value                  |
 |------------------|------------------------|
-| `total`          | 2^61-1                 |
+| `total`          | 2^64-1                 |
 | `decimals`       | 0                      |
 | `default_frozen` | True                   |
 | `unit_name`      | S-ASA                  |
