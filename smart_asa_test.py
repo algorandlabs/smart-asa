@@ -17,6 +17,7 @@ from pyteal import Expr, Router
 from algosdk.abi import Contract
 from algosdk.error import AlgodHTTPError
 from algosdk.constants import ZERO_ADDRESS
+from algosdk.future.transaction import AssetTransferTxn, PaymentTxn
 
 from sandbox import Sandbox
 from account import Account, AppAccount
@@ -30,6 +31,7 @@ from smart_asa_asc import (
 
 from smart_asa_client import (
     get_smart_asa_params,
+    get_params,
     smart_asa_account_freeze,
     smart_asa_app_create,
     smart_asa_closeout,
@@ -53,44 +55,52 @@ INITIAL_FUNDS = 100_000_000
 
 @pytest.fixture(scope="session")
 def smart_asa_abi_router() -> Router:
+    print("\n --- Creating Smart ASA ABI...")
     return smart_asa_abi
 
 
 @pytest.fixture(scope="session")
 def pyteal_approval(smart_asa_abi_router: Router) -> Expr:
     approval, _, _ = smart_asa_abi_router.build_program()
+    print("\n --- Building Smart ASA PyTeal approval program...")
     return approval
 
 
 @pytest.fixture(scope="session")
 def pyteal_clear(smart_asa_abi_router: Router) -> Expr:
     _, clear, _ = smart_asa_abi_router.build_program()
+    print("\n --- Building Smart ASA PyTeal clear program...")
     return clear
 
 
 @pytest.fixture(scope="session")
 def teal_approval(pyteal_approval: Expr) -> str:
+    print("\n --- Compiling Smart ASA TEAL approval program...")
     return compile_stateful(pyteal_approval)
 
 
 @pytest.fixture(scope="session")
 def teal_clear(pyteal_clear: Expr) -> str:
+    print("\n --- Compiling Smart ASA TEAL clear program...")
     return compile_stateful(pyteal_clear)
 
 
 @pytest.fixture(scope="session")
 def smart_asa_contract(smart_asa_abi_router: Router) -> Contract:
     _, _, contract = smart_asa_abi_router.build_program()
+    print("\n --- Building Smart ASA JSON contract...")
     return contract
 
 
 @pytest.fixture(scope="class")
 def creator() -> Account:
+    print("\n --- Creator Account...")
     return Sandbox.create(funds_amount=INITIAL_FUNDS)
 
 
 @pytest.fixture(scope="class")
 def eve() -> Account:
+    print("\n --- Eve Account...")
     return Sandbox.create(funds_amount=INITIAL_FUNDS)
 
 
@@ -106,6 +116,7 @@ def smart_asa_app(
         creator=creator,
     )
     creator.pay(receiver=app_account, amount=1_000_000)
+    print("\n --- Creating Smart ASA App...")
     return app_account
 
 
@@ -120,6 +131,7 @@ def smart_asa_id(
     creator: Account,
     request,
 ) -> int:
+    print("\n --- Creating Smart ASA...")
     return smart_asa_create(
         smart_asa_app=smart_asa_app,
         creator=creator,
@@ -137,6 +149,7 @@ def opted_in_creator(
     creator: Account,
     smart_asa_id: int,
 ) -> Account:
+    print("\n --- Creator opt-in...")
     smart_asa_optin(
         smart_asa_contract=smart_asa_contract,
         smart_asa_app=smart_asa_app,
@@ -153,6 +166,7 @@ def creator_with_supply(
     opted_in_creator: Account,
     smart_asa_id: int,
 ) -> Account:
+    print("\n --- Minting to Creator...")
     smart_asa_transfer(
         smart_asa_contract=smart_asa_contract,
         smart_asa_app=smart_asa_app,
@@ -177,6 +191,7 @@ def opted_in_account_factory(
             asset_id=smart_asa_id,
             caller=account,
         )
+        print("\n --- Account opt-in...")
         return account
 
     return _factory
@@ -200,6 +215,7 @@ def account_with_supply_factory(
             caller=creator_with_supply,
             asset_receiver=account,
         )
+        print("\n --- Minting to Account...")
         return account
 
     return _factory
@@ -349,11 +365,56 @@ class TestAssetOptin:
             )
         print(" --- Rejected as expected!")
 
-    def test_optin_group_wrong_txn_type(self) -> None:
-        pass  # TODO
+    def test_optin_group_wrong_txn_type(
+        self,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        creator: Account,
+        smart_asa_id: int,
+    ) -> None:
+        creator.optin_to_asset(smart_asa_id)
+        wrong_type_txn = PaymentTxn(
+            sender=creator.address,
+            sp=get_params(creator.algod_client),
+            receiver=creator.address,
+            amt=0,
+        )
+        print("\n --- Opt-In Group with wrong TxnType...")
+        with pytest.raises(AlgodHTTPError):
+            smart_asa_optin(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                asset_id=smart_asa_id,
+                caller=creator,
+                debug_txn=wrong_type_txn,
+            )
+        print(" --- Rejected as expected!")
 
-    def test_optin_group_wrong_asa(self) -> None:
-        pass  # TODO
+    def test_optin_group_wrong_asa(
+        self,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        creator: Account,
+        smart_asa_id: int,
+    ) -> None:
+        wrong_asa = creator.create_asset()
+        wrong_asa_txn = AssetTransferTxn(
+            sender=creator.address,
+            sp=get_params(creator.algod_client),
+            receiver=creator.address,
+            amt=0,
+            index=wrong_asa,
+        )
+        print("\n --- Opt-In Group with wrong TxnType...")
+        with pytest.raises(AlgodHTTPError):
+            smart_asa_optin(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                asset_id=smart_asa_id,
+                caller=creator,
+                debug_txn=wrong_asa_txn,
+            )
+        print(" --- Rejected as expected!")
 
     def test_optin_group_wrong_sender(self) -> None:
         pass  # TODO
