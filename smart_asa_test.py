@@ -15,6 +15,7 @@ import pytest
 from pyteal import Expr, Router
 
 from algosdk.abi import Contract
+from algosdk.atomic_transaction_composer import TransactionWithSigner
 from algosdk.error import AlgodHTTPError
 from algosdk.constants import ZERO_ADDRESS
 from algosdk.future.transaction import AssetTransferTxn, PaymentTxn
@@ -379,6 +380,10 @@ class TestAssetOptin:
             receiver=creator.address,
             amt=0,
         )
+        wrong_type_txn = TransactionWithSigner(
+            txn=wrong_type_txn,
+            signer=creator,
+        )
         print("\n --- Opt-In Group with wrong TxnType...")
         with pytest.raises(AlgodHTTPError):
             smart_asa_optin(
@@ -405,7 +410,11 @@ class TestAssetOptin:
             amt=0,
             index=wrong_asa,
         )
-        print("\n --- Opt-In Group with wrong TxnType...")
+        wrong_asa_txn = TransactionWithSigner(
+            txn=wrong_asa_txn,
+            signer=creator,
+        )
+        print("\n --- Opt-In Group with wrong Underlying ASA...")
         with pytest.raises(AlgodHTTPError):
             smart_asa_optin(
                 smart_asa_contract=smart_asa_contract,
@@ -416,8 +425,35 @@ class TestAssetOptin:
             )
         print(" --- Rejected as expected!")
 
-    def test_optin_group_wrong_sender(self) -> None:
-        pass  # TODO
+    def test_optin_group_wrong_sender(
+        self,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        creator: Account,
+        eve: Account,
+        smart_asa_id: int,
+    ) -> None:
+        wrong_sender_txn = AssetTransferTxn(
+            sender=eve.address,
+            sp=get_params(creator.algod_client),
+            receiver=creator.address,
+            amt=0,
+            index=smart_asa_id,
+        )
+        wrong_sender_txn = TransactionWithSigner(
+            txn=wrong_sender_txn,
+            signer=eve,
+        )
+        print("\n --- Opt-In Group with wrong Sender...")
+        with pytest.raises(AlgodHTTPError):
+            smart_asa_optin(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                asset_id=smart_asa_id,
+                caller=creator,
+                debug_txn=wrong_sender_txn,
+            )
+        print(" --- Rejected as expected!")
 
     def test_optin_group_wrong_receiver(self) -> None:
         pass  # TODO

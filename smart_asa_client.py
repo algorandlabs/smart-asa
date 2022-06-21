@@ -10,7 +10,7 @@ from algosdk.abi import Contract
 from algosdk.atomic_transaction_composer import TransactionWithSigner
 from algosdk.v2client.algod import AlgodClient
 from algosdk.encoding import encode_address
-from algosdk.future.transaction import AssetTransferTxn, OnComplete, Transaction
+from algosdk.future.transaction import AssetTransferTxn, OnComplete
 from account import Account, AppAccount
 from utils import get_global_state, get_method, get_params
 
@@ -112,7 +112,7 @@ def smart_asa_optin(
     smart_asa_app: AppAccount,
     asset_id: int,
     caller: Account,
-    debug_txn: Optional[Transaction] = None,
+    debug_txn: Optional[TransactionWithSigner] = None,
     save_abi_call: Optional[str] = None,
 ) -> None:
 
@@ -129,11 +129,10 @@ def smart_asa_optin(
             amt=0,
             index=asset_id,
         )
-
-    asa_optin_txn = TransactionWithSigner(
-        txn=asa_optin_txn,
-        signer=caller,
-    )
+        asa_optin_txn = TransactionWithSigner(
+            txn=asa_optin_txn,
+            signer=caller,
+        )
 
     caller.abi_call(
         get_method(smart_asa_contract, "asset_app_optin"),
@@ -152,7 +151,7 @@ def smart_asa_closeout(
     asset_id: int,
     caller: Account,
     close_to: Union[str, Account],
-    debug_txn: Optional[Transaction] = None,
+    debug_txn: Optional[TransactionWithSigner] = None,
     save_abi_call: Optional[str] = None,
 ) -> None:
 
@@ -170,11 +169,10 @@ def smart_asa_closeout(
             index=asset_id,
             close_assets_to=close_to if isinstance(close_to, str) else close_to.address,
         )
-
-    asa_close_to_txn = TransactionWithSigner(
-        txn=asa_close_to_txn,
-        signer=caller,
-    )
+        asa_close_to_txn = TransactionWithSigner(
+            txn=asa_close_to_txn,
+            signer=caller,
+        )
 
     caller.abi_call(
         get_method(smart_asa_contract, "asset_app_closeout"),
