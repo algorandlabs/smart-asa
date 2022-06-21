@@ -14,6 +14,7 @@ from pyteal import (
     Approve,
     Assert,
     AssetHolding,
+    AssetParam,
     BareCallActions,
     Bytes,
     CallConfig,
@@ -630,6 +631,7 @@ def asset_app_closeout(
     current_smart_asa_id = App.localGet(Txn.sender(), LocalState.smart_asa_id)
     is_correct_smart_asa_id = current_smart_asa_id == close_asset.asset_id()
     account_balance = AssetHolding().balance(Txn.sender(), close_asset.asset_id())
+    asset_params = AssetParam().creator(close_asset.asset_id())
     asset_frozen = App.globalGet(GlobalState.frozen)
     asset_closer_frozen = App.localGet(Txn.sender(), LocalState.frozen)
     return Seq(
@@ -648,12 +650,20 @@ def asset_app_closeout(
         If(Or(asset_frozen, asset_closer_frozen)).Then(
             Assert(close_to.address() == Global.current_application_address())
         ),
-        account_balance,
-        smart_asa_transfer_inner_txn(
-            close_asset.asset_id(),
-            account_balance.value(),
-            Txn.sender(),
-            close_to.address(),
+        asset_params,
+        If(asset_params.hasValue())
+        # NOTE: Skip if Underlying ASA has been destroyed to avoid users'
+        # lock-in.
+        .Then(
+            Seq(
+                account_balance,
+                smart_asa_transfer_inner_txn(
+                    close_asset.asset_id(),
+                    account_balance.value(),
+                    Txn.sender(),
+                    close_to.address(),
+                ),
+            )
         ),
         Approve(),
     )

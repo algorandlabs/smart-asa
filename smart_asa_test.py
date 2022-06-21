@@ -18,7 +18,7 @@ from algosdk.abi import Contract
 from algosdk.atomic_transaction_composer import TransactionWithSigner
 from algosdk.error import AlgodHTTPError
 from algosdk.constants import ZERO_ADDRESS
-from algosdk.future.transaction import AssetTransferTxn, PaymentTxn
+from algosdk.future.transaction import AssetTransferTxn
 
 from sandbox import Sandbox
 from account import Account, AppAccount
@@ -328,6 +328,16 @@ class TestAssetCreate:
         smart_asa = get_smart_asa_params(creator.algod_client, smart_asa_id)
         assert smart_asa["smart_asa_id"] == smart_asa_id
         assert smart_asa["total"] == 100
+        assert smart_asa["decimals"] == 0
+        assert not smart_asa["default_frozen"]
+        assert not smart_asa["unit_name"]
+        assert not smart_asa["name"]
+        assert not smart_asa["url"]
+        assert smart_asa["metadata_hash"][1] == "\x00"
+        assert smart_asa["manager_addr"] == creator.address
+        assert smart_asa["reserve_addr"] == creator.address
+        assert smart_asa["freeze_addr"] == creator.address
+        assert smart_asa["clawback_addr"] == creator.address
 
 
 class TestAssetOptin:
@@ -363,35 +373,6 @@ class TestAssetOptin:
                 smart_asa_app=smart_asa_app,
                 asset_id=smart_asa_id + 1,
                 caller=creator,
-            )
-        print(" --- Rejected as expected!")
-
-    def test_optin_group_wrong_txn_type(
-        self,
-        smart_asa_contract: Contract,
-        smart_asa_app: AppAccount,
-        creator: Account,
-        smart_asa_id: int,
-    ) -> None:
-        creator.optin_to_asset(smart_asa_id)
-        wrong_type_txn = PaymentTxn(
-            sender=creator.address,
-            sp=get_params(creator.algod_client),
-            receiver=creator.address,
-            amt=0,
-        )
-        wrong_type_txn = TransactionWithSigner(
-            txn=wrong_type_txn,
-            signer=creator,
-        )
-        print("\n --- Opt-In Group with wrong TxnType...")
-        with pytest.raises(AlgodHTTPError):
-            smart_asa_optin(
-                smart_asa_contract=smart_asa_contract,
-                smart_asa_app=smart_asa_app,
-                asset_id=smart_asa_id,
-                caller=creator,
-                debug_txn=wrong_type_txn,
             )
         print(" --- Rejected as expected!")
 
@@ -433,9 +414,10 @@ class TestAssetOptin:
         eve: Account,
         smart_asa_id: int,
     ) -> None:
+        eve.optin_to_asset(smart_asa_id)
         wrong_sender_txn = AssetTransferTxn(
             sender=eve.address,
-            sp=get_params(creator.algod_client),
+            sp=get_params(eve.algod_client),
             receiver=creator.address,
             amt=0,
             index=smart_asa_id,
@@ -455,14 +437,97 @@ class TestAssetOptin:
             )
         print(" --- Rejected as expected!")
 
-    def test_optin_group_wrong_receiver(self) -> None:
-        pass  # TODO
+    def test_optin_group_wrong_receiver(
+        self,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        creator: Account,
+        eve: Account,
+        smart_asa_id: int,
+    ) -> None:
+        eve.optin_to_asset(smart_asa_id)
+        wrong_receiver_txn = AssetTransferTxn(
+            sender=creator.address,
+            sp=get_params(creator.algod_client),
+            receiver=eve.address,
+            amt=0,
+            index=smart_asa_id,
+        )
+        wrong_receiver_txn = TransactionWithSigner(
+            txn=wrong_receiver_txn,
+            signer=creator,
+        )
+        print("\n --- Opt-In Group with wrong Receiver...")
+        with pytest.raises(AlgodHTTPError):
+            smart_asa_optin(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                asset_id=smart_asa_id,
+                caller=creator,
+                debug_txn=wrong_receiver_txn,
+            )
+        print(" --- Rejected as expected!")
 
-    def test_optin_group_wrong_amount(self) -> None:
-        pass  # TODO
+    @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
+    def test_optin_group_wrong_amount(
+        self,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        creator_with_supply: Account,
+        smart_asa_id: int,
+    ) -> None:
+        wrong_amount_txn = AssetTransferTxn(
+            sender=creator_with_supply.address,
+            sp=get_params(creator_with_supply.algod_client),
+            receiver=creator_with_supply.address,
+            amt=1,
+            index=smart_asa_id,
+        )
+        wrong_amount_txn = TransactionWithSigner(
+            txn=wrong_amount_txn,
+            signer=creator_with_supply,
+        )
+        print("\n --- Opt-In Group with wrong amount...")
+        with pytest.raises(AlgodHTTPError):
+            smart_asa_optin(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                asset_id=smart_asa_id,
+                caller=creator_with_supply,
+                debug_txn=wrong_amount_txn,
+            )
+        print(" --- Rejected as expected!")
 
-    def test_optin_group_with_asset_close_to(self) -> None:
-        pass  # TODO
+    @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
+    def test_optin_group_with_asset_close_to(
+        self,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        creator: Account,
+        smart_asa_id: int,
+    ) -> None:
+        wrong_close_to_txn = AssetTransferTxn(
+            sender=creator.address,
+            sp=get_params(creator.algod_client),
+            receiver=creator.address,
+            amt=0,
+            index=smart_asa_id,
+            close_assets_to=smart_asa_app.address,
+        )
+        wrong_close_to_txn = TransactionWithSigner(
+            txn=wrong_close_to_txn,
+            signer=creator,
+        )
+        print("\n --- Opt-In Group with Close Asset To...")
+        with pytest.raises(AlgodHTTPError):
+            smart_asa_optin(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                asset_id=smart_asa_id,
+                caller=creator,
+                debug_txn=wrong_close_to_txn,
+            )
+        print(" --- Rejected as expected!")
 
     def test_happy_path(
         self,
@@ -656,17 +721,19 @@ class TestAssetConfig:
         )
         print(" --- Configured Smart ASA ID:", configured_smart_asa_id)
 
-        # FIXME
-        # smart_asa = get_global_state(creator.algod_client, smart_asa_app.app_id)
-        # for k in smart_asa.keys():
-        #     if k == 'total' or k == 'default_frozen':
-        #         assert smart_asa[k] != config_s_asa[k]
-        #     elif smart_asa[k] is bytes and smart_asa[k][-5:] == '_addr':
-        #         assert encode_address(smart_asa[k]) == config_s_asa[k]
-        #     elif smart_asa[k] is bytes:
-        #         assert smart_asa[k].decode() == config_s_asa[k]
-        #     else:
-        #         assert smart_asa[k] == config_s_asa[k]
+        smart_asa = get_smart_asa_params(creator.algod_client, smart_asa_id)
+        assert smart_asa["smart_asa_id"] == smart_asa_id
+        assert smart_asa["total"] == config_s_asa["total"]
+        assert smart_asa["decimals"] == config_s_asa["decimals"]
+        assert smart_asa["default_frozen"] == config_s_asa["default_frozen"]
+        assert smart_asa["unit_name"] == config_s_asa["unit_name"]
+        assert smart_asa["name"] == config_s_asa["name"]
+        assert smart_asa["url"] == config_s_asa["url"]
+        assert smart_asa["metadata_hash"][2:] == config_s_asa["metadata_hash"].decode()
+        assert smart_asa["manager_addr"] == config_s_asa["manager_addr"]
+        assert smart_asa["reserve_addr"] == config_s_asa["reserve_addr"]
+        assert smart_asa["freeze_addr"] == config_s_asa["freeze_addr"]
+        assert smart_asa["clawback_addr"] == config_s_asa["clawback_addr"]
 
     @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
     def test_forbidden_total(
@@ -1573,11 +1640,6 @@ class TestAssetTransfer:
         )
         print(" --- Created Smart ASA ID:", new_smart_asa_id)
 
-        print(get_global_state(opted_in_creator.algod_client, smart_asa_app.app_id))
-
-        print(f"\n --- Closing old Smart ASA {smart_asa_id}...")
-        opted_in_creator.close_asset_to(smart_asa_id, smart_asa_app)
-
         print(f"\n --- Closing out Smart ASA in App {smart_asa_app.app_id}...")
         smart_asa_closeout(
             smart_asa_contract=smart_asa_contract,
@@ -1587,12 +1649,7 @@ class TestAssetTransfer:
             close_to=smart_asa_app,
         )
 
-        print(f"\n --- Creator optin new Smart ASA {new_smart_asa_id}...")
-        opted_in_creator.optin_to_asset(new_smart_asa_id)
-
-        print(
-            f"\n --- Creator optin again to Smart ASA App" f" {smart_asa_app.app_id}..."
-        )
+        print(f"\n --- Creator optin again to Smart ASA App {smart_asa_app.app_id}...")
         smart_asa_optin(
             smart_asa_contract=smart_asa_contract,
             smart_asa_app=smart_asa_app,
