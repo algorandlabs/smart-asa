@@ -18,7 +18,7 @@ from algosdk.abi import Contract
 from algosdk.atomic_transaction_composer import TransactionWithSigner
 from algosdk.error import AlgodHTTPError
 from algosdk.constants import ZERO_ADDRESS
-from algosdk.future.transaction import AssetTransferTxn
+from algosdk.future.transaction import AssetTransferTxn, PaymentTxn
 
 from sandbox import Sandbox
 from account import Account, AppAccount
@@ -2002,27 +2002,225 @@ class TestAssetDestroy:
 
 
 class TestAssetCloseout:
-    def test_closeout_group_wrong_txn_type(self) -> None:
-        pass  # TODO
+    @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
+    def test_closeout_group_wrong_txn_type(
+        self,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        smart_asa_id: int,
+        account_with_supply_factory: Callable,
+    ) -> None:
+        account_with_supply = account_with_supply_factory()
 
-    def test_closeout_group_wrong_asa(self) -> None:
-        pass  # TODO
+        wrong_type_txn = PaymentTxn(
+            sender=account_with_supply.address,
+            sp=get_params(account_with_supply.algod_client),
+            receiver=account_with_supply.address,
+            amt=0,
+        )
 
-    def test_closeout_group_wrong_sender(self) -> None:
-        pass  # TODO
+        wrong_asa_txn = TransactionWithSigner(
+            txn=wrong_type_txn,
+            signer=account_with_supply,
+        )
 
-    def test_closeout_group_wrong_amount(self) -> None:
-        pass  # TODO
+        print("\n --- Close-out Group with wrong Txn Type...")
+        with pytest.raises(AlgodHTTPError):
+            smart_asa_closeout(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                asset_id=smart_asa_id,
+                caller=account_with_supply,
+                close_to=smart_asa_app,
+                debug_txn=wrong_asa_txn,
+            )
+        print(" --- Rejected as expected!")
 
-    def test_closeout_group_with_asset_close_to(self) -> None:
-        pass  # TODO
+    @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
+    def test_closeout_group_wrong_asa(
+        self,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        smart_asa_id: int,
+        account_with_supply_factory: Callable,
+    ) -> None:
+        account_with_supply = account_with_supply_factory()
+        wrong_asa = account_with_supply.create_asset()
+        wrong_asa_txn = AssetTransferTxn(
+            sender=account_with_supply.address,
+            sp=get_params(account_with_supply.algod_client),
+            receiver=account_with_supply.address,
+            amt=0,
+            index=wrong_asa,
+            close_assets_to=smart_asa_app.address,
+        )
+        wrong_asa_txn = TransactionWithSigner(
+            txn=wrong_asa_txn,
+            signer=account_with_supply,
+        )
+
+        print("\n --- Close-out Group with wrong Underlying ASA...")
+        with pytest.raises(AlgodHTTPError):
+            smart_asa_closeout(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                asset_id=smart_asa_id,
+                caller=account_with_supply,
+                close_to=smart_asa_app,
+                debug_txn=wrong_asa_txn,
+            )
+        print(" --- Rejected as expected!")
+
+    @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
+    def test_closeout_group_wrong_sender(
+        self,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        smart_asa_id: int,
+        account_with_supply_factory: Callable,
+    ) -> None:
+        account_with_supply = account_with_supply_factory()
+        eve = account_with_supply_factory()
+
+        wrong_sender_txn = AssetTransferTxn(
+            sender=eve.address,
+            sp=get_params(account_with_supply.algod_client),
+            receiver=account_with_supply.address,
+            amt=0,
+            index=smart_asa_id,
+            close_assets_to=smart_asa_app.address,
+        )
+        wrong_sender_txn = TransactionWithSigner(
+            txn=wrong_sender_txn,
+            signer=account_with_supply,
+        )
+
+        print("\n --- Close-out Group with wrong Sender...")
+        with pytest.raises(AlgodHTTPError):
+            smart_asa_closeout(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                asset_id=smart_asa_id,
+                caller=account_with_supply,
+                close_to=smart_asa_app,
+                debug_txn=wrong_sender_txn,
+            )
+        print(" --- Rejected as expected!")
+
+    @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
+    def test_closeout_group_wrong_amount(
+        self,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        smart_asa_id: int,
+        account_with_supply_factory: Callable,
+    ) -> None:
+        account_with_supply = account_with_supply_factory()
+
+        wrong_amount_txn = AssetTransferTxn(
+            sender=account_with_supply.address,
+            sp=get_params(account_with_supply.algod_client),
+            receiver=account_with_supply.address,
+            amt=10,
+            index=smart_asa_id,
+            close_assets_to=smart_asa_app.address,
+        )
+        wrong_amount_txn = TransactionWithSigner(
+            txn=wrong_amount_txn,
+            signer=account_with_supply,
+        )
+
+        print("\n --- Close-out Group with wrong Amount...")
+        with pytest.raises(AlgodHTTPError):
+            smart_asa_closeout(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                asset_id=smart_asa_id,
+                caller=account_with_supply,
+                close_to=smart_asa_app,
+                debug_txn=wrong_amount_txn,
+            )
+        print(" --- Rejected as expected!")
+
+    @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
+    def test_closeout_group_with_asset_close_to(
+        self,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        smart_asa_id: int,
+        account_with_supply_factory: Callable,
+    ) -> None:
+        account_with_supply = account_with_supply_factory()
+        eve = account_with_supply_factory()
+
+        wrong_closeto_txn = AssetTransferTxn(
+            sender=account_with_supply.address,
+            sp=get_params(account_with_supply.algod_client),
+            receiver=account_with_supply.address,
+            amt=0,
+            index=smart_asa_id,
+            close_assets_to=eve.address,
+        )
+        wrong_closeto_txn = TransactionWithSigner(
+            txn=wrong_closeto_txn,
+            signer=account_with_supply,
+        )
+
+        print("\n --- Close-out Group with wrong Close Asset To...")
+        with pytest.raises(AlgodHTTPError):
+            smart_asa_closeout(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                asset_id=smart_asa_id,
+                caller=account_with_supply,
+                close_to=smart_asa_app,
+                debug_txn=wrong_closeto_txn,
+            )
+        print(" --- Rejected as expected!")
 
     @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
     def test_frozen_happy_path(
         self,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
         smart_asa_id: int,
+        creator: Account,
+        account_with_supply_factory: Callable,
     ) -> None:
-        pass  # TODO
+        account_with_supply = account_with_supply_factory()
+
+        account_state = get_local_state(
+            account_with_supply.algod_client,
+            account_with_supply.address,
+            smart_asa_app.app_id,
+        )
+        assert not account_state["frozen"]
+        print("\n --- Freezeing Smart ASA account...")
+        smart_asa_account_freeze(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            freezer=creator,
+            freeze_asset=smart_asa_id,
+            target_account=account_with_supply,
+            account_frozen=True,
+        )
+        account_state = get_local_state(
+            account_with_supply.algod_client,
+            account_with_supply.address,
+            smart_asa_app.app_id,
+        )
+        assert account_state["frozen"]
+
+        print(f"\n --- Closing out Smart ASA in App {smart_asa_app.app_id}...")
+        smart_asa_closeout(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            asset_id=smart_asa_id,
+            caller=account_with_supply,
+            close_to=smart_asa_app,
+        )
+        print(" --- Closed out Smart ASA ID:", smart_asa_id)
+        assert not account_with_supply.local_state()
 
     @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
     def test_not_frozen_happy_path(
