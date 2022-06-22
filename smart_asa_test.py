@@ -1917,8 +1917,8 @@ class TestAssetDestroy:
         creator: Account,
     ) -> None:
 
-        print("\n --- Destroying unexisting Smart ASA...")
         with pytest.raises(AlgodHTTPError):
+            print("\n --- Destroying unexisting Smart ASA...")
             smart_asa_destroy(
                 smart_asa_contract=smart_asa_contract,
                 smart_asa_app=smart_asa_app,
@@ -1936,8 +1936,8 @@ class TestAssetDestroy:
         smart_asa_id: int,
     ) -> None:
 
-        print("\n --- Destroying wrong Smart ASA ID...")
         with pytest.raises(AlgodHTTPError):
+            print("\n --- Destroying wrong Smart ASA ID...")
             smart_asa_destroy(
                 smart_asa_contract=smart_asa_contract,
                 smart_asa_app=smart_asa_app,
@@ -2024,8 +2024,8 @@ class TestAssetCloseout:
             signer=account_with_supply,
         )
 
-        print("\n --- Close-out Group with wrong Txn Type...")
         with pytest.raises(AlgodHTTPError):
+            print("\n --- Close-out Group with wrong Txn Type...")
             smart_asa_closeout(
                 smart_asa_contract=smart_asa_contract,
                 smart_asa_app=smart_asa_app,
@@ -2059,8 +2059,8 @@ class TestAssetCloseout:
             signer=account_with_supply,
         )
 
-        print("\n --- Close-out Group with wrong Underlying ASA...")
         with pytest.raises(AlgodHTTPError):
+            print("\n --- Close-out Group with wrong Underlying ASA...")
             smart_asa_closeout(
                 smart_asa_contract=smart_asa_contract,
                 smart_asa_app=smart_asa_app,
@@ -2095,8 +2095,8 @@ class TestAssetCloseout:
             signer=account_with_supply,
         )
 
-        print("\n --- Close-out Group with wrong Sender...")
         with pytest.raises(AlgodHTTPError):
+            print("\n --- Close-out Group with wrong Sender...")
             smart_asa_closeout(
                 smart_asa_contract=smart_asa_contract,
                 smart_asa_app=smart_asa_app,
@@ -2130,8 +2130,8 @@ class TestAssetCloseout:
             signer=account_with_supply,
         )
 
-        print("\n --- Close-out Group with wrong Amount...")
         with pytest.raises(AlgodHTTPError):
+            print("\n --- Close-out Group with wrong Amount...")
             smart_asa_closeout(
                 smart_asa_contract=smart_asa_contract,
                 smart_asa_app=smart_asa_app,
@@ -2166,8 +2166,8 @@ class TestAssetCloseout:
             signer=account_with_supply,
         )
 
-        print("\n --- Close-out Group with wrong Close Asset To...")
         with pytest.raises(AlgodHTTPError):
+            print("\n --- Close-out Group with wrong Close Asset To...")
             smart_asa_closeout(
                 smart_asa_contract=smart_asa_contract,
                 smart_asa_app=smart_asa_app,
@@ -2175,6 +2175,86 @@ class TestAssetCloseout:
                 caller=account_with_supply,
                 close_to=smart_asa_app,
                 debug_txn=wrong_closeto_txn,
+            )
+        print(" --- Rejected as expected!")
+
+    @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
+    def test_closeout_fails_with_frozen_asset(
+        self,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        smart_asa_id: int,
+        creator: Account,
+        account_with_supply_factory: Callable,
+        opted_in_account_factory: Callable,
+    ) -> None:
+        account_with_supply = account_with_supply_factory()
+        opted_in_account = opted_in_account_factory()
+
+        print("\n --- Freezeing Smart ASA...")
+        smart_asa_freeze(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            freezer=creator,
+            freeze_asset=smart_asa_id,
+            asset_frozen=True,
+        )
+        assert get_smart_asa_params(creator.algod_client, smart_asa_id)["frozen"]
+
+        with pytest.raises(AlgodHTTPError):
+            print(f"\n --- Closing out frozen asset fails with wrong " f"close to...")
+            smart_asa_closeout(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                asset_id=smart_asa_id,
+                caller=account_with_supply,
+                close_to=opted_in_account,
+            )
+        print(" --- Rejected as expected!")
+
+    @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
+    def test_closeout_fails_with_frozen_account(
+        self,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        smart_asa_id: int,
+        creator: Account,
+        account_with_supply_factory: Callable,
+        opted_in_account_factory: Callable,
+    ) -> None:
+        account_with_supply = account_with_supply_factory()
+        opted_in_account = opted_in_account_factory()
+
+        account_state = get_local_state(
+            account_with_supply.algod_client,
+            account_with_supply.address,
+            smart_asa_app.app_id,
+        )
+        assert not account_state["frozen"]
+        print("\n --- Freezeing Smart ASA account...")
+        smart_asa_account_freeze(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            freezer=creator,
+            freeze_asset=smart_asa_id,
+            target_account=account_with_supply,
+            account_frozen=True,
+        )
+        account_state = get_local_state(
+            account_with_supply.algod_client,
+            account_with_supply.address,
+            smart_asa_app.app_id,
+        )
+        assert account_state["frozen"]
+
+        with pytest.raises(AlgodHTTPError):
+            print(f"\n --- Closing out frozen account fails with wrong " f"close to...")
+            smart_asa_closeout(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                asset_id=smart_asa_id,
+                caller=account_with_supply,
+                close_to=opted_in_account,
             )
         print(" --- Rejected as expected!")
 
