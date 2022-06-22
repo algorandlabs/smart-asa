@@ -60,9 +60,9 @@ from smart_asa_asc import (
 from smart_asa_client import (
     get_smart_asa_params,
     smart_asa_account_freeze,
-    smart_asa_app_closeout,
+    smart_asa_closeout,
     smart_asa_app_create,
-    smart_asa_app_optin,
+    smart_asa_optin,
     smart_asa_create,
     smart_asa_config,
     smart_asa_destroy,
@@ -253,8 +253,7 @@ def asset_optin(
     account = Sandbox.from_public_key(args["<account>"])
 
     print(f"\n --- Opt-in Smart ASA {args['<asset-id>']}...")
-    account.optin_to_asset(args["<asset-id>"])
-    smart_asa_app_optin(
+    smart_asa_optin(
         smart_asa_contract=contract,
         smart_asa_app=smart_asa_app,
         asset_id=args["<asset-id>"],
@@ -273,12 +272,12 @@ def asset_optout(
     close_to = Account(address=args["<close-to>"])
 
     print(f"\n --- Closing Smart ASA {args['<asset-id>']}...")
-    account.close_asset_to(args["<asset-id>"], close_to)
-    smart_asa_app_closeout(
+    smart_asa_closeout(
         smart_asa_contract=contract,
         smart_asa_app=smart_asa_app,
         asset_id=args["<asset-id>"],
-        closer=account,
+        caller=account,
+        close_to=close_to,
     )
     return print(f"\n --- Smart ASA {args['<asset-id>']} closed!")
 

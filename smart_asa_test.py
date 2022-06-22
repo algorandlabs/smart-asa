@@ -2229,8 +2229,10 @@ class TestAssetCloseout:
         smart_asa_app: AppAccount,
         smart_asa_id: int,
         account_with_supply_factory: Callable,
+        opted_in_account_factory: Callable,
     ) -> None:
         account_with_supply = account_with_supply_factory()
+        opted_in_account = opted_in_account_factory()
 
         print(
             f"\n --- Smart ASA App Local State:\n",
@@ -2240,17 +2242,18 @@ class TestAssetCloseout:
                 smart_asa_app.app_id,
             ),
         )
-
+        account_balance = account_with_supply.asa_balance(smart_asa_id)
         print(f"\n --- Closing out Smart ASA in App {smart_asa_app.app_id}...")
         smart_asa_closeout(
             smart_asa_contract=smart_asa_contract,
             smart_asa_app=smart_asa_app,
             asset_id=smart_asa_id,
             caller=account_with_supply,
-            close_to=smart_asa_app,
+            close_to=opted_in_account,
         )
         print(" --- Closed out Smart ASA ID:", smart_asa_id)
         assert not account_with_supply.local_state()
+        assert opted_in_account.asa_balance(smart_asa_id) == account_balance
 
 
 class TestGetters:

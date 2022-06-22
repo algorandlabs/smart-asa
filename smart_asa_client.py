@@ -167,7 +167,7 @@ def smart_asa_closeout(
             receiver=caller.address,
             amt=0,
             index=asset_id,
-            close_assets_to=close_to if isinstance(close_to, str) else close_to.address,
+            close_assets_to=smart_asa_app.address,
         )
         asa_close_to_txn = TransactionWithSigner(
             txn=asa_close_to_txn,
