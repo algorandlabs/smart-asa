@@ -589,12 +589,10 @@ def asset_freeze(freeze_asset: abi.Asset, asset_frozen: abi.Bool) -> Expr:
     smart_asa_id = App.globalGet(GlobalState.smart_asa_id)
     is_correct_smart_asa_id = smart_asa_id == freeze_asset.asset_id()
     is_freeze_addr = Txn.sender() == App.globalGet(GlobalState.freeze_addr)
-    is_boolean = Or(asset_frozen.get() == Int(0), asset_frozen.get() == Int(1))
     return Seq(
         # Asset Freeze Preconditions
         Assert(smart_asa_id),
         Assert(is_correct_smart_asa_id),
-        Assert(is_boolean),
         Assert(is_freeze_addr),
         # Effects
         App.globalPut(GlobalState.frozen, asset_frozen.get()),
@@ -610,13 +608,11 @@ def account_freeze(
     smart_asa_id = App.globalGet(GlobalState.smart_asa_id)
     is_correct_smart_asa_id = smart_asa_id == freeze_asset.asset_id()
     is_freeze_addr = Txn.sender() == App.globalGet(GlobalState.freeze_addr)
-    is_boolean = Or(asset_frozen.get() == Int(0), asset_frozen.get() == Int(1))
     return Seq(
         # Account Freeze Preconditions
         Assert(smart_asa_id),
         Assert(is_correct_smart_asa_id),
         is_valid_address_bytes_length(freeze_account.address()),
-        Assert(is_boolean),
         Assert(is_freeze_addr),
         # Effects
         App.localPut(freeze_account.address(), LocalState.frozen, asset_frozen.get()),

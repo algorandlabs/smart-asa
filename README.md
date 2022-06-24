@@ -16,20 +16,28 @@ A Smart ASA is an ASA, called *Underlying ASA*, controlled by a Smart Contract, 
 
 The `create` method triggers an `AssetConfigTx` transaction (inner transaction) that generates a new asset with the following parameters:
 
-| Property         | Value                  |
-|------------------|------------------------|
-| `total`          | 2^64-1                 |
-| `decimals`       | 0                      |
-| `default_frozen` | True                   |
-| `unit_name`      | S-ASA                  |
-| `asset_name`     | SMART-ASA              |
-| `url`            | \<Smart ASA App ID\>   |
-| `manager_addr`   | \<Smart ASA App Addr\> |
-| `reserve_addr`   | \<Smart ASA App Addr\> |
-| `freeze_addr`    | \<Smart ASA App Addr\> |
-| `clawback_name`  | \<Smart ASA App Addr\> |
+| Property         | Value                                 |
+|------------------|---------------------------------------|
+| `total`          | 2^64-1                                |
+| `decimals`       | 0                                     |
+| `default_frozen` | True                                  |
+| `unit_name`      | S-ASA                                 |
+| `asset_name`     | SMART-ASA                             |
+| `url`            | smart-asa-app-id:\<Smart ASA App ID\> |
+| `manager_addr`   | \<Smart ASA App Addr\>                |
+| `reserve_addr`   | \<Smart ASA App Addr\>                |
+| `freeze_addr`    | \<Smart ASA App Addr\>                |
+| `clawback_name`  | \<Smart ASA App Addr\>                |
 
-The Underlying ASA is created with maximum supply (max `uint64`), it is not divisible, and it is frozen by default. The unit and asset names are custom strings that identify the Smart ASA, whereas the `url` field is used to link the ASA with the Smart ASA App ID. Finally, the `manager`, `reserve`, `freeze`, and `clawback` roles of the ASA are assigned to the application address. Therefore, **the Underlying ASA can only be controlled by the smart contract**.
+The Underlying ASA is created with maximum supply (max `uint64`), it is not
+divisible, and it is frozen by default. The unit and asset names are custom
+strings that identify the Smart ASA.
+
+The `url` field is used to bind the Underlying ASA with the Smart ASA App ID who controls it, with the following encoding:
+
+`smart-asa-app-id:<App ID>`
+
+Finally, the `manager`, `reserve`, `freeze`, and `clawback` roles of the ASA are assigned to the application address. Therefore, **the Underlying ASA can only be controlled by the smart contract**.
 
 ### State Schema
 
