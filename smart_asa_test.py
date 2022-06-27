@@ -240,7 +240,7 @@ def test_compile(
         f.write(teal_clear_program)
 
 
-class TestAppCreate:
+class TestAppDeployment:
     def test_wrong_state_schema(
         self,
         teal_approval: str,
@@ -256,20 +256,15 @@ class TestAppCreate:
             )
         print(" --- Rejected as expected!")
 
-    def test_happy_path(
+    def test_app_create_happy_path(
         self,
-        teal_approval: str,
-        teal_clear: str,
-        creator: Account,
+        smart_asa_app: AppAccount,
     ) -> None:
-
-        print("\n --- Creating Smart ASA App...")
-        smart_asa_app = smart_asa_app_create(
-            teal_approval=teal_approval,
-            teal_clear=teal_clear,
-            creator=creator,
-        )
         print(f" --- Created Smart ASA App ID: {smart_asa_app.app_id}")
+
+    # TODO: test_app_update (fails)
+    # TODO: test_app_delete (fails)
+    # TODO: test_app_clear_state (fails)
 
 
 class TestAssetCreate:
