@@ -855,16 +855,6 @@ def compile_stateful(program: Expr) -> str:
     )
 
 
-def compile_stateless(program: Expr) -> str:
-    return compileTeal(
-        program,
-        Mode.Signature,
-        version=TEAL_VERSION,
-        assembleConstants=True,
-        optimize=OptimizeOptions(scratch_slots=True),
-    )
-
-
 if __name__ == "__main__":
     # Allow quickly testing compilation.
     from smart_asa_test import test_compile
