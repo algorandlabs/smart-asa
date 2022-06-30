@@ -12,7 +12,7 @@ from typing import Callable
 
 import pytest
 
-from pyteal import Expr, Router
+from pyteal import compileTeal, Expr, Int, Mode, Reject, Router
 
 from algosdk.abi import Contract
 from algosdk.atomic_transaction_composer import TransactionWithSigner
@@ -262,9 +262,36 @@ class TestAppDeployment:
     ) -> None:
         print(f" --- Created Smart ASA App ID: {smart_asa_app.app_id}")
 
-    # TODO: test_app_update (fails)
-    # TODO: test_app_delete (fails)
-    # TODO: test_app_clear_state (fails)
+    def test_app_update_fail(self, smart_asa_app: AppAccount, creator: Account) -> None:
+
+        new_approval_program = compileTeal(
+            Int(1),
+            Mode.Application,
+        )
+        new_clear_program = compileTeal(Reject(), Mode.Application)
+
+        with pytest.raises(AlgodHTTPError):
+            print("\n --- Updating Smart ASA App...")
+            creator.update_application(
+                approval_program=new_approval_program,
+                clear_program=new_clear_program,
+                app_id=smart_asa_app.app_id,
+            )
+        print(" --- Rejected as expected!")
+
+    def test_app_delete_fail(self, smart_asa_app: AppAccount, creator: Account) -> None:
+        with pytest.raises(AlgodHTTPError):
+            print("\n --- Deleting Smart ASA App...")
+            creator.delete_application(smart_asa_app.app_id)
+        print(" --- Rejected as expected!")
+
+    def test_app_clear_state_fail(
+        self, smart_asa_app: AppAccount, creator: Account
+    ) -> None:
+        with pytest.raises(AlgodHTTPError):
+            print("\n --- Clearing the state of Smart ASA App...")
+            creator.clear_state(smart_asa_app.app_id)
+        print(" --- Rejected as expected!")
 
 
 class TestAssetCreate:

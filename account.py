@@ -287,6 +287,74 @@ class Account(TransactionSigner):
             transaction_response["application-index"], algod_client=self.algod_client
         )
 
+    def update_application(
+        self,
+        approval_program: str,
+        clear_program: str,
+        app_id: int,
+        app_args: list = None,
+        accounts: list[str] = None,
+        foreign_apps: list[int] = None,
+        foreign_assets: list[int] = None,
+    ) -> dict:
+
+        approval_program = assembly_program(self.algod_client, approval_program)
+        clear_program = assembly_program(self.algod_client, clear_program)
+
+        txn = transaction.ApplicationUpdateTxn(
+            sender=self.address,
+            sp=self._get_params(),
+            index=app_id,
+            approval_program=approval_program,
+            clear_program=clear_program,
+            app_args=app_args,
+            accounts=accounts,
+            foreign_apps=foreign_apps,
+            foreign_assets=foreign_assets,
+        )
+
+        return self.sign_send_wait(txn)
+
+    def delete_application(
+        self,
+        app_id: int,
+        app_args: list = None,
+        accounts: list[str] = None,
+        foreign_apps: list[int] = None,
+        foreign_assets: list[int] = None,
+    ) -> dict:
+
+        txn = transaction.ApplicationDeleteTxn(
+            sender=self.address,
+            sp=self._get_params(),
+            index=app_id,
+            app_args=app_args,
+            accounts=accounts,
+            foreign_apps=foreign_apps,
+            foreign_assets=foreign_assets,
+        )
+
+        return self.sign_send_wait(txn)
+
+    def clear_state(
+        self,
+        app_id: int,
+        app_args: list = None,
+        accounts: list[str] = None,
+        foreign_apps: list[int] = None,
+        foreign_assets: list[int] = None,
+    ) -> dict:
+        txn = transaction.ApplicationClearStateTxn(
+            sender=self.address,
+            sp=self._get_params(),
+            index=app_id,
+            app_args=app_args,
+            accounts=accounts,
+            foreign_apps=foreign_apps,
+            foreign_assets=foreign_assets,
+        )
+        return self.sign_send_wait(txn)
+
 
 @dataclasses.dataclass(frozen=True)
 class AppAccount(Account):
