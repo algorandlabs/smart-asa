@@ -263,7 +263,6 @@ def smart_asa_destroy_inner_txn(smart_asa_id: Expr) -> Expr:
     )
 
 
-# TODO: Remove this once provided natively by PyTeal ABI
 @Subroutine(TealType.none)
 def is_valid_address_bytes_length(address: Expr) -> Expr:
     # WARNING: Note this check only ensures proper bytes' length on `address`,

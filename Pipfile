@@ -7,7 +7,7 @@ name = "pypi"
 docopt = "*"
 py-algorand-sdk = "*"
 # TODO: switch to stable `pyteal` once the PyTeal ABI is released
-pyteal = {editable = true, ref = "135f215fd88bb53336554d7797d6537aa5ccb044", git = "https://github.com/algorand/pyteal.git"}
+pyteal = {git = "https://github.com/algorand/pyteal.git", ref = "feature/abi", editable = true}
 
 [dev-packages]
 autoflake = "*"
