@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "7a406afa9df5d8a2305df5ce37f64afc61920fc24c8c7d8b5dbdd8335e6cbc68"
+            "sha256": "9e365e3cfaa4f365ebf2ac92d3fa16f26f2e0935b39f2ab4e04941c830f37056"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -151,11 +151,11 @@
         },
         "py-algorand-sdk": {
             "hashes": [
-                "sha256:ecfab5180090a23a4001463dd3a05612ce9bd5923326c01996c48105886a8569",
-                "sha256:efc2fb02905dbbc5e369adb024ae92ed6bedefa542676939ae1b817c3b84f95f"
+                "sha256:31694957ac7e23bf7bdbb84e1c640bd932fc5b808ffe4bb43fb0a2419023382c",
+                "sha256:bb24647a6fd8563f7264fc7364ba3eca8a41965afd720dd282c1c44e1dc9b050"
             ],
             "index": "pypi",
-            "version": "==1.15.0"
+            "version": "==1.16.0"
         },
         "pycparser": {
             "hashes": [
@@ -217,9 +217,20 @@
             "version": "==1.5.0"
         },
         "pyteal": {
-            "editable": true,
-            "git": "https://github.com/algorand/pyteal.git",
-            "ref": "7f78f9b79b6cd061ffced40d5c9db133f3281cd3"
+            "hashes": [
+                "sha256:3c53b654161e43e02706f6df9e84983d55a76b5f60d38681927266d9eaa6d352",
+                "sha256:b28e2a4aafe722bfd09351f92a0be61741e4f2968214c1d9108adb8e040531bf"
+            ],
+            "index": "pypi",
+            "version": "==0.14.0"
+        },
+        "semantic-version": {
+            "hashes": [
+                "sha256:bdabb6d336998cbb378d4b9db3a4b56a1e3235701dc05ea2690d9a997ed5041c",
+                "sha256:de78a3b8e0feda74cabc54aab2da702113e33ac9d9eb9d2389bcf1f58b7d9177"
+            ],
+            "markers": "python_version >= '2.7'",
+            "version": "==2.10.0"
         }
     },
     "develop": {
@@ -357,7 +368,7 @@
                 "sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc",
                 "sha256:de526c12914f0c550d15924c62d72abc48d6fe7364aa87328337a31007fe8a4f"
             ],
-            "markers": "python_version >= '3.7'",
+            "markers": "python_full_version < '3.11.0a7'",
             "version": "==2.0.1"
         }
     }
