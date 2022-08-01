@@ -32,6 +32,13 @@ def get_local_state(
         "key-value", {}
     )
     local_state = decode_state(local_state)
+
+    if 'is_frozen' in local_state:
+        local_state['frozen'] = local_state['is_frozen']
+        del local_state['is_frozen']
+    if 'current_asa_id' in local_state:
+        local_state['smart_asa_id'] = local_state['current_asa_id']
+        del local_state['current_asa_id']
     return local_state
 
 

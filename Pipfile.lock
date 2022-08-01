@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "9e365e3cfaa4f365ebf2ac92d3fa16f26f2e0935b39f2ab4e04941c830f37056"
+            "sha256": "5b7950a8dc18534f3424a0ff129d70f1003a15ac8c23fd25067918ba20b3c45b"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -16,6 +16,14 @@
         ]
     },
     "default": {
+        "attrs": {
+            "hashes": [
+                "sha256:29adc2665447e5191d0e7c568fde78b21f9672d344281d0c6e1ab085429b22b6",
+                "sha256:86efa402f67bf2df34f51a335487cf46b1ec130d02b8d39fd248abfd30da551c"
+            ],
+            "markers": "python_version >= '3.5'",
+            "version": "==22.1.0"
+        },
         "cffi": {
             "hashes": [
                 "sha256:00a9ed42e88df81ffae7a8ab6d9356b371399b91dbdf0c3cb1e84c03a13aceb5",
@@ -92,6 +100,13 @@
             "index": "pypi",
             "version": "==0.6.2"
         },
+        "iniconfig": {
+            "hashes": [
+                "sha256:011e24c64b7f47f6ebd835bb12a743f2fbe9a26d4cecaa7f53bc4f35ee9da8b3",
+                "sha256:bc3af051d7d14b2ee5ef9969666def0cd1a000e121eaea580d4a313df4b37f32"
+            ],
+            "version": "==1.1.1"
+        },
         "msgpack": {
             "hashes": [
                 "sha256:002b5c72b6cd9b4bafd790f364b8480e859b4712e91f43014fe01e4f957b8467",
@@ -148,6 +163,30 @@
                 "sha256:fcb8a47f43acc113e24e910399376f7277cf8508b27e5b88499f053de6b115a8"
             ],
             "version": "==1.0.4"
+        },
+        "packaging": {
+            "hashes": [
+                "sha256:dd47c42927d89ab911e606518907cc2d3a1f38bbd026385970643f9c5b8ecfeb",
+                "sha256:ef103e05f519cdc783ae24ea4e2e0f508a9c99b2d4969652eed6a2e1ea5bd522"
+            ],
+            "markers": "python_version >= '3.6'",
+            "version": "==21.3"
+        },
+        "pluggy": {
+            "hashes": [
+                "sha256:4224373bacce55f955a878bf9cfa763c1e360858e330072059e10bad68531159",
+                "sha256:74134bbf457f031a36d68416e1509f34bd5ccc019f0bcc952c7b909d06b37bd3"
+            ],
+            "markers": "python_version >= '3.6'",
+            "version": "==1.0.0"
+        },
+        "py": {
+            "hashes": [
+                "sha256:51c75c4126074b472f746a24399ad32f6053d1b34b68d2fa41e558e6f4a98719",
+                "sha256:607c53218732647dff4acdfcd50cb62615cedf612e72d1724fb1a0cc6405b378"
+            ],
+            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4'",
+            "version": "==1.11.0"
         },
         "py-algorand-sdk": {
             "hashes": [
@@ -216,6 +255,14 @@
             "markers": "python_version >= '3.6'",
             "version": "==1.5.0"
         },
+        "pyparsing": {
+            "hashes": [
+                "sha256:2b020ecf7d21b687f219b71ecad3631f644a47f01403fa1d1036b0c6416d70fb",
+                "sha256:5026bae9a10eeaefb61dab2f09052b9f4307d44aee4eda64b309723d8d206bbc"
+            ],
+            "markers": "python_full_version >= '3.6.8'",
+            "version": "==3.0.9"
+        },
         "pyteal": {
             "hashes": [
                 "sha256:3c53b654161e43e02706f6df9e84983d55a76b5f60d38681927266d9eaa6d352",
@@ -224,6 +271,14 @@
             "index": "pypi",
             "version": "==0.14.0"
         },
+        "pytest": {
+            "hashes": [
+                "sha256:13d0e3ccfc2b6e26be000cb6568c832ba67ba32e719443bfe725814d3c42433c",
+                "sha256:a06a0425453864a270bc45e71f783330a7428defb4230fb5e6a731fde06ecd45"
+            ],
+            "index": "pypi",
+            "version": "==7.1.2"
+        },
         "semantic-version": {
             "hashes": [
                 "sha256:bdabb6d336998cbb378d4b9db3a4b56a1e3235701dc05ea2690d9a997ed5041c",
@@ -231,16 +286,24 @@
             ],
             "markers": "python_version >= '2.7'",
             "version": "==2.10.0"
+        },
+        "tomli": {
+            "hashes": [
+                "sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc",
+                "sha256:de526c12914f0c550d15924c62d72abc48d6fe7364aa87328337a31007fe8a4f"
+            ],
+            "markers": "python_version >= '3.7'",
+            "version": "==2.0.1"
         }
     },
     "develop": {
         "attrs": {
             "hashes": [
-                "sha256:2d27e3784d7a565d36ab851fe94887c5eccd6a463168875832a1be79c82828b4",
-                "sha256:626ba8234211db98e869df76230a137c4c40a12d72445c45d5f5b716f076e2fd"
+                "sha256:29adc2665447e5191d0e7c568fde78b21f9672d344281d0c6e1ab085429b22b6",
+                "sha256:86efa402f67bf2df34f51a335487cf46b1ec130d02b8d39fd248abfd30da551c"
             ],
-            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4'",
-            "version": "==21.4.0"
+            "markers": "python_version >= '3.5'",
+            "version": "==22.1.0"
         },
         "autoflake": {
             "hashes": [
@@ -341,11 +404,11 @@
         },
         "pyflakes": {
             "hashes": [
-                "sha256:05a85c2872edf37a4ed30b0cce2f6093e1d0581f8c19d7393122da7e25b2b24c",
-                "sha256:3bb3a3f256f4b7968c9c788781e4ff07dce46bdf12339dcda61053375426ee2e"
+                "sha256:4579f67d887f804e67edb544428f264b7b24f435b263c4614f384135cea553d2",
+                "sha256:491feb020dca48ccc562a8c0cbe8df07ee13078df59813b83959cbdada312ea3"
             ],
-            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'",
-            "version": "==2.4.0"
+            "markers": "python_version >= '3.6'",
+            "version": "==2.5.0"
         },
         "pyparsing": {
             "hashes": [
@@ -368,7 +431,7 @@
                 "sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc",
                 "sha256:de526c12914f0c550d15924c62d72abc48d6fe7364aa87328337a31007fe8a4f"
             ],
-            "markers": "python_full_version < '3.11.0a7'",
+            "markers": "python_version >= '3.7'",
             "version": "==2.0.1"
         }
     }
