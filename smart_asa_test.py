@@ -1761,8 +1761,8 @@ class TestAssetFreeze:
         self,
         smart_asa_contract: Contract,
         smart_asa_app: AppAccount,
-        creator: Account,
         smart_asa_id: int,
+        creator: Account,
     ) -> None:
 
         print("\n --- Freezing Smart ASA with wrong Asset ID...")
@@ -1780,8 +1780,8 @@ class TestAssetFreeze:
         self,
         smart_asa_contract: Contract,
         smart_asa_app: AppAccount,
-        eve: Account,
         smart_asa_id: int,
+        eve: Account,
     ) -> None:
         with pytest.raises(AlgodHTTPError):
             print("\n --- Unfreezeing whole Smart ASA with wrong account...")
@@ -1798,8 +1798,8 @@ class TestAssetFreeze:
         self,
         smart_asa_contract: Contract,
         smart_asa_app: AppAccount,
-        creator: Account,
         smart_asa_id: int,
+        creator: Account,
     ) -> None:
         smart_asa = get_smart_asa_params(creator.algod_client, smart_asa_id)
         assert not smart_asa["frozen"]
@@ -1852,8 +1852,8 @@ class TestAccountFreeze:
         self,
         smart_asa_contract: Contract,
         smart_asa_app: AppAccount,
-        creator: Account,
         smart_asa_id: int,
+        creator: Account,
         opted_in_account_factory: Callable,
     ) -> None:
 
@@ -1873,8 +1873,8 @@ class TestAccountFreeze:
         self,
         smart_asa_contract: Contract,
         smart_asa_app: AppAccount,
-        eve: Account,
         smart_asa_id: int,
+        eve: Account,
     ) -> None:
         with pytest.raises(AlgodHTTPError):
             print("\n --- Unfreezeing account with wrong account...")
@@ -1893,8 +1893,8 @@ class TestAccountFreeze:
         self,
         smart_asa_contract: Contract,
         smart_asa_app: AppAccount,
-        creator: Account,
         smart_asa_id: int,
+        creator: Account,
         opted_in_account_factory: Callable,
     ) -> None:
         account = opted_in_account_factory()
@@ -1954,8 +1954,8 @@ class TestAssetDestroy:
         self,
         smart_asa_contract: Contract,
         smart_asa_app: AppAccount,
-        creator: Account,
         smart_asa_id: int,
+        creator: Account,
     ) -> None:
 
         with pytest.raises(AlgodHTTPError):
@@ -1972,8 +1972,8 @@ class TestAssetDestroy:
         self,
         smart_asa_contract: Contract,
         smart_asa_app: AppAccount,
-        eve: Account,
         smart_asa_id: int,
+        eve: Account,
     ) -> None:
         with pytest.raises(AlgodHTTPError):
             print("\n --- Destroying Smart ASA with wrong account...")
@@ -1990,8 +1990,8 @@ class TestAssetDestroy:
         self,
         smart_asa_contract: Contract,
         smart_asa_app: AppAccount,
-        creator_with_supply: Account,
         smart_asa_id: int,
+        creator_with_supply: Account,
     ) -> None:
         with pytest.raises(AlgodHTTPError):
             print(
@@ -2010,8 +2010,8 @@ class TestAssetDestroy:
         self,
         smart_asa_contract: Contract,
         smart_asa_app: AppAccount,
-        creator: Account,
         smart_asa_id: int,
+        creator: Account,
     ) -> None:
         print(f"\n --- Destroying Smart ASA in App {smart_asa_app.app_id}...")
         smart_asa_destroy(
@@ -2281,6 +2281,37 @@ class TestAssetCloseout:
         print(" --- Rejected as expected!")
 
     @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
+    def test_closeout_fails_to_not_optedin(
+        self,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        smart_asa_id: int,
+        account_with_supply_factory: Callable,
+        eve: Account,
+    ) -> None:
+        account_with_supply = account_with_supply_factory()
+        eve.optin_to_asset(smart_asa_id)
+        print(
+            f"\n --- Smart ASA App Local State:\n",
+            get_local_state(
+                account_with_supply.algod_client,
+                account_with_supply.address,
+                smart_asa_app.app_id,
+            ),
+        )
+
+        with pytest.raises(AlgodHTTPError):
+            print(f"\n --- Closing out Smart ASA in App {smart_asa_app.app_id}...")
+            smart_asa_closeout(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                asset_id=smart_asa_id,
+                caller=account_with_supply,
+                close_to=eve,
+            )
+        print(" --- Rejected as expected!")
+
+    @pytest.mark.parametrize("smart_asa_id", [False], indirect=True)
     def test_frozen_happy_path(
         self,
         smart_asa_contract: Contract,
@@ -2357,6 +2388,36 @@ class TestAssetCloseout:
         assert not account_with_supply.local_state()
         assert opted_in_account.asa_balance(smart_asa_id) == account_balance
 
+    def test_closeout_destroyed_happy_path(
+        self,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        smart_asa_id: int,
+        creator: Account,
+        opted_in_account_factory: Callable,
+        eve: Account,
+    ) -> None:
+        opted_in_account = opted_in_account_factory()
+
+        print(f"\n --- Destroying Smart ASA in App {smart_asa_app.app_id}...")
+        smart_asa_destroy(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            manager=creator,
+            destroy_asset=smart_asa_id,
+        )
+        print(" --- Destroyed Smart ASA ID:", smart_asa_id)
+
+        print(f"\n --- Closing out Smart ASA in App {smart_asa_app.app_id}...")
+        smart_asa_closeout(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            asset_id=smart_asa_id,
+            caller=opted_in_account,
+            close_to=eve,
+        )
+        print(" --- Closed out Smart ASA ID:", smart_asa_id)
+
 
 class TestGetters:
     def test_happy_path(
@@ -2375,7 +2436,7 @@ class TestGetters:
             smart_asa_app=smart_asa_app,
             caller=creator,
             asset_id=smart_asa_id,
-            getter="is_asset_frozen",
+            getter="get_asset_is_frozen",
         )
 
         account = opted_in_account_factory()
@@ -2389,7 +2450,7 @@ class TestGetters:
             caller=creator,
             asset_id=smart_asa_id,
             account=account,
-            getter="is_account_frozen",
+            getter="get_account_is_frozen",
         )
 
         print(f"\n --- Getting 'total' param of Smart ASA {smart_asa_app.app_id}...")
@@ -2431,7 +2492,7 @@ class TestGetters:
             smart_asa_app=smart_asa_app,
             caller=creator,
             asset_id=smart_asa_id,
-            getter="get_asset_name",
+            getter="get_name",
         )
 
         print(f"\n --- Getting 'url' param of Smart ASA {smart_asa_app.app_id}...")

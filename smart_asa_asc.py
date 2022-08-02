@@ -621,19 +621,21 @@ def asset_app_closeout(
     close_asset: abi.Asset,
     close_to: abi.Account,
 ) -> Expr:
+    smart_asa_id = App.globalGet(GlobalState.smart_asa_id)
+    is_correct_smart_asa_id = smart_asa_id == close_asset.asset_id()
     current_smart_asa_id = App.localGet(Txn.sender(), LocalState.smart_asa_id)
-    is_correct_smart_asa_id = current_smart_asa_id == close_asset.asset_id()
+    is_current_smart_asa_id = current_smart_asa_id == close_asset.asset_id()
     account_balance = AssetHolding().balance(Txn.sender(), close_asset.asset_id())
-    asset_params = AssetParam().creator(close_asset.asset_id())
+    asset_creator = AssetParam().creator(close_asset.asset_id())
     asset_frozen = App.globalGet(GlobalState.frozen)
     asset_closer_frozen = App.localGet(Txn.sender(), LocalState.frozen)
     return Seq(
         # Preconditions
-        # NOTE: Smart ASA existence is not checked on close-out since
-        # would be impossible to close-out destroyed assets.
+        # NOTE: Smart ASA existence is not checked by default on close-out
+        # since would be impossible to close-out destroyed assets.
         is_valid_address_bytes_length(close_to.address()),
         Assert(
-            is_correct_smart_asa_id,
+            is_current_smart_asa_id,
             Global.group_size() >= Int(2),
             Gtxn[1].type_enum() == TxnType.AssetTransfer,
             Gtxn[1].xfer_asset() == close_asset.asset_id(),
@@ -642,24 +644,36 @@ def asset_app_closeout(
             Gtxn[1].asset_close_to() == Global.current_application_address(),
         ),
         # Effects
-        If(Or(asset_frozen, asset_closer_frozen)).Then(
-            Assert(close_to.address() == Global.current_application_address())
+        asset_creator,
+        # NOTE: Skip checks if Underlying ASA has been destroyed to avoid
+        # users' lock-in.
+        If(asset_creator.hasValue()).Then(
+            # NOTE: Smart ASA has not been destroyed.
+            Assert(is_correct_smart_asa_id),
+            If(Or(asset_frozen, asset_closer_frozen)).Then(
+                # NOTE: If Smart ASA is frozen, users can only close-out to
+                # Creator
+                Assert(close_to.address() == Global.current_application_address())
+            ),
+            If(close_to.address() != Global.current_application_address()).Then(
+                # NOTE: If the target of close-out is not Creator, it MUST be
+                # opted-in to the current Smart ASA.
+                Assert(
+                    smart_asa_id
+                    == App.localGet(close_to.address(), LocalState.smart_asa_id)
+                )
+            ),
+            account_balance,
+            smart_asa_transfer_inner_txn(
+                close_asset.asset_id(),
+                account_balance.value(),
+                Txn.sender(),
+                close_to.address(),
+            ),
         ),
-        asset_params,
-        If(asset_params.hasValue())
-        # NOTE: Skip if Underlying ASA has been destroyed to avoid users'
-        # lock-in.
-        .Then(
-            Seq(
-                account_balance,
-                smart_asa_transfer_inner_txn(
-                    close_asset.asset_id(),
-                    account_balance.value(),
-                    Txn.sender(),
-                    close_to.address(),
-                ),
-            )
-        ),
+        # NOTE: If Smart ASA has been destroyed:
+        #   1. The close-to address could be anyone
+        #   2. No InnerTxn happens
         Approve(),
     )
 
@@ -684,7 +698,7 @@ def asset_destroy(destroy_asset: abi.Asset) -> Expr:
 
 # / --- --- GETTERS
 @smart_asa_abi.method
-def is_asset_frozen(freeze_asset: abi.Asset, *, output: abi.Bool) -> Expr:
+def get_asset_is_frozen(freeze_asset: abi.Asset, *, output: abi.Bool) -> Expr:
     return Seq(
         # Preconditions
         getter_preconditions(freeze_asset.asset_id()),
@@ -694,7 +708,7 @@ def is_asset_frozen(freeze_asset: abi.Asset, *, output: abi.Bool) -> Expr:
 
 
 @smart_asa_abi.method
-def is_account_frozen(
+def get_account_is_frozen(
     freeze_asset: abi.Asset, freeze_account: abi.Account, *, output: abi.Bool
 ) -> Expr:
     return Seq(
@@ -747,7 +761,7 @@ def get_unit_name(asset: abi.Asset, *, output: abi.String) -> Expr:
 
 
 @smart_asa_abi.method
-def get_asset_name(asset: abi.Asset, *, output: abi.String) -> Expr:
+def get_name(asset: abi.Asset, *, output: abi.String) -> Expr:
     return Seq(
         # Preconditions
         getter_preconditions(asset.asset_id()),
