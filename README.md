@@ -765,7 +765,7 @@ python3 smart_asa.py destroy 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRS
 
 A malicious user could attempt to Clear its Local State to hack the `frozen` state of a Smart ASA. Consider the following scenario:
 
-- Smart ASA `default_frozen = false`;
+- Smart ASA `default_frozen = False`;
 - Eve has regularly opted-in to the Smart ASA;
 - Eve receives 5 Smart ASA from Bob (Smart ASA manager and freezer) and get freezed afterwards;
 - Eve can now Clear its Local State and Opt-In again to clear its `frozen` state and spend the Smart ASA.
@@ -776,15 +776,15 @@ upon the opt-in, after a Clear State, the account holds an amount of Smart ASA.
 
 ### Conscious Smart ASA Destroy
 
-Upon a call to `asset_destroy`, the `GlobalState` of the Smart ASA App is reset and the _Underlying ASA_ destroyed. However, the `LocalState` of opted-in users is not affected. Let's consider the case a `manager` invokes an `asset_destroy` over `Smart ASA` and afterwards an `asset_create` to instantiate `Smart ASA B` with the same *Smart ASA App*.
+Upon a call to `asset_destroy`, the `GlobalState` of the Smart ASA App is reset and the _Underlying ASA_ destroyed. However, the `LocalState` of opted-in users is not affected. Let's consider the case a `manager` invokes an `asset_destroy` over Smart ASA `A` and afterwards an `asset_create` to instantiate Smart ASA `B` with the same *Smart ASA App*.
 
 - Eve was opted-in to *Smart ASA App* and was not frozen;
-- Bob (manager) destroys `Smart ASA A` (assuming `circulating_supply = 0`);
-- Bob creates `Smart ASA B` with param `default_frozen = True`;
+- Bob (manager) destroys Smart ASA `A` (assuming `circulating_supply = 0`);
+- Bob creates Smart ASA `B` with param `default_frozen = True`;
 - Eve is opted-in with `frozen = False`;
-- Eve can freely receive and spend `Smart ASA B`.
+- Eve can freely receive and spend Smart ASA `B`.
 
-To avoid this issue, the reference implementation includes the current `smart_asa_id` both in `GlobalState` and `LocalState`. Smart ASA transfers can now be approved only for users opted-in with the current Underlying ASA.
+To avoid this issue, the reference implementation includes the current `smart_asa_id` both in `GlobalState` and `LocalState`. Smart ASA transfers can now be approved only for users opted-in with the current _Underlying ASA_.
 
 ## Conclusions
 
