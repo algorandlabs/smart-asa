@@ -493,7 +493,7 @@ def asset_transfer(
     # WARNING: Setting Smart ASA `reserve` to ZERO_ADDRESS switchs-off minting.
     is_minting = And(
         Txn.sender() == App.globalGet(GlobalState.reserve_addr),
-        Global.current_application_address() == asset_sender.address(),
+        asset_sender.address() == Global.current_application_address(),
     )
 
     # NOTE: Ref. implementation grants _burning_ premission to `reserve_addr`,
@@ -502,8 +502,8 @@ def asset_transfer(
     # WARNING: Setting Smart ASA `reserve` to ZERO_ADDRESS switchs-off burning.
     is_burning = And(
         Txn.sender() == App.globalGet(GlobalState.reserve_addr),
-        App.globalGet(GlobalState.reserve_addr) == asset_sender.address(),
-        Global.current_application_address() == asset_receiver.address(),
+        asset_sender.address() == App.globalGet(GlobalState.reserve_addr),
+        asset_receiver.address() == Global.current_application_address(),
     )
 
     is_clawback = Txn.sender() == clawback_addr
