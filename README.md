@@ -175,8 +175,6 @@ _Smart ASA Close-Out_ closes out an account from the Smart ASA. The argument `cl
 2. If the user account is _frozen_ or the whole _Underlying ASA_ is _frozen_, then the `close_to` MUST be the Smart ASA Creator (Smart ASA App);
 3. If the `close_to` account is not the Smart ASA Creator, then it MUST opted-in to the Smart ASA.
 
-> For Smart ASA `default_frozen = False`, a freezed malicious user could close-out and opt-in again to change is `frozen` state. Checking the Smart ASA holdings before approving a close-out addresses this issue.
-
 ```json
 {
   "name": "asset_app_closeout",
@@ -763,17 +761,16 @@ python3 smart_asa.py destroy 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRS
 
 ## Security Considerations
 
-### Prevent malicious Close-Out and Clear State
+### Prevent malicious Clear State
 
-A malicious user could attempt to Close-Out or Clear its Local State to hack the `frozen` state of a Smart ASA. Consider the following scenario:
+A malicious user could attempt to Clear its Local State to hack the `frozen` state of a Smart ASA. Consider the following scenario:
 
 - Smart ASA `default_frozen = false`;
 - Eve has regularly opted-in to the Smart ASA;
 - Eve receives 5 Smart ASA from Bob (Smart ASA manager and freezer) and get freezed afterwards;
-- Eve can now Close-Out or Clear its state and Opt-In again to clear its `frozen` state and spend the Smart ASA.
+- Eve can now Clear its Local State and Opt-In again to clear its `frozen` state and spend the Smart ASA.
 
 To avoid this situation, the reference implementation introduces:
-- *Close-Out condition*: succeeds if and only if Eve has _no holdings_ of the Smart ASA;
 - *Opt-In condition*: set `frozen` status of the account to `True` if
 upon the opt-in, after a Clear State, the account holds an amount of Smart ASA.
 
