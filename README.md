@@ -2,6 +2,8 @@
 
 Smart ASA reference implementation that combines the simplicity and security of an Algorand Standard Asset with the composability and programmability of Algorand Smart Contracts to obtain a new, powerful, L1 entity that extends a regular ASA up to the limits of your imagination!
 
+**⚠️ Disclamer: This code is not audited!**
+
 - [Overview](#overview)
 - [Reference implementation rational](#reference-implementation-rational)
   * [Underlying ASA configuration](#underlying-asa-configuration)
@@ -45,8 +47,6 @@ Smart ASA reference implementation that combines the simplicity and security of 
 ## Overview
 
 The Smart ASA introduced with [ARC-0020](https://github.com/aldur/ARCs/blob/smartasa/ARCs/arc-0020.md) represents a new building block for complex blockchain applications. It offers a more flexible way to work with ASAs providing re-configuration functionalities and the possibility of building additional business logics around operations like ASA transfers, _royalties_, _role-based-transfers_, _limit-amount-transfers_, _mints_, and _burns_. This example presents an implementation of the Smart ASA contract as well as an easy to use CLI to interact with its functionalities.
-
-**⚠️ Disclamer: This code is not audited!**
 
 ## Reference implementation rational
 
