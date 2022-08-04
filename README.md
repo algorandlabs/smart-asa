@@ -190,7 +190,7 @@ _Smart ASA Close-Out_ closes out an account from the Smart ASA. The argument `cl
 
 ### Smart ASA Creation
 
-_Smart ASA Create_ is the creation method of a Smart ASA. It creates a new Underlying ASA and instantiates the controlling Smart Contract with the given properties.
+_Smart ASA Create_ is the creation method of a Smart ASA. It creates a new _Underlying ASA_ and parametrises the controlling Application with the given properties.
 
 ```json
 {
@@ -202,7 +202,7 @@ _Smart ASA Create_ is the creation method of a Smart ASA. It creates a new Under
     {"name": "unit_name", "type": "string"},
     {"name": "name", "type": "string"},
     {"name": "url", "type": "string"},
-    {"name": "metadata_hash", "type": "string"},
+    {"name": "metadata_hash", "type": "byte[]"},
     {"name": "manager_addr", "type": "address"},
     {"name": "reserve_addr", "type": "address"},
     {"name": "freeze_addr", "type": "address"},
@@ -226,7 +226,7 @@ makes the Smart ASA a perfect fit for "evolvable" assets, like NFTs.
 > The ABI method requires specifying always all Smart ASA fields,
 even those one not to be changed, by assigning the current value to
 the unchanged fields. The Smart ASA Client of this reference
-implementation abstracts this taking care of unspecified fields by
+implementation abstracts this complexity taking care of unspecified fields by
 replicating current Smart ASA state for the unchanged fields as default.
 
 The reference implementation applies the following restrictions:
@@ -245,7 +245,7 @@ The reference implementation applies the following restrictions:
     {"name": "unit_name", "type": "string"},
     {"name": "name", "type": "string"},
     {"name": "url", "type": "string"},
-    {"name": "metadata_hash", "type": "string"},
+    {"name": "metadata_hash", "type": "byte[]"},
     {"name": "manager_addr", "type": "address"},
     {"name": "reserve_addr", "type": "address"},
     {"name": "freeze_addr", "type": "address"},
