@@ -2,6 +2,46 @@
 
 Smart ASA reference implementation that combines the simplicity and security of an Algorand Standard Asset with the composability and programmability of Algorand Smart Contracts to obtain a new, powerful, L1 entity that extends a regular ASA up to the limits of your imagination!
 
+- [Overview](#overview)
+- [Reference implementation rational](#reference-implementation-rational)
+  * [Underlying ASA configuration](#underlying-asa-configuration)
+  * [State Schema](#state-schema)
+    + [Global State](#global-state)
+    + [Local State](#local-state)
+    + [Self Validation](#self-validation)
+    + [Smart Contract ABI's type check](#smart-contract-abi-s-type-check)
+- [Smart ASA Methods](#smart-asa-methods)
+  * [Smart ASA App Create](#smart-asa-app-create)
+  * [Smart ASA App Opt-In](#smart-asa-app-opt-in)
+  * [Smart ASA App Close-Out](#smart-asa-app-close-out)
+  * [Smart ASA Creation](#smart-asa-creation)
+  * [Smart ASA Configuration](#smart-asa-configuration)
+  * [Smart ASA Transfer](#smart-asa-transfer)
+    + [Mint](#mint)
+    + [Burn](#burn)
+    + [Clawback](#clawback)
+    + [Transfer](#transfer)
+  * [Smart ASA Global Freeze](#smart-asa-global-freeze)
+  * [Smart ASA Account Freeze](#smart-asa-account-freeze)
+  * [Smart ASA Destroy](#smart-asa-destroy)
+  * [Smart ASA Getters](#smart-asa-getters)
+- [Smart ASA CLI](#smart-asa-cli)
+  * [Install](#install)
+  * [Usage](#usage)
+  * [Create Smart ASA NFT](#create-smart-asa-nft)
+  * [Fractionalize Smart ASA NFT](#fractionalize-smart-asa-nft)
+  * [Smart ASA NFT opt-in](#smart-asa-nft-opt-in)
+  * [Mint Smart ASA NFT](#mint-smart-asa-nft)
+  * [Smart NFT ASA global freeze](#smart-nft-asa-global-freeze)
+  * [Smart NFT ASA rename](#smart-nft-asa-rename)
+  * [Smart NFT ASA global unfreeze](#smart-nft-asa-global-unfreeze)
+  * [Smart NFT ASA burn](#smart-nft-asa-burn)
+  * [Smart ASA destroy](#smart-asa-destroy)
+- [Security Considerations](#security-considerations)
+  * [Prevent malicious Close-Out and Clear State](#prevent-malicious-close-out-and-clear-state)
+  * [Conscious Smart ASA Destroy](#conscious-smart-asa-destroy)
+- [Conclusions](#conclusions)
+
 ## Overview
 
 The Smart ASA introduced with [ARC-0020](https://github.com/aldur/ARCs/blob/smartasa/ARCs/arc-0020.md) represents a new building block for complex blockchain applications. It offers a more flexible way to work with ASAs providing re-configuration functionalities and the possibility of building additional business logics around operations like ASA transfers, _royalties_, _role-based-transfers_, _limit-amount-transfers_, _mints_, and _burns_. This example presents an implementation of the Smart ASA contract as well as an easy to use CLI to interact with its functionalities.
@@ -129,14 +169,21 @@ _Smart ASA Opt-In_ represents the account opt-in to the Smart ASA. The argument 
 
 ### Smart ASA App Close-Out
 
-_Smart ASA Close-Out_ is the close out of an account from the Smart ASA. The argument `asset` represents the Underlying ASA. This method removes the `LocalState` from the calling account. It succeeds if the account has no holdings left of the Smart ASA, otherwise fails.
+_Smart ASA Close-Out_ is the close out of an account from the Smart ASA. The argument `close_asset` represents the Underlying ASA to be closed, while `close_to` is the account to which all the remainder balance is sent on closing. This method removes the Smart ASA App `LocalState` from the calling account as well as closing out the Underlying ASA. In order to replicate the regulare close-out behaviour of a regular ASA a Smart ASA closing procedure acts as follows:
+
+1. If the _Underlying ASA_ has been destroyed, then no check on is performed on `close_to` account;
+2. If the user account is _frozen_ or the whole _Underlying ASA_ is _frozen_, then the `close_to` MUST be the Smart ASA Creator (Smart ASA App);
+3. If the `close_to` account is not the Smart ASA Creator, then it MUST opted-in to the Smart ASA.
 
 > For Smart ASA `default_frozen = False`, a freezed malicious user could close-out and opt-in again to change is `frozen` state. Checking the Smart ASA holdings before approving a close-out addresses this issue.
 
 ```json
 {
   "name": "asset_app_closeout",
-  "args": [{"name": "asset", "type": "asset"}],
+  "args": [
+    {"name": "close_asset", "type": "asset"},
+    {"name": "close_to", "type": "account"}
+  ],
   "returns": {"type": "void"}
 }
 ```
@@ -343,9 +390,9 @@ Getters ABI interface example:
 }
 ```
 
-## Smart ASA life-cycle example
+## Smart ASA CLI
 
-### Smart ASA CLI - Install
+### Install
 
 The `Pipfile` contains all the dependencies to install the Smart ASA CLI using
 `pipenv` entering:
@@ -357,7 +404,7 @@ pipenv install
 The Smart ASA CLI requires an Algorand `sandbox` up and running (try it in
 `dev` mode first!).
 
-### Smart ASA CLI - Usage
+### Usage
 The Smart ASA CLI plays the same role as `goal asset` to facilitate a seamless
 understanding of this new "smarter" ASA.
 
@@ -716,7 +763,7 @@ python3 smart_asa.py destroy 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRS
 
 ## Security Considerations
 
-### 1. Prevent malicious Close-Out and Clear State
+### Prevent malicious Close-Out and Clear State
 
 A malicious user could attempt to Close-Out or Clear its Local State to hack the `frozen` state of a Smart ASA. Consider the following scenario:
 
@@ -730,7 +777,7 @@ To avoid this situation, the reference implementation introduces:
 - *Opt-In condition*: set `frozen` status of the account to `True` if
 upon the opt-in, after a Clear State, the account holds an amount of Smart ASA.
 
-### 2. Conscious Smart ASA Destroy
+### Conscious Smart ASA Destroy
 
 Upon a call to `asset_destroy`, the `GlobalState` of the Smart ASA App is reset and the Underlying ASA destroyed. However, the `LocalState` of opted-in users is not affected. Let's consider the case a `manager` invokes an `asset_destroy` over `Smart ASA A` and afterwards an `asset_create` to instantiate `Smart ASA B` with the same *Smart ASA App*.
 
