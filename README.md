@@ -1,6 +1,6 @@
 # Smart-ASA
 
-Smart ASA reference implementation that combines the simplicity and security of an Algorand Standard Asset with the composability and programmability of Algorand Smart Contracts to obtain a new, powerful, L1 entity that extends a regular ASA up to the limits of your imagination!
+Smart ASA reference implementation combines the simplicity and security of the Algorand Standard Assets (ASA)s with the composability and programmability of Algorand Smart Contracts. The Smart ASA offers a new, powerful, L1 feature that extends regular ASAs up to the limits of your imagination!
 
 **⚠️ Disclamer: This code is not audited!**
 
@@ -46,15 +46,19 @@ Smart ASA reference implementation that combines the simplicity and security of 
 
 ## Overview
 
-The Smart ASA introduced with [ARC-0020](https://github.com/aldur/ARCs/blob/smartasa/ARCs/arc-0020.md) represents a new building block for complex blockchain applications. It offers a more flexible way to work with ASAs providing re-configuration functionalities and the possibility of building additional business logics around operations like ASA transfers, _royalties_, _role-based-transfers_, _limit-amount-transfers_, _mints_, and _burns_. This example presents an implementation of the Smart ASA contract as well as an easy to use CLI to interact with its functionalities.
+The Smart ASA introduced with [ARC-0020](https://github.com/aldur/ARCs/blob/smartasa/ARCs/arc-0020.md) represents a new building block for blockchain applications. It offers a more flexible way to work with ASAs providing re-configuration functionalities and the possibility of building additional business logics around operations like asset _transfers_, _royalties_, _role-based-transfers_, _limit-amount-transfers_, _mints_, and _burns_. This reference implementation provides a basic Smart ASA contract as well as an easy to use CLI to interact with its functionalities.
+
+It is worth noting that Smart ASA extends ASA configurability to **any field**!
+With Smart ASA users can now reconfigure properties like `name`, `unit_name`, `url` and even properties like `total`, `decimals` or `default_frozen`! This makes the Smart ASA a perfect fit for "evolvable" assets, like NFTs.
+
 
 ## Reference implementation rational
 
-A Smart ASA is an ASA, called *Underlying ASA*, controlled by a Smart Contract, called *Smart ASA App*, that exposes methods to `create`, `opt-in`, `configure`, `transfer`, `global-freeze`, `freeze`, `close-out`, and `destroy` the asset plus some useful `getters`.
+A Smart ASA combines together a traditional ASA, called *Underlying ASA*, and an Algorand Smart Contract, called *Smart ASA App*. Essentially, the smart contract controls the ASA, implementing the  `create`, `opt-in`, `configure`, `transfer`, `global-freeze`, `freeze`, `close-out`, and `destroy` methods, plus some useful `getters`.
 
 ### Underlying ASA configuration
 
-The `create` method triggers an `AssetConfigTx` transaction (inner transaction) that generates a new asset, called *Underlying ASA*, with the following parameters:
+The `create` method triggers an `AssetConfigTx` transaction (inner transaction) that generates a new ASA, called *Underlying ASA*. The ASA is created with the following configuration:
 
 | Property         | Value                                 |
 |------------------|---------------------------------------|
@@ -69,19 +73,19 @@ The `create` method triggers an `AssetConfigTx` transaction (inner transaction) 
 | `freeze_addr`    | \<Smart ASA App Addr\>                |
 | `clawback_name`  | \<Smart ASA App Addr\>                |
 
-The _Underlying ASA_ is created with maximum supply (max `uint64`), it is not
-divisible, and it is frozen by default. The unit and asset names are custom
-strings that identify the Smart ASA.
+The ASA is set with maximum supply as (`total` = max `uint64`), it is not divisible, and it is frozen by default. The unit and asset names are standard strings that identify a Smart ASA.
 
 The `url` field is used to bind the Underlying ASA with the Smart ASA App ID who controls it, with the following encoding:
 
 `smart-asa-app-id:<App ID>`
 
-Finally, the `manager`, `reserve`, `freeze`, and `clawback` roles of the ASA are assigned to the application address. Therefore, **the Underlying ASA can only be controlled by the smart contract**.
+Finally, the `manager`, `reserve`, `freeze`, and `clawback` roles are assigned to the *Smart ASA App* address.
+
+> **The Underlying ASA can only be controlled by the smart contract**.
 
 ### State Schema
 
-The `StateSchema` of the Smart Contract has been designed to match 1-to-1 the parameters of an ASA. In addition, this reference implementation requires users to opt-in to the application and initialize their `LocalState`.
+The `StateSchema` of the Smart Contract has been designed to match 1-to-1 the parameters of an ASA. This reference implementation also requires users to initialize their `LocalState` by opting-in into the application.
 
 #### Global State
 
@@ -89,10 +93,10 @@ The `GlobalState` of the Smart ASA App is defined as follows:
 
 Integer Variables:
 
-- `total`: total supply of a Smart ASA. This value cannot be greater than the Underlying ASA total supply or lower than the current cirulating supply (in case of reconfiguration);
+- `total`: total supply of a Smart ASA. This value cannot be greater than the *Underlying ASA* total supply or lower than the current cirulating supply (in case of reconfiguration);
 - `decimals`: number of digits to use after the decimal point. If 0, the Smart ASA is not divisible. If 1, the base unit of the Smart ASA is in tenth, it 2 it is in hundreds, if 3 it is in thousands, and so on;
 - `default_frozen`: True to freeze Smart ASA holdings by default;
-- `smart_asa_id`: asset ID of the Underlying ASA;
+- `smart_asa_id`: asset ID of the *Underlying ASA*;
 - `frozen`: True to globally freeze Smart ASA transfers for all holders.
 
 Bytes Variables:
@@ -101,24 +105,24 @@ Bytes Variables:
 - `name`: name of the Smart ASA;
 - `url`: URL with additional information on the Smart ASA;
 - `metadata_hash`: Smart ASA metadata hash;
-- `manager_addr`: Address of the account that can manage the configuration of the Smart ASA and destroy it;
-- `reserve_addr`: Address of the account used to mint and burn the Smart ASA;
-- `freeze_addr`: Address of the account used to freeze holdings or even globally freeze the Smart ASA;
+- `manager_addr`: Address of the account entitle to manage the configuration of the Smart ASA and destroy it;
+- `reserve_addr`: Address of the account entitled to mint and burn the Smart ASA;
+- `freeze_addr`: Address of the account entitled to freeze holdings or even globally freeze the Smart ASA;
 - `clawback_addr`: Address of the account that can clawback holdings of the Smart ASA.
 
-**The Smart ASA App of the reference implementation has been designed to control one ASA at a time**. For this reason, the `smart_asa_id` variable has been added to the `GlobalState`. It is used to record the current Underlying ASA controlled by the application. This value is also stored into the local state of opted-in users, enforcing cross-checks between local and global states and avoiding issues like unauthorized transfers (see Security Considerations for more details).
+**The *Smart ASA App* of this reference implementation has been designed to control one ASA at a time. However the same app could be re-used for several Smart ASAs**. For this reason, the `smart_asa_id` variable has been added to the `GlobalState` to monitor the ID of the current *Underlying ASA* controlled by the application. This value is also stored into the local state of opted-in users, enforcing cross-checks between local and global states. This also avoids issues like unauthorized transfers (see [Security Considerations](https://github.com/algorandlabs/smart-asa#security-considerations) for more details).
 
-As additional feature, this reference implementation also includes the Smart ASA global `frozen` variable. It can only be updated by the freeze address which has the authority of globally freezing the asset with a single action, rather than freezing accounts one by one.
+Bonus feature: This reference implementation also includes the Smart ASA global `frozen` variable. It can only be updated by the freeze address which has the authority of globally freezing the asset with a single action, rather than freezing accounts one by one.
 
-In this implementation, new functional authority has been assigned to the `reserve` address of the Smart ASA, which is now the (only) entity in charge of `minting` and `burning` Smart ASAs (see the Smart ASA Transfer interface for more details).
+Finally, a new functional authority has been assigned to the `reserve` address of the Smart ASA. It is now the (_only_) entity in charge of `minting` and `burning` Smart ASAs (see the [Smart ASA Transfer](https://github.com/algorandlabs/smart-asa#smart-asa-transfer) interface for more details).
 
 #### Local State
 
-The `LocalState` initialized by the Smart ASA App for opted-in users is defined as follows:
+The opted-in users `LocalState` is defined as follows:
 
 Integer Variables:
 
-- `smart_asa_id`: asset ID of the Underlying ASA of the Smart ASA a user has opted-in;
+- `smart_asa_id`: asset ID of the *Underlying ASA* of the Smart ASA a user has opted-in;
 - `frozen`: True to freeze the holdings of the account.
 
 #### Self Validation
@@ -132,7 +136,7 @@ The Smart ASA reference implementation enforces self validation of the `StateSch
 
 #### Smart Contract ABI's type check
 
-Smart Contract methods has been implemented to comply with the Algorand ABI interface. The validation checks on the ABI types are carried on the client side. The Smart Contract enforces the following on-chain checks:
+Smart Contract methods has been implemented to comply with the [Algorand ABI](https://developer.algorand.org/docs/get-details/dapps/smart-contracts/ABI/) interface. The validation checks on the ABI types are carried on the client side. The Smart Contract enforces the following on-chain checks:
 
 - `address` length must be equal to 32 bytes;
 - `Bool` values must be equal to 0 or 1.
@@ -157,7 +161,7 @@ upon creation.
 
 ### Smart ASA App Opt-In
 
-_Smart ASA Opt-In_ represents the account opt-in to the Smart ASA. The argument `asset` represents the Underlying ASA. This method initializes the `LocalState` of the user. If the Smart ASA is `default_frozen` then the opting-in users are `frozen` too.
+_Smart ASA Opt-In_ represents the account opt-in to the Smart ASA. The argument `asset` represents the *Underlying ASA*. This method initializes the `LocalState` of the user. If the Smart ASA is `default_frozen` then the opting-in users are `frozen` too.
 
 ```json
 {
@@ -169,11 +173,11 @@ _Smart ASA Opt-In_ represents the account opt-in to the Smart ASA. The argument 
 
 ### Smart ASA App Close-Out
 
-_Smart ASA Close-Out_ closes out an account from the Smart ASA. The argument `close_asset` represents the _Underlying ASA_ to be closed, while `close_to` is the account to which all the remainder balance is sent on closing. This method removes the Smart ASA App `LocalState` from the calling account as well as closing out the _Underlying ASA_. In order to replicate the close-out behaviour of a regular ASA the Smart ASA closing procedure acts as follows:
+_Smart ASA Close-Out_ closes out an account from the Smart ASA. It shadows the exact behavior of a traditional ASA. In particular, The argument `close_asset` represents the _Underlying ASA_ to be closed, whereas the `close_to` is the account to which all the remainder balance is sent on closing. This method removes the *Smart ASA App* `LocalState` from the calling account as well as closing out the _Underlying ASA_. The Smart ASA closing procedure proceeds as follows:
 
-1. If the _Underlying ASA_ has been destroyed, then no check on is performed on `close_to` account;
-2. If the user account is _frozen_ or the whole _Underlying ASA_ is _frozen_, then the `close_to` MUST be the Smart ASA Creator (Smart ASA App);
-3. If the `close_to` account is not the Smart ASA Creator, then it MUST opted-in to the Smart ASA.
+1. If the _Underlying ASA_ has been destroyed, then no checks is performed on `close_to` account;
+2. If the user account is _frozen_ or the whole _Underlying ASA_ is _frozen_, then the `close_to` MUST be the Smart ASA Creator (*Smart ASA App*);
+3. If the `close_to` account is not the Smart ASA Creator, then it MUST have opted-in to the Smart ASA.
 
 ```json
 {
@@ -216,18 +220,9 @@ _Smart ASA Configuration_ is the update method of a Smart ASA. It updates the
 parameters of an existing Smart ASA. Only the `manager` has the authority to
 reconfigure the asset by invoking this method.
 
-It is worth noting that Smart ASA extends ASA configurability to **any field**!
-With Smart ASA users can now reconfigure properties like `name`, `unit_name`,
-`url` and even properties like `total`, `decimals` or `default_frozen`! This
-makes the Smart ASA a perfect fit for "evolvable" assets, like NFTs.
+> The ABI method needs all Smart ASA fields, even those one not to be changed, by assigning the current value to the unchanged fields. The Smart ASA Client of this reference implementation abstracts this complexity taking care of unspecified fields by replicating current Smart ASA state for the unchanged fields as default.
 
-> The ABI method requires specifying always all Smart ASA fields,
-even those one not to be changed, by assigning the current value to
-the unchanged fields. The Smart ASA Client of this reference
-implementation abstracts this complexity taking care of unspecified fields by
-replicating current Smart ASA state for the unchanged fields as default.
-
-The reference implementation applies the following restrictions:
+The following restrictions apply in this Smart ASA reference implementation:
 
 - `manager_addr`, `reserve_addr`, `freeze_addr` and `clawback_addr` addresses can no longer be configured once set to `ZERO_ADDRESS`;
 - `total` cannot be configured to a value lower than the current circulating supply.
@@ -272,7 +267,7 @@ _Smart ASA Transfer_ is the asset transfer method of a Smart ASA. It defines the
 
 #### Mint
 
-In the reference implementation only the `reserve` address can mint a Smart ASA. A minting succeeds if the following conditions are satisfied:
+In the reference implementation only the `reserve` address can _mint_ a Smart ASA. A minting succeeds if the following conditions are met:
 
 - the Smart ASA is not globally `frozen`;
 - `asset_sender` is the *Smart ASA App*;
@@ -288,7 +283,7 @@ In the reference implementation only the `reserve` address can mint a Smart ASA.
 
 #### Burn
 
-In the reference implementation only the `reserve` address can burn a Smart ASA. A burning succeeds if the following conditions are satisfied:
+In the reference implementation only the `reserve` address can burn a Smart ASA. A burning succeeds if the following conditions are met:
 
 - the Smart ASA is not globally `frozen`;
 - `asset_sender` is the `reserve` address;
@@ -298,20 +293,16 @@ In the reference implementation only the `reserve` address can burn a Smart ASA.
 
 #### Clawback
 
-The `clawback` address of a Smart ASA can invoke a clawback transfer from and to any asset holder (or revoke an asset). A clawback succeeds if the following conditions are satisfied:
+The `clawback` address of a Smart ASA can invoke a clawback transfer from and to any asset holder (or revoke an asset). A clawback succeeds if the following conditions are met:
 
 - `asset_sender` Smart ASA ID in Local State is up-to-date;
 - `asset_receiver` Smart ASA ID in Local State is up-to-date;.
 
-Checking that Smart ASA ID in Local State is up-to-date both for `asset_sender`
-and `asset_receiver`, by looking at their respective Local States, implicitly
-checks that both `asset_sender` and `asset_receiver` opted-in the Smart ASA
-App. This ensures that _minting_ and _burning_ can not be executed as
-_clawback_, since the Smart ASA App can not opt-in to itself.
+Checking that Smart ASA ID in Local State is up-to-date both for `asset_sender` and `asset_receiver` implicitly verifies that both users are opted-in to the *Smart ASA App*. This ensures that _minting_ and _burning_ can not be executed as _clawback_, since the *Smart ASA App* can not opt-in to itself.
 
 #### Transfer
 
-A regular transfer of a Smart ASA can be invoked by any opted-in asset holder. It succeeds if the following conditions are satisfied:
+A regular transfer of a Smart ASA can be invoked by any opted-in asset holder. It succeeds if the following conditions are met:
 
 - the Smart ASA is not globally `frozen`;
 - `asset_sender` is not `frozen`;
@@ -354,7 +345,7 @@ _Smart ASA Account Freeze_ is the account freeze method of a Smart ASA. It enabl
 
 _Smart ASA Destroy_ is the destroy method of a Smart ASA. In this reference implementation only the `manager` can invoke the Smart ASA destroy. This method clears the `GlobalState` schema of a Smart ASA, destroying any previous configuration.
 
-> A Smart ASA can be destroyed if and only if the `circulating supply = 0`. After a destroy, users remain opted-in to the Smart ASA App, but with an outdated `smart_asa_id` in their local state. See Security Considerations to understand the side effects of a Smart ASA destroy.
+> A Smart ASA can be destroyed if and only if the `circulating supply = 0`. After a Smart ASA destroy, users remain opted-in to the *Smart ASA App*, but with an outdated `smart_asa_id` in their local state. The section [Security Considerations](https://github.com/algorandlabs/smart-asa#security-considerations) discusses the side effects of a Smart ASA destroy.
 
 ```json
 {
@@ -766,9 +757,9 @@ python3 smart_asa.py destroy 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRS
 A malicious user could attempt to Clear its Local State to hack the `frozen` state of a Smart ASA. Consider the following scenario:
 
 - Smart ASA `default_frozen = False`;
-- Eve has regularly opted-in to the Smart ASA;
-- Eve receives 5 Smart ASA from Bob (Smart ASA manager and freezer) and get freezed afterwards;
-- Eve can now Clear its Local State and Opt-In again to clear its `frozen` state and spend the Smart ASA.
+- Eve is regularly opted-in to the Smart ASA;
+- Eve receives 5 Smart ASAs from Bob (Smart ASA manager and freezer) and get freezed afterwards;
+- Eve can now Clear its Local State and Opt-In again to reset its `frozen` state and be free to spend the Smart ASAs.
 
 To avoid this situation, the reference implementation introduces:
 - *Opt-In condition*: set `frozen` status of the account to `True` if
@@ -776,7 +767,7 @@ upon the opt-in, after a Clear State, the account holds an amount of Smart ASA.
 
 ### Conscious Smart ASA Destroy
 
-Upon a call to `asset_destroy`, the `GlobalState` of the Smart ASA App is reset and the _Underlying ASA_ destroyed. However, the `LocalState` of opted-in users is not affected. Let's consider the case a `manager` invokes an `asset_destroy` over Smart ASA `A` and afterwards an `asset_create` to instantiate Smart ASA `B` with the same *Smart ASA App*.
+Upon an `asset_destroy`, the `GlobalState` of the *Smart ASA App* is re-initialized and the _Underlying ASA_ destroyed. However, the destroy does not affect users' `LocalState`. Let's consider the case a `manager` invokes an `asset_destroy` over Smart ASA `A` and afterwards an `asset_create` to instantiate Smart ASA `B` with the same *Smart ASA App*.
 
 - Eve was opted-in to *Smart ASA App* and was not frozen;
 - Bob (manager) destroys Smart ASA `A` (assuming `circulating_supply = 0`);
@@ -784,18 +775,13 @@ Upon a call to `asset_destroy`, the `GlobalState` of the Smart ASA App is reset 
 - Eve is opted-in with `frozen = False`;
 - Eve can freely receive and spend Smart ASA `B`.
 
-To avoid this issue, the reference implementation includes the current `smart_asa_id` both in `GlobalState` and `LocalState`. Smart ASA transfers can now be approved only for users opted-in with the current _Underlying ASA_.
+To avoid this issue, the reference implementation includes the current `smart_asa_id` in both the `GlobalState` and `LocalState`. Smart ASA transfers can now be approved only for users opted-in with the current _Underlying ASA_.
 
 ## Conclusions
 
-Smart ASA reference implementation is a building block that shows how regular
-ASA can be turned into a more poweful and sophisticated L1 tool. By adopting
-ABI the Smart ASA will be easily interoperable and composable with the rest of
-Algorand's ecosystem (e.g. wallets, chain explorers, external dApp, etc.).
+Smart ASA reference implementation is a building block that shows how regular ASA can be turned into a more powerful and sophisticated L1 tool. By adopting ABI the Smart ASA will be easily interoperable and composable with the rest of Algorand's ecosystem (e.g. wallets, chain explorers, external dApp, etc.).
 
-This reference implementation is intended to be used as initial step for more
-specific and customized transferability logic like: royalties, DAOs' assets,
-NFTs, in-game assets etc.
+This reference implementation is intended to be used as initial step for more specific and customized transferability logic like: royalties, DAOs' assets, NFTs, in-game assets etc.
 
 We encourage the community to expand and customize this new tool to fit
 specific dApp!
