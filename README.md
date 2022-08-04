@@ -169,7 +169,7 @@ _Smart ASA Opt-In_ represents the account opt-in to the Smart ASA. The argument 
 
 ### Smart ASA App Close-Out
 
-_Smart ASA Close-Out_ is the close out of an account from the Smart ASA. The argument `close_asset` represents the Underlying ASA to be closed, while `close_to` is the account to which all the remainder balance is sent on closing. This method removes the Smart ASA App `LocalState` from the calling account as well as closing out the Underlying ASA. In order to replicate the regulare close-out behaviour of a regular ASA a Smart ASA closing procedure acts as follows:
+_Smart ASA Close-Out_ closes out an account from the Smart ASA. The argument `close_asset` represents the _Underlying ASA_ to be closed, while `close_to` is the account to which all the remainder balance is sent on closing. This method removes the Smart ASA App `LocalState` from the calling account as well as closing out the _Underlying ASA_. In order to replicate the close-out behaviour of a regular ASA the Smart ASA closing procedure acts as follows:
 
 1. If the _Underlying ASA_ has been destroyed, then no check on is performed on `close_to` account;
 2. If the user account is _frozen_ or the whole _Underlying ASA_ is _frozen_, then the `close_to` MUST be the Smart ASA Creator (Smart ASA App);
