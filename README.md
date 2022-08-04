@@ -50,11 +50,11 @@ The Smart ASA introduced with [ARC-0020](https://github.com/aldur/ARCs/blob/smar
 
 ## Reference implementation rational
 
-A Smart ASA is an ASA, called *Underlying ASA*, controlled by a Smart Contract, called *Smart ASA App*, that exposes methods to `create`, `configure`, `transfer`, `freeze`, and `destroy` the asset. The `create` method configures the initial the state of the controlling Smart Contract and creates the *Underlying ASA*. The following sections introduce the both the *Underlying ASA* and the Application state of this implementation.
+A Smart ASA is an ASA, called *Underlying ASA*, controlled by a Smart Contract, called *Smart ASA App*, that exposes methods to `create`, `opt-in`, `configure`, `transfer`, `global-freeze`, `freeze`, `close-out`, and `destroy` the asset plus some useful `getters`.
 
 ### Underlying ASA configuration
 
-The `create` method triggers an `AssetConfigTx` transaction (inner transaction) that generates a new asset with the following parameters:
+The `create` method triggers an `AssetConfigTx` transaction (inner transaction) that generates a new asset, called *Underlying ASA*, with the following parameters:
 
 | Property         | Value                                 |
 |------------------|---------------------------------------|
@@ -69,7 +69,7 @@ The `create` method triggers an `AssetConfigTx` transaction (inner transaction) 
 | `freeze_addr`    | \<Smart ASA App Addr\>                |
 | `clawback_name`  | \<Smart ASA App Addr\>                |
 
-The Underlying ASA is created with maximum supply (max `uint64`), it is not
+The _Underlying ASA_ is created with maximum supply (max `uint64`), it is not
 divisible, and it is frozen by default. The unit and asset names are custom
 strings that identify the Smart ASA.
 
