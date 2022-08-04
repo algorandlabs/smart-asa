@@ -776,7 +776,7 @@ upon the opt-in, after a Clear State, the account holds an amount of Smart ASA.
 
 ### Conscious Smart ASA Destroy
 
-Upon a call to `asset_destroy`, the `GlobalState` of the Smart ASA App is reset and the Underlying ASA destroyed. However, the `LocalState` of opted-in users is not affected. Let's consider the case a `manager` invokes an `asset_destroy` over `Smart ASA A` and afterwards an `asset_create` to instantiate `Smart ASA B` with the same *Smart ASA App*.
+Upon a call to `asset_destroy`, the `GlobalState` of the Smart ASA App is reset and the _Underlying ASA_ destroyed. However, the `LocalState` of opted-in users is not affected. Let's consider the case a `manager` invokes an `asset_destroy` over `Smart ASA` and afterwards an `asset_create` to instantiate `Smart ASA B` with the same *Smart ASA App*.
 
 - Eve was opted-in to *Smart ASA App* and was not frozen;
 - Bob (manager) destroys `Smart ASA A` (assuming `circulating_supply = 0`);
