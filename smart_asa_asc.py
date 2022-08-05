@@ -869,6 +869,9 @@ def get_optin_min_balance(asset: abi.Asset, *, output: abi.Uint64) -> Expr:
     )
 
 
+# NOTE: This getters returns a Tuple3 of (Tuple5, Tuple5, Tuple1). PyTeal currently supports tuples maximum
+# of 5 generic arguments (i.e. Tuple5). For this reason this getters splits the returned parameters in
+# three tuples.
 @smart_asa_abi.method
 def get_asset_config(asset: abi.Asset, *, output: AssetParamsTuple) -> Expr:
     return Seq(
