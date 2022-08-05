@@ -1,6 +1,6 @@
 import base64
 from typing import Union
-from algosdk import constants, abi
+from algosdk import constants
 from algosdk.future import transaction
 from algosdk.v2client import algod
 
@@ -42,13 +42,6 @@ def get_params(
     params.flat_fee = True
     params.fee = fee or constants.MIN_TXN_FEE
     return params
-
-
-def get_method(contract: abi.Contract, name: str) -> abi.Method:
-    for m in contract.methods:
-        if m.name == name:
-            return m
-    raise Exception("No method with the name {}".format(name))
 
 
 def get_last_round(algod_client: algod.AlgodClient):

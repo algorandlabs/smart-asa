@@ -46,9 +46,7 @@ from smart_asa_client import (
 )
 
 from utils import (
-    get_global_state,
     get_local_state,
-    get_method,
 )
 
 INITIAL_FUNDS = 100_000_000
@@ -556,15 +554,13 @@ class TestAssetOptin:
         smart_asa_app: AppAccount,
         opted_in_creator: Account,
     ) -> None:
-        smart_asa = get_global_state(
-            algod_client=opted_in_creator.algod_client,
-            asc_idx=smart_asa_app.app_id,
-        )
+        smart_asa = smart_asa_app.global_state()
         local_state = get_local_state(
             algod_client=opted_in_creator.algod_client,
             account_address=opted_in_creator.address,
             asc_idx=smart_asa_app.app_id,
         )
+
         if smart_asa["default_frozen"]:
             assert local_state["frozen"]
         else:
@@ -584,7 +580,7 @@ class TestAssetConfig:
         print("\n --- Configuring unexisting Smart ASA...")
         with pytest.raises(AlgodHTTPError):
             creator.abi_call(
-                get_method(smart_asa_contract, "asset_config"),
+                smart_asa_contract.get_method_by_name("asset_config"),
                 wrong_asa,
                 100,
                 2,
@@ -636,7 +632,7 @@ class TestAssetConfig:
         print("\n --- Configuring Smart ASA with wrong Asset ID...")
         with pytest.raises(AlgodHTTPError):
             creator.abi_call(
-                get_method(smart_asa_contract, "asset_config"),
+                smart_asa_contract.get_method_by_name("asset_config"),
                 wrong_asa,
                 100,
                 2,
@@ -1018,9 +1014,7 @@ class TestAssetTransfer:
 
         clawback = opted_in_account_factory()
 
-        old_global_state = get_global_state(
-            opted_in_creator.algod_client, smart_asa_app.app_id
-        )
+        old_global_state = smart_asa_app.global_state()
         assert old_global_state["clawback_addr"] == opted_in_creator.decoded_address
 
         print("\n --- Configuring clawback in Smart ASA...")
@@ -1032,9 +1026,7 @@ class TestAssetTransfer:
             config_clawback_addr=clawback,
         )
 
-        new_global_state = get_global_state(
-            opted_in_creator.algod_client, smart_asa_app.app_id
-        )
+        new_global_state = smart_asa_app.global_state()
         assert new_global_state["clawback_addr"] == clawback.decoded_address
 
         pre_minting_supply = smart_asa_get(
