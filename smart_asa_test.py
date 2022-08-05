@@ -2481,6 +2481,120 @@ class TestGetters:
             getter="get_account_is_frozen",
         )
 
+        print(f"\n --- Getting 'total' param of Smart ASA {smart_asa_app.app_id}...")
+        smart_asa = get_smart_asa_params(creator.algod_client, smart_asa_id)
+        assert smart_asa["total"] == smart_asa_get(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            caller=creator,
+            asset_id=smart_asa_id,
+            getter="get_total",
+        )
+
+        print(f"\n --- Getting 'decimals' param of Smart ASA {smart_asa_app.app_id}...")
+        smart_asa = get_smart_asa_params(creator.algod_client, smart_asa_id)
+        assert smart_asa["decimals"] == smart_asa_get(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            caller=creator,
+            asset_id=smart_asa_id,
+            getter="get_decimals",
+        )
+
+        print(
+            f"\n --- Getting 'unit_name' param of Smart ASA {smart_asa_app.app_id}..."
+        )
+        smart_asa = get_smart_asa_params(creator.algod_client, smart_asa_id)
+        assert smart_asa["unit_name"] == smart_asa_get(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            caller=creator,
+            asset_id=smart_asa_id,
+            getter="get_unit_name",
+        )
+
+        print(f"\n --- Getting 'name' param of Smart ASA {smart_asa_app.app_id}...")
+        smart_asa = get_smart_asa_params(creator.algod_client, smart_asa_id)
+        assert smart_asa["name"] == smart_asa_get(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            caller=creator,
+            asset_id=smart_asa_id,
+            getter="get_name",
+        )
+
+        print(f"\n --- Getting 'url' param of Smart ASA {smart_asa_app.app_id}...")
+        smart_asa = get_smart_asa_params(creator.algod_client, smart_asa_id)
+        assert smart_asa["url"] == smart_asa_get(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            caller=creator,
+            asset_id=smart_asa_id,
+            getter="get_url",
+        )
+
+        print(
+            f"\n --- Getting 'metadata_hash' param of Smart ASA {smart_asa_app.app_id}..."
+        )
+        # smart_asa = get_smart_asa_params(creator.algod_client, smart_asa_id_with_metadata)
+        assert b"XYZXYZ" == bytes(
+            smart_asa_get(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                caller=creator,
+                asset_id=smart_asa_id,
+                getter="get_metadata_hash",
+            )
+        )
+
+        print(
+            f"\n --- Getting 'manager_addr' param of Smart ASA {smart_asa_app.app_id}..."
+        )
+        smart_asa = get_smart_asa_params(creator.algod_client, smart_asa_id)
+        assert smart_asa["manager_addr"] == smart_asa_get(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            caller=creator,
+            asset_id=smart_asa_id,
+            getter="get_manager_addr",
+        )
+
+        print(
+            f"\n --- Getting 'reserve_addr' param of Smart ASA {smart_asa_app.app_id}..."
+        )
+        smart_asa = get_smart_asa_params(creator.algod_client, smart_asa_id)
+        assert smart_asa["reserve_addr"] == smart_asa_get(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            caller=creator,
+            asset_id=smart_asa_id,
+            getter="get_reserve_addr",
+        )
+
+        print(
+            f"\n --- Getting 'freeze_addr' param of Smart ASA {smart_asa_app.app_id}..."
+        )
+        smart_asa = get_smart_asa_params(creator.algod_client, smart_asa_id)
+        assert smart_asa["freeze_addr"] == smart_asa_get(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            caller=creator,
+            asset_id=smart_asa_id,
+            getter="get_freeze_addr",
+        )
+
+        print(
+            f"\n --- Getting 'clawback_addr' param of Smart ASA {smart_asa_app.app_id}..."
+        )
+        smart_asa = get_smart_asa_params(creator.algod_client, smart_asa_id)
+        assert smart_asa["clawback_addr"] == smart_asa_get(
+            smart_asa_contract=smart_asa_contract,
+            smart_asa_app=smart_asa_app,
+            caller=creator,
+            asset_id=smart_asa_id,
+            getter="get_clawback_addr",
+        )
+
         print(
             f"\n --- Getting 'circulating_supply' of Smart ASA "
             f"{smart_asa_app.app_id}..."
