@@ -7,9 +7,10 @@ from algosdk import encoding
 from algosdk.future import transaction
 from algosdk.v2client import algod
 from algosdk.atomic_transaction_composer import (
+    ABIResult,
+    AtomicTransactionComposer,
     TransactionSigner,
     TransactionWithSigner,
-    AtomicTransactionComposer,
 )
 
 from utils import (
@@ -49,7 +50,13 @@ class Account(TransactionSigner):
             stxns.append(stxn)
         return stxns
 
-    def sign_send_wait(self, txn: transaction.Transaction, save_txn: str = None):
+    # NOTE: By default executed in dev mode
+    def sign_send_wait(
+        self,
+        txn: transaction.Transaction,
+        dev: bool = True,
+        save_txn: str = None,
+    ):
         """Sign a transaction, submit it, and wait for its confirmation."""
         assert self.algod_client
 
@@ -60,10 +67,10 @@ class Account(TransactionSigner):
 
         try:
             self.algod_client.send_transactions([signed_txn])
-            # TODO: `wait_for_confirmation` doesn't work with `dev` mode in
-            #  Sandbox we should consider a `debug` flag to disable it.
+            # NOTE: Wait for transaction confirmation if not working with Sandbox dev mode
+            if not dev:
+                transaction.wait_for_confirmation(self.algod_client, tx_id)
 
-            # transaction.wait_for_confirmation(self.algod_client, tx_id)
             return self.algod_client.pending_transaction_info(tx_id)
 
         except algosdk.error.AlgodHTTPError as err:
@@ -87,13 +94,13 @@ class Account(TransactionSigner):
         self,
         method,
         *args,
-        app: Optional[Union[int, "AppAccount"]] = None,
+        app: Union[int, "AppAccount"],
         group_extra_txns: Optional[list[TransactionWithSigner]] = None,
         on_complete: transaction.OnComplete = transaction.OnComplete.NoOpOC,
         fee: Optional[int] = None,
         max_wait_rounds: int = 10,
-        save_abi_call: str = None,
-    ) -> Any:  # TODO: Correctly specify the return type here.
+        save_abi_call: Optional[str] = None,
+    ) -> ABIResult:
         """
         ABI call from `sender` to `app` `method`, with `*args`. Txn-type args are supplied
         as normal arguments.
@@ -102,13 +109,6 @@ class Account(TransactionSigner):
         """
         assert self.algod_client
 
-        if app is None:
-            if hasattr(method, "__self__") and hasattr(method.__self__, "__app_id__"):
-                app = getattr(method.__self__, "__app_id__")
-            else:
-                raise ValueError(
-                    "app parameter required for abi call to unbounded methods"
-                )
         if isinstance(app, AppAccount):
             app = app.app_id
 
@@ -292,10 +292,10 @@ class Account(TransactionSigner):
         approval_program: str,
         clear_program: str,
         app_id: int,
-        app_args: list = None,
-        accounts: list[str] = None,
-        foreign_apps: list[int] = None,
-        foreign_assets: list[int] = None,
+        app_args: Optional[list] = None,
+        accounts: Optional[list[str]] = None,
+        foreign_apps: Optional[list[int]] = None,
+        foreign_assets: Optional[list[int]] = None,
     ) -> dict:
 
         approval_program = assembly_program(self.algod_client, approval_program)
