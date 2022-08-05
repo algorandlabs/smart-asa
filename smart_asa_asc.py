@@ -54,6 +54,15 @@ TEAL_VERSION = 6
 
 SMART_ASA_APP_BINDING = "smart-asa-app-id:"
 
+# / --- ALIAS
+AssetParamsTuple1 = abi.Tuple5[abi.Uint64, abi.Uint32, abi.Bool, abi.String, abi.String]
+AssetParamsTuple2 = abi.Tuple5[
+    abi.String, abi.DynamicArray[abi.Byte], abi.Address, abi.Address, abi.Address
+]
+AssetParamsTuple3 = abi.Tuple1[abi.Address]
+AssetParamsTuple = abi.Tuple3[AssetParamsTuple1, AssetParamsTuple2, AssetParamsTuple3]
+
+
 # NOTE: The following costs could change over time with protocol upgrades.
 OPTIN_COST = 100_000
 UINTS_COST = 28_500
@@ -857,6 +866,39 @@ def get_optin_min_balance(asset: abi.Asset, *, output: abi.Uint64) -> Expr:
         getter_preconditions(asset.asset_id()),
         # Effects
         output.set(min_balance),
+    )
+
+
+@smart_asa_abi.method
+def get_asset_config(asset: abi.Asset, *, output: AssetParamsTuple) -> Expr:
+    return Seq(
+        # Preconditions
+        getter_preconditions(asset.asset_id()),
+        # Effects
+        (total := abi.Uint64()).set(App.globalGet(GlobalState.total)),
+        (decimals := abi.Uint32()).set(App.globalGet(GlobalState.decimals)),
+        (default_frozen := abi.Bool()).set(App.globalGet(GlobalState.default_frozen)),
+        (unit_name := abi.String()).set(App.globalGet(GlobalState.unit_name)),
+        (name := abi.String()).set(App.globalGet(GlobalState.name)),
+        (url := abi.String()).set(App.globalGet(GlobalState.url)),
+        (metadata_hash_str := abi.String()).set(
+            App.globalGet(GlobalState.metadata_hash)
+        ),
+        (metadata_hash := abi.make(abi.DynamicArray[abi.Byte])).decode(
+            metadata_hash_str.encode()
+        ),
+        (manager_addr := abi.Address()).set(App.globalGet(GlobalState.manager_addr)),
+        (reserve_addr := abi.Address()).set(App.globalGet(GlobalState.reserve_addr)),
+        (freeze_addr := abi.Address()).set(App.globalGet(GlobalState.freeze_addr)),
+        (clawback_addr := abi.Address()).set(App.globalGet(GlobalState.clawback_addr)),
+        (params_tuple1 := abi.make(AssetParamsTuple1)).set(
+            total, decimals, default_frozen, unit_name, name
+        ),
+        (params_tuple2 := abi.make(AssetParamsTuple2)).set(
+            url, metadata_hash, manager_addr, reserve_addr, freeze_addr
+        ),
+        (params_tuple3 := abi.make(AssetParamsTuple3)).set(clawback_addr),
+        output.set(params_tuple1, params_tuple2, params_tuple3),
     )
 
 
