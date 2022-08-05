@@ -49,6 +49,7 @@ from utils import (
     get_global_state,
     get_local_state,
     get_method,
+    normalize_getter_params,
 )
 
 INITIAL_FUNDS = 100_000_000
@@ -2431,26 +2432,31 @@ class TestGetters:
         smart_asa = get_smart_asa_params(creator.algod_client, smart_asa_id)
 
         print(f"\n --- Getting configuration of Smart ASA {smart_asa_app.app_id}...")
-        smart_asa_getter = smart_asa_get(
-            smart_asa_contract=smart_asa_contract,
-            smart_asa_app=smart_asa_app,
-            caller=creator,
-            asset_id=smart_asa_id,
-            getter="get_asset_config",
+
+        smart_asa_params = normalize_getter_params(
+            smart_asa_get(
+                smart_asa_contract=smart_asa_contract,
+                smart_asa_app=smart_asa_app,
+                caller=creator,
+                asset_id=smart_asa_id,
+                getter="get_asset_config",
+            )
         )
-        assert smart_asa["total"] == smart_asa_getter[0][0]
-        assert smart_asa["decimals"] == smart_asa_getter[0][1]
-        assert smart_asa["default_frozen"] == smart_asa_getter[0][2]
-        assert smart_asa["unit_name"] == smart_asa_getter[0][3]
-        assert smart_asa["name"] == smart_asa_getter[0][4]
-        assert smart_asa["url"] == smart_asa_getter[1][0]
+        print(f" ----- SMART ASA PARAMS {smart_asa_params} --------")
+
+        assert smart_asa["total"] == smart_asa_params[0]
+        assert smart_asa["decimals"] == smart_asa_params[1]
+        assert smart_asa["default_frozen"] == smart_asa_params[2]
+        assert smart_asa["unit_name"] == smart_asa_params[3]
+        assert smart_asa["name"] == smart_asa_params[4]
+        assert smart_asa["url"] == smart_asa_params[5]
         # Type Length Prefix must be discarded
-        metadata_hash_getter = smart_asa_getter[1][1][2:]
+        metadata_hash_getter = smart_asa_params[6][2:]
         assert b"XYZXYZ" == bytes(metadata_hash_getter)
-        assert smart_asa["manager_addr"] == smart_asa_getter[1][2]
-        assert smart_asa["reserve_addr"] == smart_asa_getter[1][3]
-        assert smart_asa["freeze_addr"] == smart_asa_getter[1][4]
-        assert smart_asa["clawback_addr"] == smart_asa_getter[2][0]
+        assert smart_asa["manager_addr"] == smart_asa_params[7]
+        assert smart_asa["reserve_addr"] == smart_asa_params[8]
+        assert smart_asa["freeze_addr"] == smart_asa_params[9]
+        assert smart_asa["clawback_addr"] == smart_asa_params[10]
 
         print(f"\n --- Getting 'frozen' param of Smart ASA {smart_asa_app.app_id}...")
         assert smart_asa["frozen"] == smart_asa_get(

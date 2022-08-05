@@ -62,3 +62,10 @@ def get_last_timestamp(algod_client: algod.AlgodClient):
 def assembly_program(algod_client: algod.AlgodClient, source_code: str) -> bytes:
     compile_response = algod_client.compile(source_code)
     return base64.b64decode(compile_response["result"])
+
+
+def normalize_getter_params(getter_params: list) -> tuple:
+    tup = ()
+    for t in getter_params:
+        tup += tuple(t)
+    return tup
