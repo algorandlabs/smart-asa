@@ -317,10 +317,10 @@ class Account(TransactionSigner):
     def delete_application(
         self,
         app_id: int,
-        app_args: list = None,
-        accounts: list[str] = None,
-        foreign_apps: list[int] = None,
-        foreign_assets: list[int] = None,
+        app_args: Optional[list] = None,
+        accounts: Optional[list[str]] = None,
+        foreign_apps: Optional[list[int]] = None,
+        foreign_assets: Optional[list[int]] = None,
     ) -> dict:
 
         txn = transaction.ApplicationDeleteTxn(
@@ -338,10 +338,10 @@ class Account(TransactionSigner):
     def clear_state(
         self,
         app_id: int,
-        app_args: list = None,
-        accounts: list[str] = None,
-        foreign_apps: list[int] = None,
-        foreign_assets: list[int] = None,
+        app_args: Optional[list] = None,
+        accounts: Optional[list[str]] = None,
+        foreign_apps: Optional[list[int]] = None,
+        foreign_assets: Optional[list[int]] = None,
     ) -> dict:
         txn = transaction.ApplicationClearStateTxn(
             sender=self.address,

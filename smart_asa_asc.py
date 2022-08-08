@@ -629,6 +629,7 @@ def asset_app_closeout(
     asset_creator = AssetParam().creator(close_asset.asset_id())
     asset_frozen = App.globalGet(GlobalState.frozen)
     asset_closer_frozen = App.localGet(Txn.sender(), LocalState.frozen)
+    asa_closeout_relative_idx = Txn.group_index() + Int(1)
     return Seq(
         # Preconditions
         # NOTE: Smart ASA existence is not checked by default on close-out
@@ -636,12 +637,13 @@ def asset_app_closeout(
         is_valid_address_bytes_length(close_to.address()),
         Assert(
             is_current_smart_asa_id,
-            Global.group_size() > Txn.group_index() + Int(1),
-            Gtxn[1].type_enum() == TxnType.AssetTransfer,
-            Gtxn[1].xfer_asset() == close_asset.asset_id(),
-            Gtxn[1].sender() == Txn.sender(),
-            Gtxn[1].asset_amount() == Int(0),
-            Gtxn[1].asset_close_to() == Global.current_application_address(),
+            Global.group_size() > asa_closeout_relative_idx,
+            Gtxn[asa_closeout_relative_idx].type_enum() == TxnType.AssetTransfer,
+            Gtxn[asa_closeout_relative_idx].xfer_asset() == close_asset.asset_id(),
+            Gtxn[asa_closeout_relative_idx].sender() == Txn.sender(),
+            Gtxn[asa_closeout_relative_idx].asset_amount() == Int(0),
+            Gtxn[asa_closeout_relative_idx].asset_close_to()
+            == Global.current_application_address(),
         ),
         # Effects
         asset_creator,
