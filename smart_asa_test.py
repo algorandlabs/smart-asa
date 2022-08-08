@@ -227,7 +227,6 @@ def test_compile(
     # This test simply ensures we can compile the ASC programs
     teal_approval_program = compile_stateful(pyteal_approval)
     teal_clear_program = compile_stateful(pyteal_clear)
-    dir_path = os.getcwd()
 
     pprint.pprint("\nABI\n" + json.dumps(smart_asa_contract.dictify()))
 
