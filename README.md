@@ -380,7 +380,7 @@ Getters ABI interface example:
 ```
 
 ## Smart ASA CLI
-The Smart ASA CLI has been conceived to offer the community a comprehensive and intuitive tool to interact with all the functionalities of the Smart ASA of this reference implementation. The CLI, as-is, is intent for testing purposes and can only be used within an Algorand Sandbox environment.
+The Smart ASA CLI has been conceived to offer the community a comprehensive and intuitive tool to interact with all the functionalities of the Smart ASA of this reference implementation. The CLI, as-is, is intended for testing purposes and can only be used within an Algorand Sandbox environment.
 
 ### Install
 
