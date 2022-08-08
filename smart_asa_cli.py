@@ -330,7 +330,7 @@ def asset_or_account_info(
     smart_asa_app: AppAccount,
 ) -> None:
     if args["--account"]:
-        account = Sandbox.from_public_key(args["--account"])
+        account = Account(address=args["--account"])
         print(f"\n --- Smart ASA {args['<asset-id>']} state:")
         return print(account.app_local_state(smart_asa_app.app_id), "\n")
     else:

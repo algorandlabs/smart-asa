@@ -166,8 +166,8 @@ def init_local_state() -> Expr:
 
 
 @Subroutine(TealType.bytes)
-def int_to_ascii(i: Expr) -> Expr:
-    """int_to_ascii converts an integer to the ASCII byte that represents it"""
+def digit_to_ascii(i: Expr) -> Expr:
+    """digit_to_ascii converts an integer < 10 to the ASCII byte that represents it"""
     return Extract(Bytes("0123456789"), i, Int(1))
 
 
@@ -179,7 +179,7 @@ def itoa(i: Expr) -> Expr:
         Bytes("0"),
         Concat(
             If(i / Int(10) > Int(0), itoa(i / Int(10)), Bytes("")),
-            int_to_ascii(i % Int(10)),
+            digit_to_ascii(i % Int(10)),
         ),
     )
 
@@ -636,7 +636,7 @@ def asset_app_closeout(
         is_valid_address_bytes_length(close_to.address()),
         Assert(
             is_current_smart_asa_id,
-            Global.group_size() >= Int(2),
+            Global.group_size() > Txn.group_index() + Int(1),
             Gtxn[1].type_enum() == TxnType.AssetTransfer,
             Gtxn[1].xfer_asset() == close_asset.asset_id(),
             Gtxn[1].sender() == Txn.sender(),

@@ -15,7 +15,7 @@ from algosdk.atomic_transaction_composer import (
 )
 
 from utils import (
-    assembly_program,
+    assemble_program,
     get_global_state,
     get_local_state,
     get_params,
@@ -268,8 +268,8 @@ class Account(TransactionSigner):
         local_schema=transaction.StateSchema(0, 0),
         on_complete=transaction.OnComplete.NoOpOC,
     ) -> "AppAccount":
-        approval_program = assembly_program(self.algod_client, approval_program)
-        clear_program = assembly_program(self.algod_client, clear_program)
+        approval_program = assemble_program(self.algod_client, approval_program)
+        clear_program = assemble_program(self.algod_client, clear_program)
 
         txn = transaction.ApplicationCreateTxn(
             self.address,
@@ -298,8 +298,8 @@ class Account(TransactionSigner):
         foreign_assets: Optional[list[int]] = None,
     ) -> dict:
 
-        approval_program = assembly_program(self.algod_client, approval_program)
-        clear_program = assembly_program(self.algod_client, clear_program)
+        approval_program = assemble_program(self.algod_client, approval_program)
+        clear_program = assemble_program(self.algod_client, clear_program)
 
         txn = transaction.ApplicationUpdateTxn(
             sender=self.address,
