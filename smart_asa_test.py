@@ -7,7 +7,6 @@ __email__ = "<cosimo.bassi@algorand.com>, <stefano.deangelis@algorand.com>"
 
 import json
 import pprint
-import os
 
 from typing import Callable
 
