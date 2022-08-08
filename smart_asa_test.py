@@ -7,6 +7,7 @@ __email__ = "<cosimo.bassi@algorand.com>, <stefano.deangelis@algorand.com>"
 
 import json
 import pprint
+import os
 
 from typing import Callable
 
@@ -226,15 +227,18 @@ def test_compile(
     # This test simply ensures we can compile the ASC programs
     teal_approval_program = compile_stateful(pyteal_approval)
     teal_clear_program = compile_stateful(pyteal_clear)
+    dir_path = os.getcwd()
 
     pprint.pprint("\nABI\n" + json.dumps(smart_asa_contract.dictify()))
 
     print("\nAPPROVAL PROGRAM\n" + teal_approval_program)
-    with open("/tmp/approval.teal", "w") as f:
+    filename_approval = "/approval.teal"
+    with open(dir_path + filename_approval, "w") as f:
         f.write(teal_approval_program)
 
     print("\nCLEAR PROGRAM\n" + teal_clear_program)
-    with open("/tmp/clear.teal", "w") as f:
+    filename_clear = "/clear.teal"
+    with open(dir_path + filename_clear, "w") as f:
         f.write(teal_clear_program)
 
 

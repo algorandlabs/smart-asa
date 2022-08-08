@@ -1,5 +1,6 @@
 import dataclasses
 import base64
+import os
 from typing import Any, Optional, Union, cast
 
 import algosdk
@@ -50,11 +51,9 @@ class Account(TransactionSigner):
             stxns.append(stxn)
         return stxns
 
-    # NOTE: By default executed in dev mode
     def sign_send_wait(
         self,
         txn: transaction.Transaction,
-        dev: bool = True,
         save_txn: str = None,
     ):
         """Sign a transaction, submit it, and wait for its confirmation."""
@@ -67,16 +66,16 @@ class Account(TransactionSigner):
 
         try:
             self.algod_client.send_transactions([signed_txn])
-            # NOTE: Wait for transaction confirmation if not working with Sandbox dev mode
-            if not dev:
-                transaction.wait_for_confirmation(self.algod_client, tx_id)
+
+            transaction.wait_for_confirmation(self.algod_client, tx_id)
 
             return self.algod_client.pending_transaction_info(tx_id)
 
         except algosdk.error.AlgodHTTPError as err:
             drr = transaction.create_dryrun(self.algod_client, [signed_txn])
-            filename = "/tmp/dryrun.msgp"
-            with open(filename, "wb") as f:
+            dir_path = os.getcwd()
+            filename = "/dryrun.msgp"
+            with open(dir_path + filename, "wb") as f:
                 f.write(base64.b64decode(encoding.msgpack_encode(drr)))
             raise err
 
@@ -150,8 +149,9 @@ class Account(TransactionSigner):
 
         except algosdk.error.AlgodHTTPError as err:
             drr = transaction.create_dryrun(self.algod_client, atc.signed_txns)
-            filename = "/tmp/dryrun.msgp"
-            with open(filename, "wb") as f:
+            dir_path = os.getcwd()
+            filename = "/dryrun.msgp"
+            with open(dir_path + filename, "wb") as f:
                 f.write(base64.b64decode(encoding.msgpack_encode(drr)))
             raise err
 
