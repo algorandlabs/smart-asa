@@ -47,7 +47,6 @@ from smart_asa_client import (
 
 from utils import (
     get_local_state,
-    get_method,
     normalize_getter_params,
 )
 

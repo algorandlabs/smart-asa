@@ -60,25 +60,27 @@ def assemble_program(algod_client: algod.AlgodClient, source_code: str) -> bytes
 
 # NOTE: getter_params represents a tuple of three tuples. This utility
 # will be removed once PyTeal integrates the ABI type NamedTuple
-def normalize_getter_params(getter_params: list) -> tuple:
-    Config = namedtuple(
-        "SmartASAConfig",
-        [
-            "total",
-            "decimals",
-            "default_frozen",
-            "unit_name",
-            "name",
-            "url",
-            "metadata_hash",
-            "manager_addr",
-            "reserve_addr",
-            "freeze_addr",
-            "clawback_addr",
-        ],
-    )
+SmartASAConfig = namedtuple(
+    "SmartASAConfig",
+    [
+        "total",
+        "decimals",
+        "default_frozen",
+        "unit_name",
+        "name",
+        "url",
+        "metadata_hash",
+        "manager_addr",
+        "reserve_addr",
+        "freeze_addr",
+        "clawback_addr",
+    ],
+)
 
-    return Config(
+
+def normalize_getter_params(getter_params: list) -> SmartASAConfig:
+
+    return SmartASAConfig(
         getter_params[0][0],
         getter_params[0][1],
         getter_params[0][2],

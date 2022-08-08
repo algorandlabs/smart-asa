@@ -12,7 +12,7 @@ from algosdk.v2client.algod import AlgodClient
 from algosdk.encoding import encode_address
 from algosdk.future.transaction import AssetTransferTxn, OnComplete
 from account import Account, AppAccount
-from utils import get_global_state, get_method, get_params, normalize_getter_params
+from utils import get_params, normalize_getter_params
 
 from smart_asa_asc import (
     SMART_ASA_APP_BINDING,
