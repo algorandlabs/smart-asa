@@ -235,8 +235,7 @@ def test_compile(
         f.write(teal_approval_program)
 
     print("\nCLEAR PROGRAM\n" + teal_clear_program)
-    filename_clear = "/clear.teal"
-    with open(dir_path + filename_clear, "w") as f:
+    with open("clear.teal", "w") as f:
         f.write(teal_clear_program)
 
 
