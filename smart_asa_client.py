@@ -12,7 +12,7 @@ from algosdk.v2client.algod import AlgodClient
 from algosdk.encoding import encode_address
 from algosdk.future.transaction import AssetTransferTxn, OnComplete
 from account import Account, AppAccount
-from utils import get_params
+from utils import get_params, normalize_getter_params
 
 from smart_asa_asc import (
     SMART_ASA_APP_BINDING,
@@ -207,15 +207,16 @@ def smart_asa_config(
 
     s_asa = get_smart_asa_params(manager.algod_client, asset_id)
     if config_metadata_hash is None:
-        config_metadata_hash = bytes(
+        smart_asa_params = normalize_getter_params(
             smart_asa_get(
                 smart_asa_contract=smart_asa_contract,
                 smart_asa_app=smart_asa_app,
                 caller=manager,
                 asset_id=asset_id,
-                getter="get_metadata_hash",
+                getter="get_asset_config",
             )
         )
+        config_metadata_hash = bytes(smart_asa_params.metadata_hash[2:])
 
     if config_manager_addr is None:
         config_manager_addr = Account(address=s_asa["manager_addr"])
