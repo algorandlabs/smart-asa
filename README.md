@@ -380,8 +380,11 @@ Getters ABI interface example:
 ```
 
 ## Smart ASA CLI
+The Smart ASA CLI has been conceived to offer the community a comprehensive and intuitive tool to interact with all the functionalities of the Smart ASA of this reference implementation. The CLI, as-is, is intent for testing purposes and can only be used within an Algorand Sandbox environment.
 
 ### Install
+
+**CLI Requirement: Algorand Sandbox** (try it with `dev` mode first!)
 
 The `Pipfile` contains all the dependencies to install the Smart ASA CLI using
 `pipenv` entering:
@@ -389,9 +392,6 @@ The `Pipfile` contains all the dependencies to install the Smart ASA CLI using
 ```shell
 pipenv install
 ```
-
-The Smart ASA CLI requires an Algorand `sandbox` up and running (try it in
-`dev` mode first!).
 
 ### Usage
 The Smart ASA CLI plays the same role as `goal asset` to facilitate a seamless
