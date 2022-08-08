@@ -232,8 +232,7 @@ def test_compile(
     pprint.pprint("\nABI\n" + json.dumps(smart_asa_contract.dictify()))
 
     print("\nAPPROVAL PROGRAM\n" + teal_approval_program)
-    filename_approval = "/approval.teal"
-    with open(dir_path + filename_approval, "w") as f:
+    with open("approval.teal", "w") as f:
         f.write(teal_approval_program)
 
     print("\nCLEAR PROGRAM\n" + teal_clear_program)
