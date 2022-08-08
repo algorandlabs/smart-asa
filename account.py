@@ -73,9 +73,8 @@ class Account(TransactionSigner):
 
         except algosdk.error.AlgodHTTPError as err:
             drr = transaction.create_dryrun(self.algod_client, [signed_txn])
-            dir_path = os.getcwd()
-            filename = "/dryrun.msgp"
-            with open(dir_path + filename, "wb") as f:
+            filename = "dryrun.msgp"
+            with open(filename, "wb") as f:
                 f.write(base64.b64decode(encoding.msgpack_encode(drr)))
             raise err
 
