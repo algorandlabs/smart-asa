@@ -359,12 +359,12 @@ _Smart ASA Destroy_ is the destroy method of a Smart ASA. In this reference impl
 
 ### Smart ASA Getters
 
-_Getters_ methods have bee implemented for each `StateSchema` parameter of the Smart ASA. Refer the ARC-0020 for a comprehensive list of available getters.
+_Getter_ methods expose relevant information of a Smart ASA. To retrieve the whole configuration you can query the ABI method `get_asset_config` which returns a Tuple with all the configuration parameters!
 
-Smart ASA reference implementation introduces two new getters:
+Bonus: This reference implementation also exposes two extra getters:
 
-- `get_circulating_supply`: returns the current circulating supply of a smart ASA;
-- `get_optin_min_balance`: returns the minimum balance (in ALGO) required to opt-in the Smart ASA.
+- `get_circulating_supply`: which returns the current circulating supply of a smart ASA;
+- `get_optin_min_balance`: which returns the minimum balance (in ALGO) required to opt-in the Smart ASA.
 
 Getters ABI interface example:
 
@@ -375,7 +375,7 @@ Getters ABI interface example:
   "args": [
     {"name": "asset", "type": "asset"}
   ],
-  "returns": {"type": "uint64"}
+  "returns": {"type": "<Tuple | uint64>"}
 }
 ```
 
