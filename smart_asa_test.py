@@ -354,7 +354,7 @@ class TestAssetCreate:
         assert not smart_asa["unit_name"]
         assert not smart_asa["name"]
         assert not smart_asa["url"]
-        assert smart_asa["metadata_hash"][1] == "\x00"
+        assert smart_asa["metadata_hash"] == b""
         assert smart_asa["manager_addr"] == creator.address
         assert smart_asa["reserve_addr"] == creator.address
         assert smart_asa["freeze_addr"] == creator.address
@@ -748,7 +748,7 @@ class TestAssetConfig:
         assert smart_asa["unit_name"] == config_s_asa["unit_name"]
         assert smart_asa["name"] == config_s_asa["name"]
         assert smart_asa["url"] == config_s_asa["url"]
-        assert smart_asa["metadata_hash"][2:] == config_s_asa["metadata_hash"].decode()
+        assert smart_asa["metadata_hash"] == config_s_asa["metadata_hash"]
         assert smart_asa["manager_addr"] == config_s_asa["manager_addr"]
         assert smart_asa["reserve_addr"] == config_s_asa["reserve_addr"]
         assert smart_asa["freeze_addr"] == config_s_asa["freeze_addr"]
@@ -2434,6 +2434,7 @@ class TestGetters:
                 getter="get_asset_config",
             )
         )
+
         print(f" ----- SMART ASA PARAMS {smart_asa_params} --------")
 
         assert smart_asa["total"] == smart_asa_params.total
@@ -2442,9 +2443,8 @@ class TestGetters:
         assert smart_asa["unit_name"] == smart_asa_params.unit_name
         assert smart_asa["name"] == smart_asa_params.name
         assert smart_asa["url"] == smart_asa_params.url
-        # Type Length Prefix must be discarded
-        metadata_hash_getter = smart_asa_params.metadata_hash[2:]
-        assert b"XYZXYZ" == bytes(metadata_hash_getter)
+        assert b"XYZXYZ" == bytes(smart_asa_params.metadata_hash)
+        assert smart_asa["metadata_hash"] == bytes(smart_asa_params.metadata_hash)
         assert smart_asa["manager_addr"] == smart_asa_params.manager_addr
         assert smart_asa["reserve_addr"] == smart_asa_params.reserve_addr
         assert smart_asa["freeze_addr"] == smart_asa_params.freeze_addr
@@ -2502,3 +2502,22 @@ class TestGetters:
             asset_id=smart_asa_id,
             getter="get_optin_min_balance",
         )
+
+    def test_uninitialized_smart_asa(
+        self,
+        smart_asa_contract: Contract,
+        smart_asa_app: AppAccount,
+        creator: Account,
+    ) -> None:
+        print("\n --- Creating Smart ASA...")
+
+        with pytest.raises(AlgodHTTPError):
+            normalize_getter_params(
+                smart_asa_get(
+                    smart_asa_contract=smart_asa_contract,
+                    smart_asa_app=smart_asa_app,
+                    caller=creator,
+                    asset_id=0,
+                    getter="get_asset_config",
+                )
+            )

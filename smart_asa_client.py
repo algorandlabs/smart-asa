@@ -44,7 +44,7 @@ def get_smart_asa_params(algod_client: AlgodClient, smart_asa_id: int) -> dict:
         "unit_name": smart_asa_state["unit_name"].decode(),
         "name": smart_asa_state["name"].decode(),
         "url": smart_asa_state["url"].decode(),
-        "metadata_hash": smart_asa_state["metadata_hash"].decode(),
+        "metadata_hash": smart_asa_state["metadata_hash"],
         "total": int(smart_asa_state["total"]),
         "decimals": int(smart_asa_state["decimals"]),
         "frozen": bool(smart_asa_state["frozen"]),
@@ -216,7 +216,7 @@ def smart_asa_config(
                 getter="get_asset_config",
             )
         )
-        config_metadata_hash = bytes(smart_asa_params.metadata_hash[2:])
+        config_metadata_hash = bytes(smart_asa_params.metadata_hash)
 
     if config_manager_addr is None:
         config_manager_addr = Account(address=s_asa["manager_addr"])

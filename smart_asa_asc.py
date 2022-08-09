@@ -38,6 +38,7 @@ from pyteal import (
     Router,
     Seq,
     Subroutine,
+    Suffix,
     TealType,
     Txn,
     TxnField,
@@ -192,6 +193,11 @@ def itoa(i: Expr) -> Expr:
             digit_to_ascii(i % Int(10)),
         ),
     )
+
+
+@Subroutine(TealType.bytes)
+def strip_len_prefix(abi_encoded: Expr) -> Expr:
+    return Suffix(abi_encoded, Int(abi.Uint16TypeSpec().byte_length_static()))
 
 
 # / --- --- UNDERLYING ASA CONFIG
@@ -406,7 +412,9 @@ def asset_create(
         App.globalPut(GlobalState.unit_name, unit_name.get()),
         App.globalPut(GlobalState.name, name.get()),
         App.globalPut(GlobalState.url, url.get()),
-        App.globalPut(GlobalState.metadata_hash, metadata_hash.encode()),
+        App.globalPut(
+            GlobalState.metadata_hash, strip_len_prefix(metadata_hash.encode())
+        ),
         App.globalPut(GlobalState.manager_addr, manager_addr.get()),
         App.globalPut(GlobalState.reserve_addr, reserve_addr.get()),
         App.globalPut(GlobalState.freeze_addr, freeze_addr.get()),
@@ -476,7 +484,9 @@ def asset_config(
         App.globalPut(GlobalState.unit_name, unit_name.get()),
         App.globalPut(GlobalState.name, name.get()),
         App.globalPut(GlobalState.url, url.get()),
-        App.globalPut(GlobalState.metadata_hash, metadata_hash.encode()),
+        App.globalPut(
+            GlobalState.metadata_hash, strip_len_prefix(metadata_hash.encode())
+        ),
         App.globalPut(GlobalState.manager_addr, manager_addr.get()),
         App.globalPut(GlobalState.reserve_addr, reserve_addr.get()),
         App.globalPut(GlobalState.freeze_addr, freeze_addr.get()),
