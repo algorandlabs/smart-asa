@@ -380,8 +380,11 @@ Getters ABI interface example:
 ```
 
 ## Smart ASA CLI
+The Smart ASA CLI has been conceived to offer the community a comprehensive and intuitive tool to interact with all the functionalities of the Smart ASA of this reference implementation. The CLI, as-is, is intended for testing purposes and can only be used within an Algorand Sandbox environment.
 
 ### Install
+
+**CLI Requirement: Algorand Sandbox** (try it with `dev` mode first!)
 
 The `Pipfile` contains all the dependencies to install the Smart ASA CLI using
 `pipenv` entering:
@@ -389,9 +392,6 @@ The `Pipfile` contains all the dependencies to install the Smart ASA CLI using
 ```shell
 pipenv install
 ```
-
-The Smart ASA CLI requires an Algorand `sandbox` up and running (try it in
-`dev` mode first!).
 
 ### Usage
 The Smart ASA CLI plays the same role as `goal asset` to facilitate a seamless
@@ -464,7 +464,7 @@ Options:
 Let's create a beautiful 🔴 Smart ASA NFT (non-fractional for the moment)...
 
 ```shell
-python3 smart_asa.py create KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ 1 --name Red --unit-name 🔴
+python3 smart_asa_cli.py create KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ 1 --name Red --unit-name 🔴
 
  --- Creating Smart ASA App...
  --- Smart ASA App ID: 2988
@@ -481,7 +481,7 @@ to put units of Smart ASA in circulation (see
 [Mint Smart ASA NFT](./README.md#mint-smart-asa-nft)).
 
 ```shell
-python3 smart_asa.py info 2991
+python3 smart_asa_cli.py info 2991
 
         Asset ID:         2991
         App ID:           2988
@@ -511,14 +511,14 @@ So let's use this new cool feature to **fractionalize** the Smart ASA NFT after
 its creation by setting the new `<total>` to 100 and `<decimals>` to 2!
 
 ```shell
-python3 smart_asa.py config 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ --new-total 100 --new-decimals 2
+python3 smart_asa_cli.py config 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ --new-total 100 --new-decimals 2
 
  --- Configuring Smart ASA 2991...
  --- Smart ASA 2991 configured!
 ```
 
 ```shell
-python3 smart_asa.py info 2991
+python3 smart_asa_cli.py info 2991
 
         Asset ID:         2991
         App ID:           2988
@@ -547,7 +547,7 @@ undelying ASA opt-in and the Smart ASA App opt-in under the hood.
 > local state (e.g. *account frozen*).
 
 ```shell
-python3 smart_asa.py optin 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ
+python3 smart_asa_cli.py optin 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ
 
  --- Opt-in Smart ASA 2991...
 
@@ -566,7 +566,7 @@ App, with the following restrictions:
 - Smart ASA can not be minted if the minting receiver *account is frozen*;
 
 ```shell
-python3 smart_asa.py send 2991 T6QBA5AXSJMBG55Y2BVDR6MN5KTXHHLU7LWDY3LGZNAPGIKDOWMP4GF5PU
+python3 smart_asa_cli.py send 2991 T6QBA5AXSJMBG55Y2BVDR6MN5KTXHHLU7LWDY3LGZNAPGIKDOWMP4GF5PU
 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ 100
 --reserve KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ
 
@@ -577,7 +577,7 @@ KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ 100
 ```
 
 ```shell
-python3 smart_asa.py info 2991
+python3 smart_asa_cli.py info 2991
 
         Asset ID:         2991
         App ID:           2988
@@ -608,13 +608,13 @@ Let's freeze the whole Smart ASA before starting administrative operations on
 it:
 
 ```shell
-python3 smart_asa.py freeze 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ --asset 1
+python3 smart_asa_cli.py freeze 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ --asset 1
 
  --- Freezing Smart ASA 2991...
 ```
 
 ```shell
-python3 smart_asa.py info 2991
+python3 smart_asa_cli.py info 2991
 
         Asset ID:         2991
         App ID:           2988
@@ -640,14 +640,14 @@ Now that the whole Smart ASA is globally frozen, let's take advantage again of
 Smart ASA full reconfigurability to change its `--name` and `--unit-name`!
 
 ```shell
-python3 smart_asa.py config 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ --new-name Blue --new-unit-name 🔵
+python3 smart_asa_cli.py config 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ --new-name Blue --new-unit-name 🔵
 
  --- Configuring Smart ASA 2991...
  --- Smart ASA 2991 configured!
 ```
 
 ```shell
-python3 smart_asa.py info 2991
+python3 smart_asa_cli.py info 2991
 
         Asset ID:         2991
         App ID:           2988
@@ -672,13 +672,13 @@ python3 smart_asa.py info 2991
 The Smart ASA is all set! Let's *unfreeze* it globally!
 
 ```shell
-python3 smart_asa.py freeze 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ --asset 0
+python3 smart_asa_cli.py freeze 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ --asset 0
 
  --- Unfreezing Smart ASA 2991...
 ```
 
 ```shell
-python3 smart_asa.py info 2991
+python3 smart_asa_cli.py info 2991
 
         Asset ID:         2991
         App ID:           2988
@@ -707,7 +707,7 @@ Smart ASA with the following limitation:
 - Smart ASA can not be burned if the Reserve *account is frozen*;
 
 ```shell
-python3 smart_asa.py send 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ
+python3 smart_asa_cli.py send 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ
 T6QBA5AXSJMBG55Y2BVDR6MN5KTXHHLU7LWDY3LGZNAPGIKDOWMP4GF5PU 100
 --reserve KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ
 
@@ -718,7 +718,7 @@ T6QBA5AXSJMBG55Y2BVDR6MN5KTXHHLU7LWDY3LGZNAPGIKDOWMP4GF5PU 100
 ```
 
 ```shell
-python3 smart_asa.py info 2991
+python3 smart_asa_cli.py info 2991
 
         Asset ID:         2991
         App ID:           2988
@@ -744,7 +744,7 @@ Similarly to regular ASA, Smart ASA can be destroyed by Smart ASA Manager
 Address if and only if the Smart ASA Creator hold the `total` supply.
 
 ```shell
-python3 smart_asa.py destroy 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ
+python3 smart_asa_cli.py destroy 2991 KAVHOSWPO3XLBL5Q7FFOTPHAIRAT6DRDXUYGSLQOAEOPRSAXJKKPMHWLLQ
 
  --- Destroying Smart ASA 2991...
  --- Smart ASA 2991 destroyed!

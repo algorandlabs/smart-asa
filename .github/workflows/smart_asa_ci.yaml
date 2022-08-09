@@ -3,7 +3,7 @@ name: Smart ASA Build and Test
 on: [push]
 
 jobs:
-  build-backend:
+  build-and-test:
     name: Build & Test Smart ASA
     runs-on: ubuntu-latest
 

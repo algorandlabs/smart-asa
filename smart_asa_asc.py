@@ -38,6 +38,7 @@ from pyteal import (
     Router,
     Seq,
     Subroutine,
+    Suffix,
     TealType,
     Txn,
     TxnField,
@@ -52,7 +53,17 @@ from algosdk.constants import key_len_bytes
 # / --- CONSTANTS
 TEAL_VERSION = 6
 
+# Descriptive field for the binding of Smart ASA App ID into the Underlying ASA url.
 SMART_ASA_APP_BINDING = "smart-asa-app-id:"
+
+# / --- ALIAS
+AssetParamsTuple1 = abi.Tuple5[abi.Uint64, abi.Uint32, abi.Bool, abi.String, abi.String]
+AssetParamsTuple2 = abi.Tuple5[
+    abi.String, abi.DynamicArray[abi.Byte], abi.Address, abi.Address, abi.Address
+]
+AssetParamsTuple3 = abi.Tuple1[abi.Address]
+AssetParamsTuple = abi.Tuple3[AssetParamsTuple1, AssetParamsTuple2, AssetParamsTuple3]
+
 
 # NOTE: The following costs could change over time with protocol upgrades.
 OPTIN_COST = 100_000
@@ -166,8 +177,8 @@ def init_local_state() -> Expr:
 
 
 @Subroutine(TealType.bytes)
-def int_to_ascii(i: Expr) -> Expr:
-    """int_to_ascii converts an integer to the ASCII byte that represents it"""
+def digit_to_ascii(i: Expr) -> Expr:
+    """digit_to_ascii converts an integer < 10 to the ASCII byte that represents it"""
     return Extract(Bytes("0123456789"), i, Int(1))
 
 
@@ -179,9 +190,14 @@ def itoa(i: Expr) -> Expr:
         Bytes("0"),
         Concat(
             If(i / Int(10) > Int(0), itoa(i / Int(10)), Bytes("")),
-            int_to_ascii(i % Int(10)),
+            digit_to_ascii(i % Int(10)),
         ),
     )
+
+
+@Subroutine(TealType.bytes)
+def strip_len_prefix(abi_encoded: Expr) -> Expr:
+    return Suffix(abi_encoded, Int(abi.Uint16TypeSpec().byte_length_static()))
 
 
 # / --- --- UNDERLYING ASA CONFIG
@@ -396,7 +412,9 @@ def asset_create(
         App.globalPut(GlobalState.unit_name, unit_name.get()),
         App.globalPut(GlobalState.name, name.get()),
         App.globalPut(GlobalState.url, url.get()),
-        App.globalPut(GlobalState.metadata_hash, metadata_hash.encode()),
+        App.globalPut(
+            GlobalState.metadata_hash, strip_len_prefix(metadata_hash.encode())
+        ),
         App.globalPut(GlobalState.manager_addr, manager_addr.get()),
         App.globalPut(GlobalState.reserve_addr, reserve_addr.get()),
         App.globalPut(GlobalState.freeze_addr, freeze_addr.get()),
@@ -466,7 +484,9 @@ def asset_config(
         App.globalPut(GlobalState.unit_name, unit_name.get()),
         App.globalPut(GlobalState.name, name.get()),
         App.globalPut(GlobalState.url, url.get()),
-        App.globalPut(GlobalState.metadata_hash, metadata_hash.encode()),
+        App.globalPut(
+            GlobalState.metadata_hash, strip_len_prefix(metadata_hash.encode())
+        ),
         App.globalPut(GlobalState.manager_addr, manager_addr.get()),
         App.globalPut(GlobalState.reserve_addr, reserve_addr.get()),
         App.globalPut(GlobalState.freeze_addr, freeze_addr.get()),
@@ -629,6 +649,7 @@ def asset_app_closeout(
     asset_creator = AssetParam().creator(close_asset.asset_id())
     asset_frozen = App.globalGet(GlobalState.frozen)
     asset_closer_frozen = App.localGet(Txn.sender(), LocalState.frozen)
+    asa_closeout_relative_idx = Txn.group_index() + Int(1)
     return Seq(
         # Preconditions
         # NOTE: Smart ASA existence is not checked by default on close-out
@@ -636,12 +657,13 @@ def asset_app_closeout(
         is_valid_address_bytes_length(close_to.address()),
         Assert(
             is_current_smart_asa_id,
-            Global.group_size() >= Int(2),
-            Gtxn[1].type_enum() == TxnType.AssetTransfer,
-            Gtxn[1].xfer_asset() == close_asset.asset_id(),
-            Gtxn[1].sender() == Txn.sender(),
-            Gtxn[1].asset_amount() == Int(0),
-            Gtxn[1].asset_close_to() == Global.current_application_address(),
+            Global.group_size() > asa_closeout_relative_idx,
+            Gtxn[asa_closeout_relative_idx].type_enum() == TxnType.AssetTransfer,
+            Gtxn[asa_closeout_relative_idx].xfer_asset() == close_asset.asset_id(),
+            Gtxn[asa_closeout_relative_idx].sender() == Txn.sender(),
+            Gtxn[asa_closeout_relative_idx].asset_amount() == Int(0),
+            Gtxn[asa_closeout_relative_idx].asset_close_to()
+            == Global.current_application_address(),
         ),
         # Effects
         asset_creator,
@@ -721,120 +743,6 @@ def get_account_is_frozen(
 
 
 @smart_asa_abi.method
-def get_total(asset: abi.Asset, *, output: abi.Uint64) -> Expr:
-    return Seq(
-        # Preconditions
-        getter_preconditions(asset.asset_id()),
-        # Effects
-        output.set(App.globalGet(GlobalState.total)),
-    )
-
-
-@smart_asa_abi.method
-def get_decimals(asset: abi.Asset, *, output: abi.Uint32) -> Expr:
-    return Seq(
-        # Preconditions
-        getter_preconditions(asset.asset_id()),
-        # Effects
-        output.set(App.globalGet(GlobalState.decimals)),
-    )
-
-
-@smart_asa_abi.method
-def get_default_frozen(asset: abi.Asset, *, output: abi.Bool) -> Expr:
-    return Seq(
-        # Preconditions
-        getter_preconditions(asset.asset_id()),
-        # Effects
-        output.set(App.globalGet(GlobalState.default_frozen)),
-    )
-
-
-@smart_asa_abi.method
-def get_unit_name(asset: abi.Asset, *, output: abi.String) -> Expr:
-    return Seq(
-        # Preconditions
-        getter_preconditions(asset.asset_id()),
-        # Effects
-        output.set(App.globalGet(GlobalState.unit_name)),
-    )
-
-
-@smart_asa_abi.method
-def get_name(asset: abi.Asset, *, output: abi.String) -> Expr:
-    return Seq(
-        # Preconditions
-        getter_preconditions(asset.asset_id()),
-        # Effects
-        output.set(App.globalGet(GlobalState.name)),
-    )
-
-
-@smart_asa_abi.method
-def get_url(asset: abi.Asset, *, output: abi.String) -> Expr:
-    return Seq(
-        # Preconditions
-        getter_preconditions(asset.asset_id()),
-        # Effects
-        output.set(App.globalGet(GlobalState.url)),
-    )
-
-
-@smart_asa_abi.method
-def get_metadata_hash(
-    asset: abi.Asset,
-    *,
-    output: abi.DynamicArray[abi.Byte],
-) -> Expr:
-    return Seq(
-        # Preconditions
-        getter_preconditions(asset.asset_id()),
-        # Effects
-        output.decode(App.globalGet(GlobalState.metadata_hash)),
-    )
-
-
-@smart_asa_abi.method
-def get_manager_addr(asset: abi.Asset, *, output: abi.Address) -> Expr:
-    return Seq(
-        # Preconditions
-        getter_preconditions(asset.asset_id()),
-        # Effects
-        output.set(App.globalGet(GlobalState.manager_addr)),
-    )
-
-
-@smart_asa_abi.method
-def get_reserve_addr(asset: abi.Asset, *, output: abi.Address) -> Expr:
-    return Seq(
-        # Preconditions
-        getter_preconditions(asset.asset_id()),
-        # Effects
-        output.set(App.globalGet(GlobalState.reserve_addr)),
-    )
-
-
-@smart_asa_abi.method
-def get_freeze_addr(asset: abi.Asset, *, output: abi.Address) -> Expr:
-    return Seq(
-        # Preconditions
-        getter_preconditions(asset.asset_id()),
-        # Effects
-        output.set(App.globalGet(GlobalState.freeze_addr)),
-    )
-
-
-@smart_asa_abi.method
-def get_clawback_addr(asset: abi.Asset, *, output: abi.Address) -> Expr:
-    return Seq(
-        # Preconditions
-        getter_preconditions(asset.asset_id()),
-        # Effects
-        output.set(App.globalGet(GlobalState.clawback_addr)),
-    )
-
-
-@smart_asa_abi.method
 def get_circulating_supply(asset: abi.Asset, *, output: abi.Uint64) -> Expr:
     return Seq(
         # Preconditions
@@ -857,6 +765,42 @@ def get_optin_min_balance(asset: abi.Asset, *, output: abi.Uint64) -> Expr:
         getter_preconditions(asset.asset_id()),
         # Effects
         output.set(min_balance),
+    )
+
+
+# NOTE: This getters returns a Tuple3 of (Tuple5, Tuple5, Tuple1). PyTeal currently supports tuples maximum
+# of 5 generic arguments (i.e. Tuple5). For this reason this getters splits the returned parameters in
+# three tuples.
+@smart_asa_abi.method
+def get_asset_config(asset: abi.Asset, *, output: AssetParamsTuple) -> Expr:
+    return Seq(
+        # Preconditions
+        getter_preconditions(asset.asset_id()),
+        # Effects
+        (total := abi.Uint64()).set(App.globalGet(GlobalState.total)),
+        (decimals := abi.Uint32()).set(App.globalGet(GlobalState.decimals)),
+        (default_frozen := abi.Bool()).set(App.globalGet(GlobalState.default_frozen)),
+        (unit_name := abi.String()).set(App.globalGet(GlobalState.unit_name)),
+        (name := abi.String()).set(App.globalGet(GlobalState.name)),
+        (url := abi.String()).set(App.globalGet(GlobalState.url)),
+        (metadata_hash_str := abi.String()).set(
+            App.globalGet(GlobalState.metadata_hash)
+        ),
+        (metadata_hash := abi.make(abi.DynamicArray[abi.Byte])).decode(
+            metadata_hash_str.encode()
+        ),
+        (manager_addr := abi.Address()).set(App.globalGet(GlobalState.manager_addr)),
+        (reserve_addr := abi.Address()).set(App.globalGet(GlobalState.reserve_addr)),
+        (freeze_addr := abi.Address()).set(App.globalGet(GlobalState.freeze_addr)),
+        (clawback_addr := abi.Address()).set(App.globalGet(GlobalState.clawback_addr)),
+        (params_tuple1 := abi.make(AssetParamsTuple1)).set(
+            total, decimals, default_frozen, unit_name, name
+        ),
+        (params_tuple2 := abi.make(AssetParamsTuple2)).set(
+            url, metadata_hash, manager_addr, reserve_addr, freeze_addr
+        ),
+        (params_tuple3 := abi.make(AssetParamsTuple3)).set(clawback_addr),
+        output.set(params_tuple1, params_tuple2, params_tuple3),
     )
 
 
