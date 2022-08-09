@@ -227,8 +227,11 @@ def test_compile(
     # This test simply ensures we can compile the ASC programs
     teal_approval_program = compile_stateful(pyteal_approval)
     teal_clear_program = compile_stateful(pyteal_clear)
+    contract = json.dumps(smart_asa_contract.dictify(), indent=4)
 
-    pprint.pprint("\nABI\n" + json.dumps(smart_asa_contract.dictify()))
+    pprint.pprint("\nABI\n" + contract)
+    with open("smart_asa_abi.json", "w") as f:
+        f.write(contract)
 
     print("\nAPPROVAL PROGRAM\n" + teal_approval_program)
     with open("approval.teal", "w") as f:
