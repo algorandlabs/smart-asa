@@ -134,9 +134,11 @@ The Smart ASA reference implementation enforces self validation of the `StateSch
 | **Ints**  | 5      | 2     |
 | **Bytes** | 8      | 0     |
 
-#### Smart Contract ABI's type check
+#### Smart Contract ABI interface
 
-Smart Contract methods has been implemented to comply with the [Algorand ABI](https://developer.algorand.org/docs/get-details/dapps/smart-contracts/ABI/) interface. The validation checks on the ABI types are carried on the client side. The Smart Contract enforces the following on-chain checks:
+Smart Contract methods has been implemented to comply with the [Algorand ABI](https://developer.algorand.org/docs/get-details/dapps/smart-contracts/ABI/) interface. The whole ABI interface of the Smart ASA reference implementation can be found in `smart_asa_abi.json`.
+
+The validation checks on the ABI types are carried on the client side. The Smart Contract enforces the following on-chain checks:
 
 - `address` length must be equal to 32 bytes;
 - `Bool` values must be equal to 0 or 1.
@@ -359,12 +361,14 @@ _Smart ASA Destroy_ is the destroy method of a Smart ASA. In this reference impl
 
 ### Smart ASA Getters
 
-_Getters_ methods have bee implemented for each `StateSchema` parameter of the Smart ASA. Refer the ARC-0020 for a comprehensive list of available getters.
+_Getter_ methods expose relevant information of a Smart ASA. To retrieve the whole configuration you can query the ABI method `get_asset_config` which returns a Tuple with all the configuration parameters!
 
-Smart ASA reference implementation introduces two new getters:
+The reference implementation also exposes the following getters:
 
-- `get_circulating_supply`: returns the current circulating supply of a smart ASA;
-- `get_optin_min_balance`: returns the minimum balance (in ALGO) required to opt-in the Smart ASA.
+- `get_asset_is_frozen`: which returns `True` if the Smart ASA is globally frozen;
+- `get_account_is_frozen`: which returns `True` if a given account is frozen;
+- `get_circulating_supply`: which returns the current circulating supply of a smart ASA;
+- `get_optin_min_balance`: which returns the minimum balance (in ALGO) required to opt-in the Smart ASA.
 
 Getters ABI interface example:
 
@@ -375,7 +379,7 @@ Getters ABI interface example:
   "args": [
     {"name": "asset", "type": "asset"}
   ],
-  "returns": {"type": "uint64"}
+  "returns": {"type": "<Tuple | uint64>"}
 }
 ```
 
