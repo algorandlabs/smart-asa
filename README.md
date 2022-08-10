@@ -787,3 +787,9 @@ We encourage the community to expand and customize this new tool to fit
 specific dApp!
 
 Enjoy experimenting and building with Smart ASA!
+
+## Credits to community
+
+Thanks to everyone who contributed or starred the repository! ⭐
+
+[![Stargazers repo roster for @algorandlabs/smart-asa](https://reporoster.com/stars/dark/algorandlabs/smart-asa)](https://github.com/algorandlabs/smart-asa/stargazers)
