@@ -56,14 +56,6 @@ TEAL_VERSION = 6
 # Descriptive field for the binding of Smart ASA App ID into the Underlying ASA url.
 SMART_ASA_APP_BINDING = "smart-asa-app-id:"
 
-# / --- ALIAS
-AssetParamsTuple1 = abi.Tuple5[abi.Uint64, abi.Uint32, abi.Bool, abi.String, abi.String]
-AssetParamsTuple2 = abi.Tuple5[
-    abi.String, abi.DynamicArray[abi.Byte], abi.Address, abi.Address, abi.Address
-]
-AssetParamsTuple3 = abi.Tuple1[abi.Address]
-AssetParamsTuple = abi.Tuple3[AssetParamsTuple1, AssetParamsTuple2, AssetParamsTuple3]
-
 
 # NOTE: The following costs could change over time with protocol upgrades.
 OPTIN_COST = 100_000
@@ -111,6 +103,20 @@ class GlobalState(GlobalInts, GlobalBytes):
             num_uints=cls.num_uints(),
             num_byte_slices=cls.num_bytes(),
         )
+
+
+class SmartASAConfig(abi.NamedTuple):
+    total: abi.Field[abi.Uint64]
+    decimals: abi.Field[abi.Uint32]
+    default_frozen: abi.Field[abi.Bool]
+    unit_name: abi.Field[abi.String]
+    name: abi.Field[abi.String]
+    url: abi.Field[abi.String]
+    metadata_hash: abi.Field[abi.DynamicArray[abi.Byte]]
+    manager_addr: abi.Field[abi.Address]
+    reserve_addr: abi.Field[abi.Address]
+    freeze_addr: abi.Field[abi.Address]
+    clawback_addr: abi.Field[abi.Address]
 
 
 # / --- --- LOCAL STATE
@@ -768,11 +774,8 @@ def get_optin_min_balance(asset: abi.Asset, *, output: abi.Uint64) -> Expr:
     )
 
 
-# NOTE: This getters returns a Tuple3 of (Tuple5, Tuple5, Tuple1). PyTeal currently supports tuples maximum
-# of 5 generic arguments (i.e. Tuple5). For this reason this getters splits the returned parameters in
-# three tuples.
 @smart_asa_abi.method
-def get_asset_config(asset: abi.Asset, *, output: AssetParamsTuple) -> Expr:
+def get_asset_config(asset: abi.Asset, *, output: SmartASAConfig) -> Expr:
     return Seq(
         # Preconditions
         getter_preconditions(asset.asset_id()),
@@ -793,14 +796,19 @@ def get_asset_config(asset: abi.Asset, *, output: AssetParamsTuple) -> Expr:
         (reserve_addr := abi.Address()).set(App.globalGet(GlobalState.reserve_addr)),
         (freeze_addr := abi.Address()).set(App.globalGet(GlobalState.freeze_addr)),
         (clawback_addr := abi.Address()).set(App.globalGet(GlobalState.clawback_addr)),
-        (params_tuple1 := abi.make(AssetParamsTuple1)).set(
-            total, decimals, default_frozen, unit_name, name
+        output.set(
+            total,
+            decimals,
+            default_frozen,
+            unit_name,
+            name,
+            url,
+            metadata_hash,
+            manager_addr,
+            reserve_addr,
+            freeze_addr,
+            clawback_addr,
         ),
-        (params_tuple2 := abi.make(AssetParamsTuple2)).set(
-            url, metadata_hash, manager_addr, reserve_addr, freeze_addr
-        ),
-        (params_tuple3 := abi.make(AssetParamsTuple3)).set(clawback_addr),
-        output.set(params_tuple1, params_tuple2, params_tuple3),
     )
 
 

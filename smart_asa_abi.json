@@ -274,10 +274,9 @@
                 }
             ],
             "returns": {
-                "type": "((uint64,uint32,bool,string,string),(string,byte[],address,address,address),(address))"
+                "type": "(uint64,uint32,bool,string,string,string,byte[],address,address,address,address)"
             }
         }
     ],
-    "desc": null,
     "networks": {}
 }

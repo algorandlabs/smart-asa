@@ -81,15 +81,15 @@ SmartASAConfig = namedtuple(
 def normalize_getter_params(getter_params: list) -> SmartASAConfig:
 
     return SmartASAConfig(
-        getter_params[0][0],
-        getter_params[0][1],
-        getter_params[0][2],
-        getter_params[0][3],
-        getter_params[0][4],
-        getter_params[1][0],
-        getter_params[1][1],
-        getter_params[1][2],
-        getter_params[1][3],
-        getter_params[1][4],
-        getter_params[2][0],
+        getter_params[0],
+        getter_params[1],
+        getter_params[2],
+        getter_params[3],
+        getter_params[4],
+        getter_params[5],
+        getter_params[6],
+        getter_params[7],
+        getter_params[8],
+        getter_params[9],
+        getter_params[10],
     )
