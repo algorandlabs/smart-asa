@@ -58,8 +58,6 @@ def assemble_program(algod_client: algod.AlgodClient, source_code: str) -> bytes
     return base64.b64decode(compile_response["result"])
 
 
-# NOTE: getter_params represents a tuple of three tuples. This utility
-# will be removed once PyTeal integrates the ABI type NamedTuple
 SmartASAConfig = namedtuple(
     "SmartASAConfig",
     [
