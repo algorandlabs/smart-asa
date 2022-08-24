@@ -4,6 +4,7 @@ from typing import Union
 from algosdk import constants
 from algosdk.future import transaction
 from algosdk.v2client import algod
+from smart_asa_asc import SmartASAConfig as PyTealSmartASAConfig
 
 
 def decode_state(state) -> dict[str, Union[int, bytes]]:
@@ -59,20 +60,8 @@ def assemble_program(algod_client: algod.AlgodClient, source_code: str) -> bytes
 
 
 SmartASAConfig = namedtuple(
-    "SmartASAConfig",
-    [
-        "total",
-        "decimals",
-        "default_frozen",
-        "unit_name",
-        "name",
-        "url",
-        "metadata_hash",
-        "manager_addr",
-        "reserve_addr",
-        "freeze_addr",
-        "clawback_addr",
-    ],
+    PyTealSmartASAConfig.__class__.__name__,
+    list(PyTealSmartASAConfig.__annotations__.keys()),
 )
 
 
