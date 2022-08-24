@@ -1,5 +1,6 @@
 import base64
 from collections import namedtuple
+from inspect import get_annotations
 from typing import Union
 from algosdk import constants
 from algosdk.future import transaction
@@ -61,7 +62,7 @@ def assemble_program(algod_client: algod.AlgodClient, source_code: str) -> bytes
 
 SmartASAConfig = namedtuple(
     PyTealSmartASAConfig.__class__.__name__,
-    list(PyTealSmartASAConfig.__annotations__.keys()),
+    list(get_annotations(PyTealSmartASAConfig)),
 )
 
 
