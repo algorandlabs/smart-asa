@@ -56,7 +56,6 @@ TEAL_VERSION = 6
 # Descriptive field for the binding of Smart ASA App ID into the Underlying ASA url.
 SMART_ASA_APP_BINDING = "smart-asa-app-id:"
 
-
 # NOTE: The following costs could change over time with protocol upgrades.
 OPTIN_COST = 100_000
 UINTS_COST = 28_500
