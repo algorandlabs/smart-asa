@@ -1,9 +1,11 @@
 import base64
 from collections import namedtuple
+from inspect import get_annotations
 from typing import Union
 from algosdk import constants
 from algosdk.future import transaction
 from algosdk.v2client import algod
+from smart_asa_asc import SmartASAConfig as PyTealSmartASAConfig
 
 
 def decode_state(state) -> dict[str, Union[int, bytes]]:
@@ -58,38 +60,11 @@ def assemble_program(algod_client: algod.AlgodClient, source_code: str) -> bytes
     return base64.b64decode(compile_response["result"])
 
 
-# NOTE: getter_params represents a tuple of three tuples. This utility
-# will be removed once PyTeal integrates the ABI type NamedTuple
 SmartASAConfig = namedtuple(
-    "SmartASAConfig",
-    [
-        "total",
-        "decimals",
-        "default_frozen",
-        "unit_name",
-        "name",
-        "url",
-        "metadata_hash",
-        "manager_addr",
-        "reserve_addr",
-        "freeze_addr",
-        "clawback_addr",
-    ],
+    PyTealSmartASAConfig.__class__.__name__,
+    list(get_annotations(PyTealSmartASAConfig)),
 )
 
 
 def normalize_getter_params(getter_params: list) -> SmartASAConfig:
-
-    return SmartASAConfig(
-        getter_params[0][0],
-        getter_params[0][1],
-        getter_params[0][2],
-        getter_params[0][3],
-        getter_params[0][4],
-        getter_params[1][0],
-        getter_params[1][1],
-        getter_params[1][2],
-        getter_params[1][3],
-        getter_params[1][4],
-        getter_params[2][0],
-    )
+    return SmartASAConfig(*getter_params)
