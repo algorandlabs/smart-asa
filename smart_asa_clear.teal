@@ -1,0 +1,10 @@
+#pragma version 6
+intcblock 0
+txn NumAppArgs
+intc_0 // 0
+==
+bnz main_l2
+err
+main_l2:
+intc_0 // 0
+return
