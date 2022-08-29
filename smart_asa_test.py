@@ -234,11 +234,11 @@ def test_compile(
         f.write(contract)
 
     print("\nAPPROVAL PROGRAM\n" + teal_approval_program)
-    with open("approval.teal", "w") as f:
+    with open("smart_asa_approval.teal", "w") as f:
         f.write(teal_approval_program)
 
     print("\nCLEAR PROGRAM\n" + teal_clear_program)
-    with open("clear.teal", "w") as f:
+    with open("smart_asa_clear.teal", "w") as f:
         f.write(teal_clear_program)
 
 
