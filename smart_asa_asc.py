@@ -348,6 +348,13 @@ def asset_app_optin(
     asset: abi.Asset,
     underlying_asa_optin: abi.AssetTransferTransaction,
 ) -> Expr:
+    """
+    Smart ASA atomic opt-in to Smart ASA App and Underlying ASA.
+
+    Args:
+        asset: Underlying ASA ID (ref. App Global State: "smart_asa_id").
+        underlying_asa_optin: Underlying ASA opt-in transaction.
+    """
     # On OptIn the frozen status must be set to `True` if account owns any
     # units of the underlying ASA. This prevents malicious users to circumvent
     # the `default_frozen` status by clearing their Local State. Note that this
@@ -395,6 +402,25 @@ def asset_create(
     *,
     output: abi.Uint64,
 ) -> Expr:
+    """
+    Create a Smart ASA (triggers inner creation of an Underlying ASA).
+
+    Args:
+        total: The total number of base units of the Smart ASA to create.
+        decimals: The number of digits to use after the decimal point when displaying the Smart ASA. If 0, the Smart ASA is not divisible.
+        default_frozen: Smart ASA default frozen status (True to freeze holdings by default).
+        unit_name: The name of a unit of Smart ASA.
+        name: The name of the Smart ASA.
+        url: Smart ASA external URL.
+        metadata_hash: Smart ASA metadata hash (suggested 32 bytes hash).
+        manager_addr: The address of the account that can manage the configuration of the Smart ASA and destroy it.
+        reserve_addr: The address of the account that holds the reserve (non-minted) units of the asset and can mint or burn units of Smart ASA.
+        freeze_addr: The address of the account that can freeze/unfreeze holdings of this Smart ASA globally or locally (specific accounts). If empty, freezing is not permitted.
+        clawback_addr: The address of the account that can clawback holdings of this asset. If empty, clawback is not permitted.
+
+    Returns:
+        New Smart ASA ID.
+    """
 
     is_creator = Txn.sender() == Global.creator_address()
     smart_asa_not_created = Not(App.globalGet(GlobalState.smart_asa_id))
@@ -443,6 +469,22 @@ def asset_config(
     freeze_addr: abi.Address,
     clawback_addr: abi.Address,
 ) -> Expr:
+    """
+    Configure the Smart ASA. Use existing values for unchanged parameters. Setting Smart ASA roles to zero-address is irreversible.
+
+    Args:
+        total: The total number of base units of the Smart ASA to create. It can not be configured to less than its current circulating supply.
+        decimals: The number of digits to use after the decimal point when displaying the Smart ASA. If 0, the Smart ASA is not divisible.
+        default_frozen: Smart ASA default frozen status (True to freeze holdings by default).
+        unit_name: The name of a unit of Smart ASA.
+        name: The name of the Smart ASA.
+        url: Smart ASA external URL.
+        metadata_hash: Smart ASA metadata hash (suggested 32 bytes hash).
+        manager_addr: The address of the account that can manage the configuration of the Smart ASA and destroy it.
+        reserve_addr: The address of the account that holds the reserve (non-minted) units of the asset and can mint or burn units of Smart ASA.
+        freeze_addr: The address of the account that can freeze/unfreeze holdings of this Smart ASA globally or locally (specific accounts). If empty, freezing is not permitted.
+        clawback_addr: The address of the account that can clawback holdings of this asset. If empty, clawback is not permitted.
+    """
 
     smart_asa_id = App.globalGet(GlobalState.smart_asa_id)
     current_manager_addr = App.globalGet(GlobalState.manager_addr)
@@ -506,6 +548,15 @@ def asset_transfer(
     asset_sender: abi.Account,
     asset_receiver: abi.Account,
 ) -> Expr:
+    """
+    Smart ASA transfers: regular, clawback (Clawback Address), mint or burn (Reserve Address).
+
+    Args:
+        xfer_asset: Smart ASA ID to transfer.
+        asset_amount: Smart ASA amount to transfer.
+        asset_sender: Smart ASA sender, for regular transfer this must be equal to the Smart ASA App caller.
+        asset_receiver: The recipient of the Smart ASA transfer.
+    """
     smart_asa_id = App.globalGet(GlobalState.smart_asa_id)
     clawback_addr = App.globalGet(GlobalState.clawback_addr)
     is_not_clawback = And(
@@ -608,6 +659,13 @@ def asset_transfer(
 
 @smart_asa_abi.method
 def asset_freeze(freeze_asset: abi.Asset, asset_frozen: abi.Bool) -> Expr:
+    """
+    Smart ASA global freeze (all accounts), called by the Freeze Address.
+
+    Args:
+        freeze_asset: Smart ASA ID to freeze/unfreeze.
+        asset_frozen: Smart ASA ID forzen status.
+    """
     smart_asa_id = App.globalGet(GlobalState.smart_asa_id)
     is_correct_smart_asa_id = smart_asa_id == freeze_asset.asset_id()
     is_freeze_addr = Txn.sender() == App.globalGet(GlobalState.freeze_addr)
@@ -629,6 +687,14 @@ def account_freeze(
     freeze_account: abi.Account,
     asset_frozen: abi.Bool,
 ) -> Expr:
+    """
+    Smart ASA local freeze (account specific), called by the Freeze Address.
+
+    Args:
+        freeze_asset: Smart ASA ID to freeze/unfreeze.
+        freeze_account: Account to freeze/unfreeze.
+        asset_frozen: Smart ASA ID forzen status.
+    """
     smart_asa_id = App.globalGet(GlobalState.smart_asa_id)
     is_correct_smart_asa_id = smart_asa_id == freeze_asset.asset_id()
     is_freeze_addr = Txn.sender() == App.globalGet(GlobalState.freeze_addr)
@@ -646,6 +712,13 @@ def asset_app_closeout(
     close_asset: abi.Asset,
     close_to: abi.Account,
 ) -> Expr:
+    """
+    Smart ASA atomic close-out of Smart ASA App and Underlying ASA.
+
+    Args:
+        close_asset: Underlying ASA ID (ref. App Global State: "smart_asa_id").
+        close_to: Account to send all Smart ASA reminder to. If the asset/account is forzen then this must be set to Smart ASA Creator.
+    """
     smart_asa_id = App.globalGet(GlobalState.smart_asa_id)
     is_correct_smart_asa_id = smart_asa_id == close_asset.asset_id()
     current_smart_asa_id = App.localGet(Txn.sender(), LocalState.smart_asa_id)
@@ -707,6 +780,12 @@ def asset_app_closeout(
 
 @smart_asa_abi.method
 def asset_destroy(destroy_asset: abi.Asset) -> Expr:
+    """
+    Destroy the Underlying ASA, must be called by Manager Address.
+
+    Args:
+        destroy_asset: Underlying ASA ID (ref. App Global State: "smart_asa_id").
+    """
     smart_asa_id = App.globalGet(GlobalState.smart_asa_id)
     is_correct_smart_asa_id = smart_asa_id == destroy_asset.asset_id()
     is_manager_addr = Txn.sender() == App.globalGet(GlobalState.manager_addr)
@@ -726,6 +805,15 @@ def asset_destroy(destroy_asset: abi.Asset) -> Expr:
 # / --- --- GETTERS
 @smart_asa_abi.method
 def get_asset_is_frozen(freeze_asset: abi.Asset, *, output: abi.Bool) -> Expr:
+    """
+    Get Smart ASA global frozen status.
+
+    Args:
+        freeze_asset: Underlying ASA ID (ref. App Global State: "smart_asa_id").
+
+    Returns:
+        Smart ASA global frozen status.
+    """
     return Seq(
         # Preconditions
         getter_preconditions(freeze_asset.asset_id()),
@@ -738,6 +826,16 @@ def get_asset_is_frozen(freeze_asset: abi.Asset, *, output: abi.Bool) -> Expr:
 def get_account_is_frozen(
     freeze_asset: abi.Asset, freeze_account: abi.Account, *, output: abi.Bool
 ) -> Expr:
+    """
+    Get Smart ASA local frozen status (account specific).
+
+    Args:
+        freeze_asset: Underlying ASA ID (ref. App Global State: "smart_asa_id").
+        freeze_account: Account to check.
+
+    Returns:
+        Smart ASA local frozen status (account specific).
+    """
     return Seq(
         # Preconditions
         getter_preconditions(freeze_asset.asset_id()),
@@ -749,6 +847,15 @@ def get_account_is_frozen(
 
 @smart_asa_abi.method
 def get_circulating_supply(asset: abi.Asset, *, output: abi.Uint64) -> Expr:
+    """
+    Get Smart ASA circulating supply.
+
+    Args:
+        asset: Underlying ASA ID (ref. App Global State: "smart_asa_id").
+
+    Returns:
+        Smart ASA circulating supply.
+    """
     return Seq(
         # Preconditions
         getter_preconditions(asset.asset_id()),
@@ -759,6 +866,15 @@ def get_circulating_supply(asset: abi.Asset, *, output: abi.Uint64) -> Expr:
 
 @smart_asa_abi.method
 def get_optin_min_balance(asset: abi.Asset, *, output: abi.Uint64) -> Expr:
+    """
+    Get Smart ASA required minimum balance (including Underlying ASA and App Local State).
+
+    Args:
+        asset: Underlying ASA ID (ref. App Global State: "smart_asa_id").
+
+    Returns:
+        Smart ASA required minimum balance in microALGO.
+    """
     min_balance = Int(
         OPTIN_COST
         + UINTS_COST * LocalState.num_uints()
@@ -775,6 +891,15 @@ def get_optin_min_balance(asset: abi.Asset, *, output: abi.Uint64) -> Expr:
 
 @smart_asa_abi.method
 def get_asset_config(asset: abi.Asset, *, output: SmartASAConfig) -> Expr:
+    """
+    Get Smart ASA configuration.
+
+    Args:
+        asset: Underlying ASA ID (ref. App Global State: "smart_asa_id").
+
+    Returns:
+        Smart ASA configuration parameters.
+    """
     return Seq(
         # Preconditions
         getter_preconditions(asset.asset_id()),
