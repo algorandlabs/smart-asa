@@ -29,7 +29,7 @@ jobs:
 
     - name: Run Algorand Sandbox
       run: |
-        docker run -d -p 4001:4001 -p 4002:4002 matteojug/algorand-sandbox-dev:3.9.4
+        docker run -d -p 4001:4001 -p 4002:4002 matteojug/algorand-sandbox-dev:3.9.2
 
     - name: Sleep to allow the sandbox to start
       run: sleep 10
@@ -39,4 +39,4 @@ jobs:
 
     - name: Stop running images
       run: |
-        docker stop $(docker ps -q --filter ancestor=matteojug/algorand-sandbox-dev:3.9.4)
+        docker stop $(docker ps -q --filter ancestor=matteojug/algorand-sandbox-dev:3.9.2)
