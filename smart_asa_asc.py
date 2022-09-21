@@ -51,7 +51,7 @@ from algosdk.constants import key_len_bytes
 
 
 # / --- CONSTANTS
-TEAL_VERSION = 6
+TEAL_VERSION = 7
 
 # Descriptive field for the binding of Smart ASA App ID into the Underlying ASA url.
 SMART_ASA_APP_BINDING = "smart-asa-app-id:"
@@ -473,6 +473,7 @@ def asset_config(
     Configure the Smart ASA. Use existing values for unchanged parameters. Setting Smart ASA roles to zero-address is irreversible.
 
     Args:
+        config_asset: Underlying ASA ID to configure (ref. App Global State: "smart_asa_id").
         total: The total number of base units of the Smart ASA to create. It can not be configured to less than its current circulating supply.
         decimals: The number of digits to use after the decimal point when displaying the Smart ASA. If 0, the Smart ASA is not divisible.
         default_frozen: Smart ASA default frozen status (True to freeze holdings by default).
@@ -552,7 +553,7 @@ def asset_transfer(
     Smart ASA transfers: regular, clawback (Clawback Address), mint or burn (Reserve Address).
 
     Args:
-        xfer_asset: Smart ASA ID to transfer.
+        xfer_asset: Underlying ASA ID to transfer (ref. App Global State: "smart_asa_id").
         asset_amount: Smart ASA amount to transfer.
         asset_sender: Smart ASA sender, for regular transfer this must be equal to the Smart ASA App caller.
         asset_receiver: The recipient of the Smart ASA transfer.
@@ -663,7 +664,7 @@ def asset_freeze(freeze_asset: abi.Asset, asset_frozen: abi.Bool) -> Expr:
     Smart ASA global freeze (all accounts), called by the Freeze Address.
 
     Args:
-        freeze_asset: Smart ASA ID to freeze/unfreeze.
+        freeze_asset: Underlying ASA ID to freeze/unfreeze (ref. App Global State: "smart_asa_id").
         asset_frozen: Smart ASA ID forzen status.
     """
     smart_asa_id = App.globalGet(GlobalState.smart_asa_id)
@@ -691,7 +692,7 @@ def account_freeze(
     Smart ASA local freeze (account specific), called by the Freeze Address.
 
     Args:
-        freeze_asset: Smart ASA ID to freeze/unfreeze.
+        freeze_asset: Underlying ASA ID to freeze/unfreeze (ref. App Global State: "smart_asa_id").
         freeze_account: Account to freeze/unfreeze.
         asset_frozen: Smart ASA ID forzen status.
     """
@@ -716,7 +717,7 @@ def asset_app_closeout(
     Smart ASA atomic close-out of Smart ASA App and Underlying ASA.
 
     Args:
-        close_asset: Underlying ASA ID (ref. App Global State: "smart_asa_id").
+        close_asset: Underlying ASA ID to close-out (ref. App Global State: "smart_asa_id").
         close_to: Account to send all Smart ASA reminder to. If the asset/account is forzen then this must be set to Smart ASA Creator.
     """
     smart_asa_id = App.globalGet(GlobalState.smart_asa_id)
@@ -784,7 +785,7 @@ def asset_destroy(destroy_asset: abi.Asset) -> Expr:
     Destroy the Underlying ASA, must be called by Manager Address.
 
     Args:
-        destroy_asset: Underlying ASA ID (ref. App Global State: "smart_asa_id").
+        destroy_asset: Underlying ASA ID to destroy (ref. App Global State: "smart_asa_id").
     """
     smart_asa_id = App.globalGet(GlobalState.smart_asa_id)
     is_correct_smart_asa_id = smart_asa_id == destroy_asset.asset_id()
