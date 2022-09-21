@@ -90,7 +90,8 @@
             "args": [
                 {
                     "type": "asset",
-                    "name": "config_asset"
+                    "name": "config_asset",
+                    "desc": "Underlying ASA ID to configure (ref. App Global State: \"smart_asa_id\")."
                 },
                 {
                     "type": "uint64",
@@ -159,7 +160,7 @@
                 {
                     "type": "asset",
                     "name": "xfer_asset",
-                    "desc": "Smart ASA ID to transfer."
+                    "desc": "Underlying ASA ID to transfer (ref. App Global State: \"smart_asa_id\")."
                 },
                 {
                     "type": "uint64",
@@ -188,7 +189,7 @@
                 {
                     "type": "asset",
                     "name": "freeze_asset",
-                    "desc": "Smart ASA ID to freeze/unfreeze."
+                    "desc": "Underlying ASA ID to freeze/unfreeze (ref. App Global State: \"smart_asa_id\")."
                 },
                 {
                     "type": "bool",
@@ -207,7 +208,7 @@
                 {
                     "type": "asset",
                     "name": "freeze_asset",
-                    "desc": "Smart ASA ID to freeze/unfreeze."
+                    "desc": "Underlying ASA ID to freeze/unfreeze (ref. App Global State: \"smart_asa_id\")."
                 },
                 {
                     "type": "account",
@@ -231,7 +232,7 @@
                 {
                     "type": "asset",
                     "name": "close_asset",
-                    "desc": "Underlying ASA ID (ref. App Global State: \"smart_asa_id\")."
+                    "desc": "Underlying ASA ID to close-out (ref. App Global State: \"smart_asa_id\")."
                 },
                 {
                     "type": "account",
@@ -250,7 +251,7 @@
                 {
                     "type": "asset",
                     "name": "destroy_asset",
-                    "desc": "Underlying ASA ID (ref. App Global State: \"smart_asa_id\")."
+                    "desc": "Underlying ASA ID to destroy (ref. App Global State: \"smart_asa_id\")."
                 }
             ],
             "returns": {

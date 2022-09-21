@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Install pipenv
       run: |
@@ -29,10 +29,14 @@ jobs:
 
     - name: Run Algorand Sandbox
       run: |
-        docker run -d -p 4001:4001 -p 4002:4002 matteojug/algorand-sandbox-dev:3.7.2
+        docker run -d -p 4001:4001 -p 4002:4002 matteojug/algorand-sandbox-dev:3.9.2
 
     - name: Sleep to allow the sandbox to start
       run: sleep 10
 
     - name: Run pytest
       run: pipenv run pytest
+
+    - name: Stop running images
+      run: |
+        docker stop $(docker ps -q --filter ancestor=matteojug/algorand-sandbox-dev:3.9.2)
