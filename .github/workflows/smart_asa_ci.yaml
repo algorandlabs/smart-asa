@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Install pipenv
       run: |
@@ -36,3 +36,7 @@ jobs:
 
     - name: Run pytest
       run: pipenv run pytest
+
+    - name: Stop running images
+      run: |
+        docker stop $(docker ps -q --filter ancestor=matteojug/algorand-sandbox-dev:3.9.4)
