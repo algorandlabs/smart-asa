@@ -3,7 +3,9 @@
 Smart ASA reference implementation combines the simplicity and security of the Algorand Standard Assets (ASA)s with the composability and programmability of Algorand Smart Contracts. The Smart ASA offers a new, powerful, L1 feature that extends regular ASAs up to the limits of your imagination!
 
 - [Smart ASA ABI JSON](https://github.com/algorandlabs/smart-asa/blob/main/smart_asa_abi.json)
-- [Smart ASA App TEAL](https://testnet.algoexplorer.io/application/107042851)
+- [Smart ASA App TEAL Approval](https://github.com/algorandlabs/smart-asa/blob/main/smart_asa_approval.teal)
+- [Smart ASA App TEAL Clear](https://github.com/algorandlabs/smart-asa/blob/main/smart_asa_clear.teal)
+- [Smart ASA App Example](https://explorer.dappflow.org/explorer/application/107042851/transactions)
 
 **⚠️ Disclamer: This code is not audited!**
 
