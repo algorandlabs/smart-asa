@@ -67,6 +67,16 @@ def static_attrs(cls):
 
 
 # / --- SMART ASA ASC
+# / --- --- ERRORS
+class Error:
+    address_length = "Invalid Address length (must be 32 bytes)"
+    missing_smart_asa_id = "Smart ASA ID dose not exist"
+    invalid_smart_asa_id = "Invalid Smart ASA ID"
+    asset_frozen = "Smart ASA is frozen"
+    sender_frozen = "Sender is frozen"
+    receiver_frozen = "Receiver is frozen"
+
+
 # / --- --- GLOBAL STATE
 class GlobalInts:
     total = Bytes("total")
@@ -278,7 +288,7 @@ def smart_asa_destroy_inner_txn(smart_asa_id: Expr) -> Expr:
 def is_valid_address_bytes_length(address: Expr) -> Expr:
     # WARNING: Note this check only ensures proper bytes' length on `address`,
     # but doesn't ensure that those 32 bytes are a _proper_ Algorand address.
-    return Assert(Len(address) == Int(key_len_bytes))
+    return Assert(Len(address) == Int(key_len_bytes), comment=Error.address_length)
 
 
 @Subroutine(TealType.uint64)
@@ -293,9 +303,9 @@ def circulating_supply(asset_id: Expr):
 def getter_preconditions(asset_id: Expr) -> Expr:
     smart_asa_id = App.globalGet(GlobalState.smart_asa_id)
     is_correct_smart_asa_id = smart_asa_id == asset_id
-    return Assert(
-        smart_asa_id,
-        is_correct_smart_asa_id,
+    return Seq(
+        Assert(smart_asa_id, comment=Error.missing_smart_asa_id),
+        Assert(is_correct_smart_asa_id, comment=Error.invalid_smart_asa_id),
     )
 
 
@@ -308,9 +318,23 @@ def asset_app_create() -> Expr:
         # Not mandatory - Smart ASA Application self validate its state.
         Assert(
             Txn.global_num_uints() == Int(GlobalState.num_uints()),
+            comment=f"Wrong State Schema - Expexted Global Ints: "
+            f"{GlobalState.num_uints()}",
+        ),
+        Assert(
             Txn.global_num_byte_slices() == Int(GlobalState.num_bytes()),
+            comment=f"Wrong State Schema - Expexted Global Bytes: "
+            f"{GlobalState.num_bytes()}",
+        ),
+        Assert(
             Txn.local_num_uints() == Int(LocalState.num_uints()),
+            comment=f"Wrong State Schema - Expexted Local Ints: "
+            f"{LocalState.num_uints()}",
+        ),
+        Assert(
             Txn.local_num_byte_slices() == Int(LocalState.num_bytes()),
+            comment=f"Wrong State Schema - Expexted Local Bytes: "
+            f"{LocalState.num_bytes()}",
         ),
         init_global_state(),
         Approve(),
