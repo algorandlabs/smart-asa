@@ -838,7 +838,7 @@ def asset_app_closeout(
                 # Creator
                 Assert(
                     close_to.address() == Global.current_application_address(),
-                    comment="Wrong CloseTo address: Frozen Smart ASA must be closed-out to creator"
+                    comment="Wrong CloseTo address: Frozen Smart ASA must be closed-out to creator",
                 ),
             ),
             If(close_to.address() != Global.current_application_address()).Then(
