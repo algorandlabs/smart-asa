@@ -224,8 +224,7 @@ UNDERLYING_ASA_CLAWBACK_ADDR = Global.current_application_address()
 @Subroutine(TealType.uint64)
 def underlying_asa_create_inner_tx() -> Expr:
     return Seq(
-        InnerTxnBuilder.Begin(),
-        InnerTxnBuilder.SetFields(
+        InnerTxnBuilder.Execute(
             {
                 TxnField.fee: Int(0),
                 TxnField.type_enum: TxnType.AssetConfig,
@@ -241,7 +240,6 @@ def underlying_asa_create_inner_tx() -> Expr:
                 TxnField.config_asset_clawback: UNDERLYING_ASA_CLAWBACK_ADDR,
             }
         ),
-        InnerTxnBuilder.Submit(),
         Return(InnerTxn.created_asset_id()),
     )
 
@@ -253,34 +251,26 @@ def smart_asa_transfer_inner_txn(
     asset_sender: Expr,
     asset_receiver: Expr,
 ) -> Expr:
-    return Seq(
-        InnerTxnBuilder.Begin(),
-        InnerTxnBuilder.SetFields(
-            {
-                TxnField.fee: Int(0),
-                TxnField.type_enum: TxnType.AssetTransfer,
-                TxnField.xfer_asset: smart_asa_id,
-                TxnField.asset_amount: asset_amount,
-                TxnField.asset_sender: asset_sender,
-                TxnField.asset_receiver: asset_receiver,
-            }
-        ),
-        InnerTxnBuilder.Submit(),
+    return InnerTxnBuilder.Execute(
+        {
+            TxnField.fee: Int(0),
+            TxnField.type_enum: TxnType.AssetTransfer,
+            TxnField.xfer_asset: smart_asa_id,
+            TxnField.asset_amount: asset_amount,
+            TxnField.asset_sender: asset_sender,
+            TxnField.asset_receiver: asset_receiver,
+        }
     )
 
 
 @Subroutine(TealType.none)
 def smart_asa_destroy_inner_txn(smart_asa_id: Expr) -> Expr:
-    return Seq(
-        InnerTxnBuilder.Begin(),
-        InnerTxnBuilder.SetFields(
-            {
-                TxnField.fee: Int(0),
-                TxnField.type_enum: TxnType.AssetConfig,
-                TxnField.config_asset: smart_asa_id,
-            }
-        ),
-        InnerTxnBuilder.Submit(),
+    return InnerTxnBuilder.Execute(
+        {
+            TxnField.fee: Int(0),
+            TxnField.type_enum: TxnType.AssetConfig,
+            TxnField.config_asset: smart_asa_id,
+        }
     )
 
 
