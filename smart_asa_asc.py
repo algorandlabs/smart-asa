@@ -72,6 +72,11 @@ class Error:
     address_length = "Invalid Address length (must be 32 bytes)"
     missing_smart_asa_id = "Smart ASA ID dose not exist"
     invalid_smart_asa_id = "Invalid Smart ASA ID"
+    not_creator_addr = "Caller not authorized (must be: App Creator Address)"
+    not_manager_addr = "Caller not authorized (must be: Manager Address)"
+    not_reserve_addr = "Caller not authorized (must be: Reserve Address)"
+    not_freeze_addr = "Caller not authorized (must be: Freeze Address)"
+    not_clawback_addr = "Caller not authorized (must be: Clawback Address)"
     asset_frozen = "Smart ASA is frozen"
     sender_frozen = "Sender is frozen"
     receiver_frozen = "Receiver is frozen"
@@ -688,8 +693,15 @@ def asset_freeze(freeze_asset: abi.Asset, asset_frozen: abi.Bool) -> Expr:
         # Asset Freeze Preconditions
         Assert(
             smart_asa_id,
+            comment=Error.missing_smart_asa_id,
+        ),
+        Assert(
             is_correct_smart_asa_id,
+            comment=Error.invalid_smart_asa_id,
+        ),
+        Assert(
             is_freeze_addr,
+            comment=Error.not_freeze_addr,
         ),
         # Effects
         App.globalPut(GlobalState.frozen, asset_frozen.get()),
@@ -716,7 +728,18 @@ def account_freeze(
     return Seq(
         # Account Freeze Preconditions
         is_valid_address_bytes_length(freeze_account.address()),
-        Assert(smart_asa_id, is_correct_smart_asa_id, is_freeze_addr),
+        Assert(
+            smart_asa_id,
+            comment=Error.missing_smart_asa_id,
+        ),
+        Assert(
+            is_correct_smart_asa_id,
+            comment=Error.invalid_smart_asa_id,
+        ),
+        Assert(
+            is_freeze_addr,
+            comment=Error.not_freeze_addr,
+        ),
         # Effects
         App.localPut(freeze_account.address(), LocalState.frozen, asset_frozen.get()),
     )
@@ -750,13 +773,32 @@ def asset_app_closeout(
         is_valid_address_bytes_length(close_to.address()),
         Assert(
             is_current_smart_asa_id,
+            comment=Error.invalid_smart_asa_id,
+        ),
+        Assert(
             Global.group_size() > asa_closeout_relative_idx,
+            comment="Smart ASA CloseOut: Wrong group size (Expected: 2)",
+        ),
+        Assert(
             Gtxn[asa_closeout_relative_idx].type_enum() == TxnType.AssetTransfer,
+            comment="Underlying ASA CloseOut Txn: Wrong Txn type (Expected: Axfer)",
+        ),
+        Assert(
             Gtxn[asa_closeout_relative_idx].xfer_asset() == close_asset.asset_id(),
+            comment="Underlying ASA CloseOut Txn: Wrong ASA ID (Expected: Smart ASA ID)",
+        ),
+        Assert(
             Gtxn[asa_closeout_relative_idx].sender() == Txn.sender(),
+            comment="Underlying ASA CloseOut Txn: Wrong sender (Expected: Smart ASA CloseOut caller)",
+        ),
+        Assert(
             Gtxn[asa_closeout_relative_idx].asset_amount() == Int(0),
+            comment="Underlying ASA CloseOut Txn: Wrong amount (Expected: 0)",
+        ),
+        Assert(
             Gtxn[asa_closeout_relative_idx].asset_close_to()
             == Global.current_application_address(),
+            comment="Underlying ASA CloseOut Txn: Wrong CloseTo address (Expected: Smart ASA App Account)",
         ),
         # Effects
         asset_creator,
@@ -764,18 +806,22 @@ def asset_app_closeout(
         # users' lock-in.
         If(asset_creator.hasValue()).Then(
             # NOTE: Smart ASA has not been destroyed.
-            Assert(is_correct_smart_asa_id),
+            Assert(is_correct_smart_asa_id, comment=Error.invalid_smart_asa_id),
             If(Or(asset_frozen, asset_closer_frozen)).Then(
                 # NOTE: If Smart ASA is frozen, users can only close-out to
                 # Creator
-                Assert(close_to.address() == Global.current_application_address())
+                Assert(
+                    close_to.address() == Global.current_application_address(),
+                    comment="Wrong CloseTo address: Frozen Smart ASA must be closed-out to creator"
+                ),
             ),
             If(close_to.address() != Global.current_application_address()).Then(
                 # NOTE: If the target of close-out is not Creator, it MUST be
                 # opted-in to the current Smart ASA.
                 Assert(
                     smart_asa_id
-                    == App.localGet(close_to.address(), LocalState.smart_asa_id)
+                    == App.localGet(close_to.address(), LocalState.smart_asa_id),
+                    comment=Error.invalid_smart_asa_id,
                 )
             ),
             account_balance,
@@ -808,8 +854,15 @@ def asset_destroy(destroy_asset: abi.Asset) -> Expr:
         # Asset Destroy Preconditions
         Assert(
             smart_asa_id,
+            comment=Error.missing_smart_asa_id,
+        ),
+        Assert(
             is_correct_smart_asa_id,
+            comment=Error.invalid_smart_asa_id,
+        ),
+        Assert(
             is_manager_addr,
+            comment=Error.not_manager_addr,
         ),
         # Effects
         smart_asa_destroy_inner_txn(destroy_asset.asset_id()),
