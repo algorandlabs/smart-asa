@@ -386,18 +386,34 @@ def asset_app_optin(
     optin_to_underlying_asa = account_balance.hasValue()
     return Seq(
         # Preconditions
+        Assert(smart_asa_id, comment=Error.missing_smart_asa_id),
+        Assert(is_correct_smart_asa_id, comment=Error.invalid_smart_asa_id),
         Assert(
-            smart_asa_id,
-            is_correct_smart_asa_id,
             underlying_asa_optin.get().type_enum() == TxnType.AssetTransfer,
+            comment="Reference Opt-In Txn: Wrong Txn Type (Expected: Axfer)",
+        ),
+        Assert(
             underlying_asa_optin.get().xfer_asset() == smart_asa_id,
+            comment="Reference Opt-In Txn: Wrong Asset ID (Expected: Smart ASA ID)",
+        ),
+        Assert(
             underlying_asa_optin.get().sender() == Txn.sender(),
+            comment="Reference Opt-In Txn: Wrong Sender (Expected: App Caller)",
+        ),
+        Assert(
             underlying_asa_optin.get().asset_receiver() == Txn.sender(),
+            comment="Reference Opt-In Txn: Wrong Asset Receiver (Expected: App Caller)",
+        ),
+        Assert(
             underlying_asa_optin.get().asset_amount() == Int(0),
+            comment="Reference Opt-In Txn: Wrong Asset Amount (Expected: 0)",
+        ),
+        Assert(
             underlying_asa_optin.get().asset_close_to() == Global.zero_address(),
+            comment="Reference Opt-In Txn: Wrong Asset CloseTo (Expected: Zero Address)",
         ),
         account_balance,
-        Assert(optin_to_underlying_asa),
+        Assert(optin_to_underlying_asa, comment="Missing Opt-In to Underlying ASA"),
         # Effects
         init_local_state(),
         If(Or(default_frozen, account_balance.value() > Int(0))).Then(freeze_account),
@@ -447,7 +463,8 @@ def asset_create(
 
     return Seq(
         # Preconditions
-        Assert(is_creator, smart_asa_not_created),
+        Assert(is_creator, comment=Error.not_creator_addr),
+        Assert(smart_asa_not_created, comment="Smart ASA ID already exists"),
         is_valid_address_bytes_length(manager_addr.get()),
         is_valid_address_bytes_length(reserve_addr.get()),
         is_valid_address_bytes_length(freeze_addr.get()),
@@ -525,25 +542,33 @@ def asset_config(
 
     return Seq(
         # Preconditions
-        Assert(
-            smart_asa_id,
-            is_correct_smart_asa_id,
-        ),  # NOTE: usless in ref. impl since 1 ASA : 1 App
+        Assert(smart_asa_id, comment=Error.missing_smart_asa_id),
+        # NOTE: usless in ref. impl since 1 ASA : 1 App
+        Assert(is_correct_smart_asa_id, comment=Error.invalid_smart_asa_id),
         is_valid_address_bytes_length(manager_addr.get()),
         is_valid_address_bytes_length(reserve_addr.get()),
         is_valid_address_bytes_length(freeze_addr.get()),
         is_valid_address_bytes_length(clawback_addr.get()),
-        Assert(is_manager_addr),
+        Assert(is_manager_addr, comment=Error.not_manager_addr),
         If(update_reserve_addr).Then(
-            Assert(current_reserve_addr != Global.zero_address())
+            Assert(
+                current_reserve_addr != Global.zero_address(),
+                comment="Reserve Address has been deleted",
+            )
         ),
         If(update_freeze_addr).Then(
-            Assert(current_freeze_addr != Global.zero_address())
+            Assert(
+                current_freeze_addr != Global.zero_address(),
+                comment="Freeze Address has been deleted",
+            )
         ),
         If(update_clawback_addr).Then(
-            Assert(current_clawback_addr != Global.zero_address())
+            Assert(
+                current_clawback_addr != Global.zero_address(),
+                comment="Clawback Address has been deleted",
+            )
         ),
-        Assert(is_valid_total),
+        Assert(is_valid_total, comment="Invalid Total (must be >= Circulating Supply)"),
         # Effects
         App.globalPut(GlobalState.total, total.get()),
         App.globalPut(GlobalState.decimals, decimals.get()),
@@ -618,54 +643,55 @@ def asset_transfer(
     asset_receiver_frozen = App.localGet(asset_receiver.address(), LocalState.frozen)
     return Seq(
         # Preconditions
-        Assert(
-            smart_asa_id,
-            is_correct_smart_asa_id,
-        ),
+        Assert(smart_asa_id, comment=Error.missing_smart_asa_id),
+        Assert(is_correct_smart_asa_id, comment=Error.invalid_smart_asa_id),
         is_valid_address_bytes_length(asset_sender.address()),
         is_valid_address_bytes_length(asset_receiver.address()),
         If(is_not_clawback)
         .Then(
             # Asset Regular Transfer Preconditions
-            Assert(
-                Not(asset_frozen),
-                Not(asset_sender_frozen),
-                Not(asset_receiver_frozen),
-                is_current_smart_asa_id,
-            ),
+            Assert(Not(asset_frozen), comment=Error.asset_frozen),
+            Assert(Not(asset_sender_frozen), comment=Error.sender_frozen),
+            Assert(Not(asset_receiver_frozen), comment=Error.receiver_frozen),
+            Assert(is_current_smart_asa_id, comment=Error.invalid_smart_asa_id),
         )
         .ElseIf(is_minting)
         .Then(
             # Asset Minting Preconditions
+            Assert(Not(asset_frozen), comment=Error.asset_frozen),
+            Assert(Not(asset_receiver_frozen), comment=Error.receiver_frozen),
             Assert(
-                Not(asset_frozen),
-                Not(asset_receiver_frozen),
                 smart_asa_id
                 == App.localGet(asset_receiver.address(), LocalState.smart_asa_id),
-                # NOTE: Ref. implementation prevents minting more than `total`.
+                comment=Error.invalid_smart_asa_id,
+            ),
+            # NOTE: Ref. implementation prevents minting more than `total`.
+            Assert(
                 circulating_supply(smart_asa_id) + asset_amount.get()
                 <= App.globalGet(GlobalState.total),
+                comment="Over-minting (can not mint more than Total)",
             ),
         )
         .ElseIf(is_burning)
         .Then(
             # Asset Burning Preconditions
+            Assert(Not(asset_frozen), comment=Error.asset_frozen),
+            Assert(Not(asset_sender_frozen), comment=Error.sender_frozen),
             Assert(
-                Not(asset_frozen),
-                Not(asset_sender_frozen),
                 smart_asa_id
                 == App.localGet(asset_sender.address(), LocalState.smart_asa_id),
+                comment=Error.invalid_smart_asa_id,
             ),
         )
         .Else(
             # Asset Clawback Preconditions
-            Assert(is_clawback),
+            Assert(is_clawback, comment=Error.not_clawback_addr),
             # NOTE: `is_current_smart_asa_id` implicitly checks that both
             # `asset_sender` and `asset_receiver` opted-in the Smart ASA
             # App. This ensures that _mint_ and _burn_ can not be
             # executed as _clawback_, since the Smart ASA App can not
             # opt-in to itself.
-            Assert(is_current_smart_asa_id),
+            Assert(is_current_smart_asa_id, comment=Error.invalid_smart_asa_id),
         ),
         # Effects
         smart_asa_transfer_inner_txn(
