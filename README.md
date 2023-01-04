@@ -3,7 +3,9 @@
 Smart ASA reference implementation combines the simplicity and security of the Algorand Standard Assets (ASA)s with the composability and programmability of Algorand Smart Contracts. The Smart ASA offers a new, powerful, L1 feature that extends regular ASAs up to the limits of your imagination!
 
 - [Smart ASA ABI JSON](https://github.com/algorandlabs/smart-asa/blob/main/smart_asa_abi.json)
-- [Smart ASA App TEAL](https://testnet.algoexplorer.io/application/107042851)
+- [Smart ASA App TEAL Approval](https://github.com/algorandlabs/smart-asa/blob/main/smart_asa_approval.teal)
+- [Smart ASA App TEAL Clear](https://github.com/algorandlabs/smart-asa/blob/main/smart_asa_clear.teal)
+- [Smart ASA App Example](https://explorer.dappflow.org/explorer/application/107042851/transactions)
 
 **⚠️ Disclamer: This code is not audited!**
 
@@ -170,9 +172,23 @@ _Smart ASA Opt-In_ represents the account opt-in to the Smart ASA. The argument 
 
 ```json
 {
-  "name": "asset_app_optin",
-  "args": [{"name": "asset", "type": "asset"}],
-  "returns": {"type": "void"}
+    "name": "asset_app_optin",
+    "args": [
+        {
+            "type": "asset",
+            "name": "asset",
+            "desc": "Underlying ASA ID (ref. App Global State: \"smart_asa_id\")."
+        },
+        {
+            "type": "axfer",
+            "name": "underlying_asa_optin",
+            "desc": "Underlying ASA opt-in transaction."
+        }
+    ],
+    "returns": {
+        "type": "void"
+    },
+    "desc": "Smart ASA atomic opt-in to Smart ASA App and Underlying ASA."
 }
 ```
 
@@ -186,12 +202,23 @@ _Smart ASA Close-Out_ closes out an account from the Smart ASA. It shadows the e
 
 ```json
 {
-  "name": "asset_app_closeout",
-  "args": [
-    {"name": "close_asset", "type": "asset"},
-    {"name": "close_to", "type": "account"}
-  ],
-  "returns": {"type": "void"}
+    "name": "asset_app_closeout",
+    "args": [
+        {
+            "type": "asset",
+            "name": "close_asset",
+            "desc": "Underlying ASA ID (ref. App Global State: \"smart_asa_id\")."
+        },
+        {
+            "type": "account",
+            "name": "close_to",
+            "desc": "Account to send all Smart ASA reminder to. If the asset/account is forzen then this must be set to Smart ASA Creator."
+        }
+    ],
+    "returns": {
+        "type": "void"
+    },
+    "desc": "Smart ASA atomic close-out of Smart ASA App and Underlying ASA."
 }
 ```
 
@@ -201,21 +228,69 @@ _Smart ASA Create_ is the creation method of a Smart ASA. It creates a new _Unde
 
 ```json
 {
-  "name": "asset_create",
-  "args": [
-    {"name": "total", "type": "uint64"},
-    {"name": "decimals", "type": "uint32"},
-    {"name": "default_frozen", "type": "bool"},
-    {"name": "unit_name", "type": "string"},
-    {"name": "name", "type": "string"},
-    {"name": "url", "type": "string"},
-    {"name": "metadata_hash", "type": "byte[]"},
-    {"name": "manager_addr", "type": "address"},
-    {"name": "reserve_addr", "type": "address"},
-    {"name": "freeze_addr", "type": "address"},
-    {"name": "clawback_addr", "type": "address"}
-  ],
-  "returns": {"type": "uint64"}
+    "name": "asset_create",
+    "args": [
+        {
+            "type": "uint64",
+            "name": "total",
+            "desc": "The total number of base units of the Smart ASA to create."
+        },
+        {
+            "type": "uint32",
+            "name": "decimals",
+            "desc": "The number of digits to use after the decimal point when displaying the Smart ASA. If 0, the Smart ASA is not divisible."
+        },
+        {
+            "type": "bool",
+            "name": "default_frozen",
+            "desc": "Smart ASA default frozen status (True to freeze holdings by default)."
+        },
+        {
+            "type": "string",
+            "name": "unit_name",
+            "desc": "The name of a unit of Smart ASA."
+        },
+        {
+            "type": "string",
+            "name": "name",
+            "desc": "The name of the Smart ASA."
+        },
+        {
+            "type": "string",
+            "name": "url",
+            "desc": "Smart ASA external URL."
+        },
+        {
+            "type": "byte[]",
+            "name": "metadata_hash",
+            "desc": "Smart ASA metadata hash (suggested 32 bytes hash)."
+        },
+        {
+            "type": "address",
+            "name": "manager_addr",
+            "desc": "The address of the account that can manage the configuration of the Smart ASA and destroy it."
+        },
+        {
+            "type": "address",
+            "name": "reserve_addr",
+            "desc": "The address of the account that holds the reserve (non-minted) units of the asset and can mint or burn units of Smart ASA."
+        },
+        {
+            "type": "address",
+            "name": "freeze_addr",
+            "desc": "The address of the account that can freeze/unfreeze holdings of this Smart ASA globally or locally (specific accounts). If empty, freezing is not permitted."
+        },
+        {
+            "type": "address",
+            "name": "clawback_addr",
+            "desc": "The address of the account that can clawback holdings of this asset. If empty, clawback is not permitted."
+        }
+    ],
+    "returns": {
+        "type": "uint64",
+        "desc": "New Smart ASA ID."
+    },
+    "desc": "Create a Smart ASA (triggers inner creation of an Underlying ASA)."
 }
 ```
 
@@ -234,22 +309,72 @@ The following restrictions apply in this Smart ASA reference implementation:
 
 ```json
 {
-  "name": "asset_config",
-  "args": [
-    {"name": "config_asset", "type": "asset"},
-    {"name": "total", "type": "uint64"},
-    {"name": "decimals", "type": "uint32"},
-    {"name": "default_frozen", "type": "bool"},
-    {"name": "unit_name", "type": "string"},
-    {"name": "name", "type": "string"},
-    {"name": "url", "type": "string"},
-    {"name": "metadata_hash", "type": "byte[]"},
-    {"name": "manager_addr", "type": "address"},
-    {"name": "reserve_addr", "type": "address"},
-    {"name": "freeze_addr", "type": "address"},
-    {"name": "clawback_addr", "type": "address"}
-  ],
-  "returns": {"type": "void"}
+    "name": "asset_config",
+    "args": [
+        {
+            "type": "asset",
+            "name": "config_asset"
+        },
+        {
+            "type": "uint64",
+            "name": "total",
+            "desc": "The total number of base units of the Smart ASA to create. It can not be configured to less than its current circulating supply."
+        },
+        {
+            "type": "uint32",
+            "name": "decimals",
+            "desc": "The number of digits to use after the decimal point when displaying the Smart ASA. If 0, the Smart ASA is not divisible."
+        },
+        {
+            "type": "bool",
+            "name": "default_frozen",
+            "desc": "Smart ASA default frozen status (True to freeze holdings by default)."
+        },
+        {
+            "type": "string",
+            "name": "unit_name",
+            "desc": "The name of a unit of Smart ASA."
+        },
+        {
+            "type": "string",
+            "name": "name",
+            "desc": "The name of the Smart ASA."
+        },
+        {
+            "type": "string",
+            "name": "url",
+            "desc": "Smart ASA external URL."
+        },
+        {
+            "type": "byte[]",
+            "name": "metadata_hash",
+            "desc": "Smart ASA metadata hash (suggested 32 bytes hash)."
+        },
+        {
+            "type": "address",
+            "name": "manager_addr",
+            "desc": "The address of the account that can manage the configuration of the Smart ASA and destroy it."
+        },
+        {
+            "type": "address",
+            "name": "reserve_addr",
+            "desc": "The address of the account that holds the reserve (non-minted) units of the asset and can mint or burn units of Smart ASA."
+        },
+        {
+            "type": "address",
+            "name": "freeze_addr",
+            "desc": "The address of the account that can freeze/unfreeze holdings of this Smart ASA globally or locally (specific accounts). If empty, freezing is not permitted."
+        },
+        {
+            "type": "address",
+            "name": "clawback_addr",
+            "desc": "The address of the account that can clawback holdings of this asset. If empty, clawback is not permitted."
+        }
+    ],
+    "returns": {
+        "type": "void"
+    },
+    "desc": "Configure the Smart ASA. Use existing values for unchanged parameters. Setting Smart ASA roles to zero-address is irreversible."
 }
 ```
 
@@ -259,14 +384,33 @@ _Smart ASA Transfer_ is the asset transfer method of a Smart ASA. It defines the
 
 ```json
 {
-  "name": "asset_transfer",
-  "args": [
-    {"name": "xfer_asset", "type": "asset"},
-    {"name": "asset_amount", "type": "uint64"},
-    {"name": "asset_sender", "type": "account"},
-    {"name": "asset_receiver", "type": "account"}
-  ],
-  "returns": {"type": "void"}
+    "name": "asset_transfer",
+    "args": [
+        {
+            "type": "asset",
+            "name": "xfer_asset",
+            "desc": "Smart ASA ID to transfer."
+        },
+        {
+            "type": "uint64",
+            "name": "asset_amount",
+            "desc": "Smart ASA amount to transfer."
+        },
+        {
+            "type": "account",
+            "name": "asset_sender",
+            "desc": "Smart ASA sender, for regular transfer this must be equal to the Smart ASA App caller."
+        },
+        {
+            "type": "account",
+            "name": "asset_receiver",
+            "desc": "The recipient of the Smart ASA transfer."
+        }
+    ],
+    "returns": {
+        "type": "void"
+    },
+    "desc": "Smart ASA transfers: regular, clawback (Clawback Address), mint or burn (Reserve Address)."
 }
 ```
 
@@ -321,12 +465,23 @@ _Smart ASA Global Freeze_ is the freeze method of a Smart ASA. It enables the `f
 
 ```json
 {
-  "name": "asset_freeze",
-  "args": [
-    {"name": "freeze_asset", "type": "asset"},
-    {"name": "asset_frozen", "type": "bool"}
-  ],
-  "returns": {"type": "void"}
+    "name": "asset_freeze",
+    "args": [
+        {
+            "type": "asset",
+            "name": "freeze_asset",
+            "desc": "Smart ASA ID to freeze/unfreeze."
+        },
+        {
+            "type": "bool",
+            "name": "asset_frozen",
+            "desc": "Smart ASA ID forzen status."
+        }
+    ],
+    "returns": {
+        "type": "void"
+    },
+    "desc": "Smart ASA global freeze (all accounts), called by the Freeze Address."
 }
 ```
 
@@ -336,13 +491,28 @@ _Smart ASA Account Freeze_ is the account freeze method of a Smart ASA. It enabl
 
 ```json
 {
-  "name": "account_freeze",
-  "args": [
-    {"name": "freeze_asset", "type": "asset"},
-    {"name": "freeze_account", "type": "account"},
-    {"name": "asset_frozen", "type": "bool"}
-  ],
-  "returns": {"type": "void"}
+    "name": "account_freeze",
+    "args": [
+        {
+            "type": "asset",
+            "name": "freeze_asset",
+            "desc": "Smart ASA ID to freeze/unfreeze."
+        },
+        {
+            "type": "account",
+            "name": "freeze_account",
+            "desc": "Account to freeze/unfreeze."
+        },
+        {
+            "type": "bool",
+            "name": "asset_frozen",
+            "desc": "Smart ASA ID forzen status."
+        }
+    ],
+    "returns": {
+        "type": "void"
+    },
+    "desc": "Smart ASA local freeze (account specific), called by the Freeze Address."
 }
 ```
 
@@ -354,11 +524,18 @@ _Smart ASA Destroy_ is the destroy method of a Smart ASA. In this reference impl
 
 ```json
 {
-  "name": "asset_destroy",
-  "args": [
-    {"name": "destroy_asset", "type": "asset"}
-  ],
-  "returns": {"type": "void"}
+    "name": "asset_destroy",
+    "args": [
+        {
+            "type": "asset",
+            "name": "destroy_asset",
+            "desc": "Underlying ASA ID (ref. App Global State: \"smart_asa_id\")."
+        }
+    ],
+    "returns": {
+        "type": "void"
+    },
+    "desc": "Destroy the Underlying ASA, must be called by Manager Address."
 }
 ```
 
