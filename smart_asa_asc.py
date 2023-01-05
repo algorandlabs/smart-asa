@@ -543,7 +543,7 @@ def asset_config(
     return Seq(
         # Preconditions
         Assert(smart_asa_id, comment=Error.missing_smart_asa_id),
-        # NOTE: usless in ref. impl since 1 ASA : 1 App
+        # NOTE: useless in ref. impl since 1 ASA : 1 App
         Assert(is_correct_smart_asa_id, comment=Error.invalid_smart_asa_id),
         is_valid_address_bytes_length(manager_addr.get()),
         is_valid_address_bytes_length(reserve_addr.get()),
