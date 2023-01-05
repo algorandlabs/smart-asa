@@ -637,6 +637,7 @@ isvalidaddressbyteslength_8:
 len
 pushint 32 // 32
 ==
+// Invalid Address length (must be 32 bytes)
 assert
 retsub
 
@@ -658,11 +659,13 @@ getterpreconditions_10:
 store 115
 bytec_0 // "smart_asa_id"
 app_global_get
+// Smart ASA ID dose not exist
 assert
 bytec_0 // "smart_asa_id"
 app_global_get
 load 115
 ==
+// Invalid Smart ASA ID
 assert
 retsub
 
@@ -671,18 +674,22 @@ assetappcreate_11:
 txn GlobalNumUint
 pushint 5 // 5
 ==
+// Wrong State Schema - Expexted Global Ints: 5
 assert
 txn GlobalNumByteSlice
 intc_2 // 8
 ==
+// Wrong State Schema - Expexted Global Bytes: 8
 assert
 txn LocalNumUint
 pushint 2 // 2
 ==
+// Wrong State Schema - Expexted Local Ints: 2
 assert
 txn LocalNumByteSlice
 intc_0 // 0
 ==
+// Wrong State Schema - Expexted Local Bytes: 0
 assert
 callsub initglobalstate_0
 intc_1 // 1
@@ -694,43 +701,51 @@ store 74
 store 73
 bytec_0 // "smart_asa_id"
 app_global_get
+// Smart ASA ID dose not exist
 assert
 bytec_0 // "smart_asa_id"
 app_global_get
 load 73
 txnas Assets
 ==
+// Invalid Smart ASA ID
 assert
 load 74
 gtxns TypeEnum
 intc_3 // axfer
 ==
+// Reference Opt-In Txn: Wrong Txn Type (Expected: Axfer)
 assert
 load 74
 gtxns XferAsset
 bytec_0 // "smart_asa_id"
 app_global_get
 ==
+// Reference Opt-In Txn: Wrong Asset ID (Expected: Smart ASA ID)
 assert
 load 74
 gtxns Sender
 txn Sender
 ==
+// Reference Opt-In Txn: Wrong Sender (Expected: App Caller)
 assert
 load 74
 gtxns AssetReceiver
 txn Sender
 ==
+// Reference Opt-In Txn: Wrong Asset Receiver (Expected: App Caller)
 assert
 load 74
 gtxns AssetAmount
 intc_0 // 0
 ==
+// Reference Opt-In Txn: Wrong Asset Amount (Expected: 0)
 assert
 load 74
 gtxns AssetCloseTo
 global ZeroAddress
 ==
+// Reference Opt-In Txn: Wrong Asset CloseTo (Expected: Zero Address)
 assert
 txn Sender
 load 73
@@ -739,6 +754,7 @@ asset_holding_get AssetBalance
 store 76
 store 75
 load 76
+// Missing Opt-In to Underlying ASA
 assert
 callsub initlocalstate_1
 bytec 8 // "default_frozen"
@@ -772,10 +788,12 @@ store 14
 txn Sender
 global CreatorAddress
 ==
+// Caller not authorized (must be: App Creator Address)
 assert
 bytec_0 // "smart_asa_id"
 app_global_get
 !
+// Smart ASA ID already exists
 assert
 load 21
 callsub isvalidaddressbyteslength_8
@@ -845,12 +863,14 @@ store 80
 store 79
 bytec_0 // "smart_asa_id"
 app_global_get
+// Smart ASA ID dose not exist
 assert
 bytec_0 // "smart_asa_id"
 app_global_get
 load 79
 txnas Assets
 ==
+// Invalid Smart ASA ID
 assert
 load 87
 callsub isvalidaddressbyteslength_8
@@ -864,6 +884,7 @@ txn Sender
 bytec 6 // "manager_addr"
 app_global_get
 ==
+// Caller not authorized (must be: Manager Address)
 assert
 bytec_2 // "reserve_addr"
 app_global_get
@@ -886,6 +907,7 @@ bytec 4 // "clawback_addr"
 app_global_get
 global ZeroAddress
 !=
+// Clawback Address has been deleted
 assert
 b assetconfig_14_l6
 assetconfig_14_l4:
@@ -893,6 +915,7 @@ bytec_3 // "freeze_addr"
 app_global_get
 global ZeroAddress
 !=
+// Freeze Address has been deleted
 assert
 b assetconfig_14_l2
 assetconfig_14_l5:
@@ -900,6 +923,7 @@ bytec_2 // "reserve_addr"
 app_global_get
 global ZeroAddress
 !=
+// Reserve Address has been deleted
 assert
 b assetconfig_14_l1
 assetconfig_14_l6:
@@ -908,6 +932,7 @@ bytec_0 // "smart_asa_id"
 app_global_get
 callsub circulatingsupply_9
 >=
+// Invalid Total (must be >= Circulating Supply)
 assert
 bytec 7 // "total"
 load 80
@@ -956,12 +981,14 @@ store 95
 store 94
 bytec_0 // "smart_asa_id"
 app_global_get
+// Smart ASA ID dose not exist
 assert
 bytec_0 // "smart_asa_id"
 app_global_get
 load 94
 txnas Assets
 ==
+// Invalid Smart ASA ID
 assert
 load 96
 txnas Accounts
@@ -1009,6 +1036,7 @@ txn Sender
 bytec 4 // "clawback_addr"
 app_global_get
 ==
+// Caller not authorized (must be: Clawback Address)
 assert
 bytec_0 // "smart_asa_id"
 app_global_get
@@ -1025,18 +1053,21 @@ bytec_0 // "smart_asa_id"
 app_local_get
 ==
 &&
+// Invalid Smart ASA ID
 assert
 b assettransfer_15_l7
 assettransfer_15_l4:
 bytec_1 // "frozen"
 app_global_get
 !
+// Smart ASA is frozen
 assert
 load 96
 txnas Accounts
 bytec_1 // "frozen"
 app_local_get
 !
+// Sender is frozen
 assert
 bytec_0 // "smart_asa_id"
 app_global_get
@@ -1045,18 +1076,21 @@ txnas Accounts
 bytec_0 // "smart_asa_id"
 app_local_get
 ==
+// Invalid Smart ASA ID
 assert
 b assettransfer_15_l7
 assettransfer_15_l5:
 bytec_1 // "frozen"
 app_global_get
 !
+// Smart ASA is frozen
 assert
 load 97
 txnas Accounts
 bytec_1 // "frozen"
 app_local_get
 !
+// Receiver is frozen
 assert
 bytec_0 // "smart_asa_id"
 app_global_get
@@ -1065,6 +1099,7 @@ txnas Accounts
 bytec_0 // "smart_asa_id"
 app_local_get
 ==
+// Invalid Smart ASA ID
 assert
 bytec_0 // "smart_asa_id"
 app_global_get
@@ -1074,24 +1109,28 @@ load 95
 bytec 7 // "total"
 app_global_get
 <=
+// Over-minting (can not mint more than Total)
 assert
 b assettransfer_15_l7
 assettransfer_15_l6:
 bytec_1 // "frozen"
 app_global_get
 !
+// Smart ASA is frozen
 assert
 load 96
 txnas Accounts
 bytec_1 // "frozen"
 app_local_get
 !
+// Sender is frozen
 assert
 load 97
 txnas Accounts
 bytec_1 // "frozen"
 app_local_get
 !
+// Receiver is frozen
 assert
 bytec_0 // "smart_asa_id"
 app_global_get
@@ -1108,6 +1147,7 @@ bytec_0 // "smart_asa_id"
 app_local_get
 ==
 &&
+// Invalid Smart ASA ID
 assert
 assettransfer_15_l7:
 load 94
@@ -1126,17 +1166,20 @@ store 103
 store 102
 bytec_0 // "smart_asa_id"
 app_global_get
+// Smart ASA ID dose not exist
 assert
 bytec_0 // "smart_asa_id"
 app_global_get
 load 102
 txnas Assets
 ==
+// Invalid Smart ASA ID
 assert
 txn Sender
 bytec_3 // "freeze_addr"
 app_global_get
 ==
+// Caller not authorized (must be: Freeze Address)
 assert
 bytec_1 // "frozen"
 load 103
@@ -1153,17 +1196,20 @@ txnas Accounts
 callsub isvalidaddressbyteslength_8
 bytec_0 // "smart_asa_id"
 app_global_get
+// Smart ASA ID dose not exist
 assert
 bytec_0 // "smart_asa_id"
 app_global_get
 load 104
 txnas Assets
 ==
+// Invalid Smart ASA ID
 assert
 txn Sender
 bytec_3 // "freeze_addr"
 app_global_get
 ==
+// Caller not authorized (must be: Freeze Address)
 assert
 load 105
 txnas Accounts
@@ -1185,12 +1231,14 @@ app_local_get
 load 107
 txnas Assets
 ==
+// Invalid Smart ASA ID
 assert
 global GroupSize
 txn GroupIndex
 intc_1 // 1
 +
 >
+// Smart ASA CloseOut: Wrong group size (Expected: 2)
 assert
 txn GroupIndex
 intc_1 // 1
@@ -1198,6 +1246,7 @@ intc_1 // 1
 gtxns TypeEnum
 intc_3 // axfer
 ==
+// Underlying ASA CloseOut Txn: Wrong Txn type (Expected: Axfer)
 assert
 txn GroupIndex
 intc_1 // 1
@@ -1206,6 +1255,7 @@ gtxns XferAsset
 load 107
 txnas Assets
 ==
+// Underlying ASA CloseOut Txn: Wrong ASA ID (Expected: Smart ASA ID)
 assert
 txn GroupIndex
 intc_1 // 1
@@ -1213,6 +1263,7 @@ intc_1 // 1
 gtxns Sender
 txn Sender
 ==
+// Underlying ASA CloseOut Txn: Wrong sender (Expected: Smart ASA CloseOut caller)
 assert
 txn GroupIndex
 intc_1 // 1
@@ -1220,6 +1271,7 @@ intc_1 // 1
 gtxns AssetAmount
 intc_0 // 0
 ==
+// Underlying ASA CloseOut Txn: Wrong amount (Expected: 0)
 assert
 txn GroupIndex
 intc_1 // 1
@@ -1227,6 +1279,7 @@ intc_1 // 1
 gtxns AssetCloseTo
 global CurrentApplicationAddress
 ==
+// Underlying ASA CloseOut Txn: Wrong CloseTo address (Expected: Smart ASA App Account)
 assert
 load 107
 txnas Assets
@@ -1240,6 +1293,7 @@ app_global_get
 load 107
 txnas Assets
 ==
+// Invalid Smart ASA ID
 assert
 bytec_1 // "frozen"
 app_global_get
@@ -1277,6 +1331,7 @@ txnas Accounts
 bytec_0 // "smart_asa_id"
 app_local_get
 ==
+// Invalid Smart ASA ID
 assert
 b assetappcloseout_18_l3
 assetappcloseout_18_l5:
@@ -1284,6 +1339,7 @@ load 108
 txnas Accounts
 global CurrentApplicationAddress
 ==
+// Wrong CloseTo address: Frozen Smart ASA must be closed-out to creator
 assert
 b assetappcloseout_18_l2
 assetappcloseout_18_l6:
@@ -1295,17 +1351,20 @@ assetdestroy_19:
 store 113
 bytec_0 // "smart_asa_id"
 app_global_get
+// Smart ASA ID dose not exist
 assert
 bytec_0 // "smart_asa_id"
 app_global_get
 load 113
 txnas Assets
 ==
+// Invalid Smart ASA ID
 assert
 txn Sender
 bytec 6 // "manager_addr"
 app_global_get
 ==
+// Caller not authorized (must be: Manager Address)
 assert
 load 113
 txnas Assets
