@@ -390,27 +390,27 @@ def asset_app_optin(
         Assert(is_correct_smart_asa_id, comment=Error.invalid_smart_asa_id),
         Assert(
             underlying_asa_optin.get().type_enum() == TxnType.AssetTransfer,
-            comment="Reference Opt-In Txn: Wrong Txn Type (Expected: Axfer)",
+            comment="Underlying ASA Opt-In Txn: Wrong Txn Type (Expected: Axfer)",
         ),
         Assert(
             underlying_asa_optin.get().xfer_asset() == smart_asa_id,
-            comment="Reference Opt-In Txn: Wrong Asset ID (Expected: Smart ASA ID)",
+            comment="Underlying ASA Opt-In Txn: Wrong Asset ID (Expected: Smart ASA ID)",
         ),
         Assert(
             underlying_asa_optin.get().sender() == Txn.sender(),
-            comment="Reference Opt-In Txn: Wrong Sender (Expected: App Caller)",
+            comment="Underlying ASA Opt-In Txn: Wrong Sender (Expected: App Caller)",
         ),
         Assert(
             underlying_asa_optin.get().asset_receiver() == Txn.sender(),
-            comment="Reference Opt-In Txn: Wrong Asset Receiver (Expected: App Caller)",
+            comment="Underlying ASA Opt-In Txn: Wrong Asset Receiver (Expected: App Caller)",
         ),
         Assert(
             underlying_asa_optin.get().asset_amount() == Int(0),
-            comment="Reference Opt-In Txn: Wrong Asset Amount (Expected: 0)",
+            comment="Underlying ASA Opt-In Txn: Wrong Asset Amount (Expected: 0)",
         ),
         Assert(
             underlying_asa_optin.get().asset_close_to() == Global.zero_address(),
-            comment="Reference Opt-In Txn: Wrong Asset CloseTo (Expected: Zero Address)",
+            comment="Underlying ASA Opt-In Txn: Wrong Asset CloseTo (Expected: Zero Address)",
         ),
         account_balance,
         Assert(optin_to_underlying_asa, comment="Missing Opt-In to Underlying ASA"),
