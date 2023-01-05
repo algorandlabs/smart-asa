@@ -70,7 +70,7 @@ def static_attrs(cls):
 # / --- --- ERRORS
 class Error:
     address_length = "Invalid Address length (must be 32 bytes)"
-    missing_smart_asa_id = "Smart ASA ID dose not exist"
+    missing_smart_asa_id = "Smart ASA ID does not exist"
     invalid_smart_asa_id = "Invalid Smart ASA ID"
     not_creator_addr = "Caller not authorized (must be: App Creator Address)"
     not_manager_addr = "Caller not authorized (must be: Manager Address)"
